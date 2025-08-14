@@ -1,3 +1,5 @@
+> This repository contains the infrastructure-as-code implementation for [**Ghost in the Stack**](https://www.noahwhite.net/soc/ghost-in-the-stack), a blog series exploring real-world DevOps practices from first principles. It documents the full lifecycle of self-hosting a Ghost blog — beginning with a lightweight MVP on Vultr and evolving into a resilient, cloud-native platform.
+
 
 # Ghost Stack (Part 1)
 

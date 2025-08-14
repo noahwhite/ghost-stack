@@ -5,3 +5,5 @@ __MACOSX/
 *.tfstate
 *.tfstate.*
 .terraform/
+# IntelliJ IDEA project files
+.idea/
