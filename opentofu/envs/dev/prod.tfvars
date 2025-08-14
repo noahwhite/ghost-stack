@@ -1,0 +1,5 @@
+cloudflare_zone_name   = "separationofconcerns.dev"
+cloudflare_hostname   = "www"
+vultr_region          = "ewr"
+vultr_plan            = "vc2-1c-2gb"
+ssh_key_id            = ""

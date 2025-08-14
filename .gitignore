@@ -1,0 +1,7 @@
+# .gitignore
+.DS_Store
+__MACOSX/
+*.zip
+*.tfstate
+*.tfstate.*
+.terraform/
