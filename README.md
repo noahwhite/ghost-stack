@@ -81,6 +81,15 @@ ghost_stack_part1/
 
 ---
 
+
+## Workflow Documentation
+
+For a detailed explanation of the Git workflow in the current **MVP/dev-only** environment, see:
+
+➡️ [`docs/git-workflow-mvp.md`](docs/git-workflow-mvp.md)
+
+---
+
 ## Using the Infrastructure Shell
 
 This project provides a containerized shell for managing infrastructure.
@@ -101,48 +110,7 @@ The shell includes:
 
 ## Secrets Management
 
-Secrets are stored in 1Password (GUI) because we already use this tool. You could use any number of similar tools to manage them. In later iterations we will shift to them being managed by infrastructure levereged by the CI/CD pipeline. To use them:
-
-1. Retrieve the following from your 1Password vault (or your tool of choice):
-   - Cloudflare API Token
-   - Cloudflare Account ID
-   - Vultr API Key
-2. Run the secure loader script:
-
-```bash
-eval $(./scripts/load-dev-secrets.sh)
-```
-
-Secrets are only used in memory and never written to disk.
-
----
-
-
-### Cloudflare Credential Strategy
-
-This project uses **scoped Cloudflare API tokens** to provision DNS, object storage, and other Cloudflare infrastructure through OpenTofu. These tokens:
-
-- Are created manually through the Cloudflare dashboard
-- Are scoped to specific accounts, zones, and permissions (e.g., DNS:Edit, Zone:Read, R2:Edit)
-
-#### Why not use the Cloudflare global API key?
-
-The **Cloudflare global API key** is _not used_ for routine infrastructure operations. However, it _may be required_ temporarily if you choose to:
-
-- Automate the creation of scoped API tokens
-- Script token lifecycle management (will address at a later stage)
-
-By default, this project assumes you **manually create and rotate** scoped API tokens for this development environment). This strikes a balance between **security**, **provider compatibility**, and **simplicity** in development.
-
-
-#### Recommended Cloudflare API Token(s)
-
-| Name                   | Permissions                                                  | Resources                     | Purpose                                         |
-| ---------------------- | ------------------------------------------------------------ | ----------------------------- | ----------------------------------------------- |
-| `cloudflare-dev-token` | - Zone:Read<br>- Zone:Edit<br>- DNS:Edit<br>- Account Settings:Read | Dev account + zone only       | For provisioning DNS records and creating zones |
-| `r2-state-token`       | - Account Storage Buckets:Edit                               | Dev account (R2 bucket scope) | For managing Terraform state in R2              |
-
-Use the Cloudflare dashboard to [create custom API tokens](https://dash.cloudflare.com/profile/api-tokens) with scoped permissions.
+Secrets management is documented here: [`Secrets Management`](docs/secrets-management.md)
 
 ---
 
@@ -153,21 +121,9 @@ Use the Cloudflare dashboard to [create custom API tokens](https://dash.cloudfla
 
 ------
 
-## Bootstrapping
+## Bootstrap Infrastructure
 
-Before running the main infrastructure, you must do a one time provisioning of:
-
-- A Cloudflare R2 bucket (for OpenTofu state)
-- A Cloudflare zone (for your domain) to facilitate domain delegation
-
-To bootstrap:
-
-```bash
-eval $(./scripts/load-dev-secrets.sh)
-cd bootstrap/envs/dev
-tofu init
-tofu apply
-```
+Before delegating the domain and running the main infrastructure, you must do a one time provisioning of R2 and DNS which is documented here: [`Bootstrap README`](opentofu/bootstrap/README.md)
 
 ------
 
