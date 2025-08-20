@@ -32,7 +32,7 @@ This repository represents the initial phase of a modular, infrastructure-as-cod
 ## Directory Structure
 
 ```
-ghost_stack_part1/
+ghost-stack/
 ├── README.md
 ├── docker/
 │   ├── Dockerfile
@@ -63,20 +63,27 @@ ghost_stack_part1/
     │   ├── init-dev.sh
     │   └── plan_dev.sh
     └── bootstrap/
-        ├── README.md
-        ├── scripts/
-        ├── envs/
-        │   └── dev/
-        │       ├── cloudflare_zone.tf
-        │       └── r2.tf
-        └── modules/
-            ├── cloudflare_zone/
-            │   ├── main.tf
-            │   └── outputs.tf
-            └── r2/
-                ├── main.tf
-                ├── README.md
-                └── variables.tf
+				├── README.md
+				├── main.tf
+				├── outputs.tf
+				├── variables.tf
+				├── envs/
+				│   └── dev/
+				│       └── dev.tfvars
+				├── modules/
+				│   ├── cloudflare_zone/
+				│   │   ├── main.tf
+				|		|		├── outputs.tf
+				│   │   └── variables.tf
+				│   └── r2/
+				│       ├── README.md
+				│       ├── main.tf
+				│       └── variables.tf
+				├── scripts/
+				│   ├── bootstrap-dev.sh
+				│   ├── generate-bootstrap-token.sh
+				│   ├── list-permission-groups.sh
+				│   └── set-cloudflare-env.sh
 ```
 
 ---
@@ -87,24 +94,6 @@ ghost_stack_part1/
 For a detailed explanation of the Git workflow in the current **MVP/dev-only** environment, see:
 
 ➡️ [`docs/git-workflow-mvp.md`](docs/git-workflow-mvp.md)
-
----
-
-## Using the Infrastructure Shell
-
-This project provides a containerized shell for managing infrastructure.
-
-To build and use the container:
-
-```bash
-cd docker
-docker build -t ghost_stack_shell .
-../scripts/infra-shell.sh
-```
-
-The shell includes:
-- OpenTofu (1.10.5)
-- curl, unzip, git, bash
 
 ---
 

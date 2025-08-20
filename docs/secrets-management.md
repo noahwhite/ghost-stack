@@ -65,6 +65,17 @@ This project uses 2 separate Cloudflare API tokens for the dev bootstrap environ
 
 ***NOTE:*** The first time you log into the Cloudflare account dashboard, and until you complete the OpenTofu bootstrapping process which creates the DNS zone resource, you will be asked to enter an existing domain or register a new domain. **Do not do this** as we want to manage all infrastructure with IaC and creating it using the dashboard like this will be out-of-band of that IaC process.
 
+### How to Find Your Cloudflare Account ID
+
+Your Cloudflare Account ID is required when generating scoped API tokens. You can find it in one of the following ways:
+
+- **From the Dashboard URL**: After logging in at [dash.cloudflare.com](https://dash.cloudflare.com), your account ID appears in the URL:
+
+  ```
+  https://dash.cloudflare.com/<account-id>/home
+  ```
+  Copy the alphanumeric string where `<account-id>` appears and save it in your vault (1Password etc.)
+
 1. **Create `dev-token-creator`** in the Cloudflare dashboard (dev account):
    - Go to **My Profile → API Tokens → Create Token**
    - Select the template: **"Create Additional Tokens"**
@@ -89,7 +100,7 @@ Rather than using 1Password CLI or storing secrets in plain `.tfvars` files, we 
 2. At runtime, you run the secrets loader script, which prompts for secrets one-by-one:
 
    ```bash
-   ./scripts/env/load-dev-secrets.sh
+   source opentofu/bootstrap/scripts/env/set-cloudflare-env.sh
    ```
 
 3. The script exports the secrets to the environment so OpenTofu can access them.
