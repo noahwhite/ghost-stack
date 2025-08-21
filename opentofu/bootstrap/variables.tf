@@ -1,9 +1,3 @@
-variable "cloudflare_api_token" {
-  type        = string
-  sensitive   = true
-  description = "Cloudflare API token with R2 and DNS permissions"
-}
-
 variable "cloudflare_account_id" {
   type        = string
   sensitive   = true
@@ -18,4 +12,16 @@ variable "cloudflare_zone_name" {
 variable "r2_bucket_name" {
   type        = string
   description = "Name of the R2 bucket used for OpenTofu state storage"
+}
+
+variable "source_email" {
+  description = "The custom domain email address to forward"
+  type        = string
+  sensitive   = true
+}
+
+variable "destination_email" {
+  description = "The target email address to forward to"
+  type        = string
+  sensitive   = true
 }

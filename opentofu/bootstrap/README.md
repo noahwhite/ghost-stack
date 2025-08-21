@@ -30,6 +30,10 @@ bootstrap/
 │   │   ├── main.tf
 |		|		├── outputs.tf
 │   │   └── variables.tf
+│   ├── email_routing/
+│   │   ├── main.tf
+|		|		├── outputs.tf
+│   │   └── variables.tf
 │   └── r2/
 │       ├── README.md
 │       ├── main.tf
@@ -79,23 +83,14 @@ Once you have your bootstrap token, you can use it to generate a Cloudflare API 
 
 This will securely prompt you for your Cloudflare Account ID and Bootstrap Token, generate a signed JWT with R2 + DNS scopes, and copy it to your clipboard. Paste it into your secrets manager (e.g., 1Password).
 
-### Step 3: Export Secrets in Your Host Shell
-
-Before launching the Docker shell, securely export the necessary secrets as environment variables by running the following script:
-
-```bash
-source ./opentofu/bootstrap/scripts/set-cloudflare-env.sh
-```
-
-These will be injected securely into the container at runtime — nothing will be echoed or persisted.
-
-### Step 3: Launch Docker Shell with Secrets Injected
+### Step 3: Export Secrets in Your Host Shell & Launch Docker Shell with Secrets Injected
 
 ```bash
 ./docker/scripts/infra-shell.sh
 ```
 
 This script:
+- Securely prompts for secrets and other sensitive information
 - Validates the presence of required environment variables
 - Passes them securely to the container with `--env`
 - Suppresses shell history inside the container
@@ -111,7 +106,7 @@ opentofu/bootstrap/scripts/bootstrap-dev.sh
 This will:
 - Initialize the OpenTofu backend
 - Plan the dev environment
-- Apply the changes to provision R2 and DNS resources
+- Apply the changes to provision R2, DNS, and E-Mail routing resources
 - Create a .terraform.lock.hcl file which is used to pin the providers. You should add this to your git repo. 
 
 You should see the changes which OpenTofu will apply to your Cloudflare resources. They will consist of a new zone as well as an R2 bucket to store Terraform state. 

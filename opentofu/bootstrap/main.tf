@@ -24,3 +24,11 @@ module "dns_zone" {
   cloudflare_account_id = var.cloudflare_account_id
   cloudflare_zone_name  = var.cloudflare_zone_name
 }
+
+module "email_routing" {
+  source                = "./modules/email_routing"
+  cloudflare_zone_id    = module.dns_zone.zone_id
+  cloudflare_account_id = var.cloudflare_account_id
+  source_email          = var.source_email
+  destination_email     = var.destination_email
+}

@@ -25,6 +25,14 @@ fi
 # "82e64a83756745bbbb1c9c2701bf816b"  DNS Read
 # "b4992e1108244f5d8bfbd5744320c2e1"  Workers R2 Storage Read
 # "bf7481a1826f439697cb59a20b22293e"  Workers R2 Storage Write
+# "5272e56105d04b5897466995b9bd4643"  Email Routing Addresses Read
+# "e4589eb09e63436686cd64252a3aebeb"  Email Routing Addresses Write
+# "1b600d9d8062443e986a973f097e728a"  Email Routing Rules Read
+# "79b3ec0d10ce4148a8f8bdc0cc5f97f2"  Email Routing Rules Write
+# Zone Settings Read: 517b21aee92c4d89936c976ba6e4be55
+# Zone Settings Write: 3030687196b94b638145a3953da2b699
+# Zone DNS Settings Read: 0a6cfe8cd3ed445e918579e2fb13087b
+# Zone DNS Settings Write: c4df38be41c247b3b4b7702e76eadae0
 
 # Create a single token that can manage both R2 and DNS resources
 echo "🚧 Creating bootstrap-dev-token with DNS and R2 permissions..."
@@ -43,7 +51,11 @@ RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${ACCO
       },
       "permission_groups": [
         { "id": "b4992e1108244f5d8bfbd5744320c2e1" },
-        { "id": "bf7481a1826f439697cb59a20b22293e" }
+        { "id": "bf7481a1826f439697cb59a20b22293e" },
+        { "id": "5272e56105d04b5897466995b9bd4643" },
+        { "id": "e4589eb09e63436686cd64252a3aebeb" },
+        { "id": "517b21aee92c4d89936c976ba6e4be55" },
+        { "id": "3030687196b94b638145a3953da2b699" }
       ]
     },
     {
@@ -57,7 +69,9 @@ RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${ACCO
         { "id": "e6d2666161e84845a636613608cee8d5" },
         { "id": "c8fed203ed3043cba015a93ad1616f1f" },
         { "id": "4755a26eedb94da69e1066d98aa820be" },
-        { "id": "82e64a83756745bbbb1c9c2701bf816b" }
+        { "id": "82e64a83756745bbbb1c9c2701bf816b" },
+        { "id": "1b600d9d8062443e986a973f097e728a" },
+        { "id": "79b3ec0d10ce4148a8f8bdc0cc5f97f2" }
       ]
     }
   ],
