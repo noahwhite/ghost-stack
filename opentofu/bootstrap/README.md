@@ -86,7 +86,7 @@ This will securely prompt you for your Cloudflare Account ID and Bootstrap Token
 ### Step 3: Export Secrets in Your Host Shell & Launch Docker Shell with Secrets Injected
 
 ```bash
-./docker/scripts/infra-shell.sh
+./docker/scripts/bootstrap-infra-shell.sh
 ```
 
 This script:
@@ -100,7 +100,7 @@ This script:
 Still within the Docker shell, run:
 
 ```bash
-opentofu/bootstrap/scripts/bootstrap-dev.sh
+opentofu/bootstrap/scripts/bootstrap-env.sh
 ```
 
 This will:

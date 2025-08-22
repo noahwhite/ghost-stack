@@ -5,5 +5,7 @@ __MACOSX/
 *.tfstate
 *.tfstate.*
 .terraform/
+opentofu/envs/*/backend.hcl
+opentofu/bootstrap/envs/*/state/
 # IntelliJ IDEA project files
 .idea/
