@@ -16,7 +16,7 @@ esac
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 BOOTSTRAP_ROOT="${REPO_ROOT}/opentofu/bootstrap"
 ENV_DIR="${BOOTSTRAP_ROOT}/envs/${ENV}"
-STATE_DIR="${ENV_DIR}/state"
+STATE_DIR="${ENV_DIR}"
 STATE_PATH="${STATE_DIR}/terraform.tfstate"
 
 # Ensure state dirs exist and keep .terraform under state/
