@@ -1,0 +1,22 @@
+[Unit]
+Description=Ghost CMS Container
+After=docker.service var-lib-ghost-content.mount
+Requires=docker.service var-lib-ghost-content.mount
+RequiresMountsFor=/var/lib/ghost/conent
+
+[Service]
+Restart=always
+# Recreate container cleanly on restart
+ExecStartPre=-/usr/bin/docker rm -f ghost
+ExecStartPre=/usr/bin/docker pull ghost:5
+ExecStart=/usr/bin/docker run --name ghost \
+  --env-file /etc/ghost.env \
+  -p 80:2368 \
+  --log-driver json-file --log-opt max-size=5m --log-opt max-file=3 \
+  -v /var/lib/ghost/content:/var/lib/ghost/content \
+  --restart unless-stopped \
+  ghost:5
+ExecStop=/usr/bin/docker stop ghost
+
+[Install]
+WantedBy=multi-user.target
