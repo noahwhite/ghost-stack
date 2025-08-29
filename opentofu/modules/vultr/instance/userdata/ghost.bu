@@ -23,6 +23,24 @@ storage:
       contents:
         source: "data:text/plain;charset=utf-8;base64,UkVCT09UX1NUUkFURUdZPXJlYm9vdApMT0NLU01JVEhEX1JFQk9PVF9XSU5ET1dfU1RBUlQ9MDI6MDAKTE9DS1NNSVRIRF9SRUJPT1RfV0lORE9XX0xFTkdUSD0yaAo="
 
+    - path: /opt/extensions/docker-compose/docker-compose-2.34.0-x86-64.raw
+      mode: 0644
+      contents:
+        source: https://extensions.flatcar.org/extensions/docker-compose-2.34.0-x86-64.raw
+
+    - path: /etc/sysupdate.docker-compose.d/docker-compose.conf
+      contents:
+        source: https://extensions.flatcar.org/extensions/docker-compose.conf
+
+    - path: /etc/sysupdate.d/noop.conf
+      contents:
+        source: https://extensions.flatcar.org/extensions/noop.conf
+
+  links:
+    - target: /opt/extensions/docker-compose/docker-compose-2.34.0-x86-64.raw
+      path: /etc/extensions/docker-compose.raw
+      hard: false
+
   directories:
     - path: /var/lib/ghost/content
       mode: 0755
@@ -54,3 +72,16 @@ systemd:
 
     - name: locksmithd.service
       enabled: true
+
+    - name: systemd-sysupdate.timer
+      enabled: true
+
+    - name: systemd-sysupdate.service
+      dropins:
+        - name: docker-compose.conf
+          contents: |
+            [Service]
+            ExecStartPre=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose"
+            ExecStartPre=/usr/lib/systemd/systemd-sysupdate -C docker-compose update
+            ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose-new"
+            ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/docker-compose /tmp/docker-compose-new; then touch /run/reboot-required; fi"
