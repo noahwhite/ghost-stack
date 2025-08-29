@@ -9,6 +9,10 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 5"
     }
+    ct = {
+        source  = "poseidon/ct"
+        version = "0.13.0"
+    }
   }
 }
 
@@ -19,6 +23,8 @@ provider "vultr" {
 provider "cloudflare" {
   email = "noah@separationofconcerns.dev"
 }
+
+provider "ct" {}
 
 data "terraform_remote_state" "bootstrap" {
   backend = "local"

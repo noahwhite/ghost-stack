@@ -1,6 +1,10 @@
 terraform {
   required_providers {
     vultr = { source = "vultr/vultr", version = "~> 2.27" }
+    ct = {
+      source  = "poseidon/ct"
+      version = "0.13.0"
+    }
   }
 }
 
@@ -30,6 +34,15 @@ resource "vultr_ssh_key" "this" {
   ssh_key = var.ssh_public_key
 }
 
+data "ct_config" "ghost" {
+  content = templatefile("${path.module}/userdata/ghost.bu", {
+    ghost_env     = local.ghost_env_b64,
+    ghost_service = local.ghost_service_b64,
+    locksmith_mask    = local.locksmith_mask
+  })
+  strict       = true
+}
+
 resource "vultr_instance" "this" {
   region            = var.region
   plan              = var.plan
@@ -40,12 +53,7 @@ resource "vultr_instance" "this" {
   firewall_group_id = var.firewall_group_id
   ssh_key_ids       = [vultr_ssh_key.this.id]
 
-  # Cloud-init user-data to install Docker and run Ghost
-  user_data         = templatefile("${path.module}/userdata/ghost.ign.tpl", {
-    ghost_env     = local.ghost_env_b64
-    ghost_service = local.ghost_service_b64
-    locksmith_mask    = local.locksmith_mask
-  })
+  user_data = data.ct_config.ghost.rendered
 
   # Optional niceties
   backups           = "disabled"
