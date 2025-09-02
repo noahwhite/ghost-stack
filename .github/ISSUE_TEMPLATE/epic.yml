@@ -1,0 +1,54 @@
+name: 📦 Epic
+description: A large body of work broken down into smaller user stories.
+title: "[EPIC] <Concise description of the epic>"
+labels: [Epic]
+body:
+  - type: dropdown
+    attributes:
+      label: 📊 Epic Status
+      description: Current status of this Epic
+      options:
+        - Planned
+        - In Progress
+        - Blocked
+        - Completed
+  - type: textarea
+    attributes:
+      label: ✨ Goal
+      description: What business or user need does this Epic address?
+      placeholder: >
+        Describe the user or business goal. This is the 'why' behind the epic.
+        Example: Enable secure access to Ghost admin over HTTPS.
+  - type: textarea
+    attributes:
+      label: ✅ Definition of Done
+      description: What conditions must be met for this Epic to be considered complete?
+      placeholder: |
+        - All user stories are completed and accepted
+        - System passes integration tests
+        - Documentation is published
+  - type: textarea
+    attributes:
+      label: 🧩 Related Stories
+      description: Link or list all user stories that are part of this Epic.
+      placeholder: |
+        - [ ] #12 Setup TLS
+        - [ ] #13 Build custom Caddy image with DNS-01 support
+        - [ ] #14 Configure Cloudflare API token securely
+  - type: dropdown
+    attributes:
+      label: 🚀 Target Release
+      description: In which release will this Epic be completed?
+      options:
+        - MVP
+        - Beta
+        - v1.0
+        - Future
+  - type: textarea
+    attributes:
+      label: 📝 Notes
+      description: Any relevant links, discussions, or dependencies.
+      placeholder: |
+        - Link to GitHub Project board
+        - Slack/Discord thread
+        - Related design docs or architectural decisions
