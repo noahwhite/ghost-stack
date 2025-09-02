@@ -97,9 +97,9 @@ body:
       label: 🗓 Sprint
       description: Select the sprint this issue belongs to.
       options:
-        - Sprint 1 (Aug 26–Sep 6)
-        - Sprint 2 (Sep 9–Sep 20)
-        - Sprint 3 (Sep 23–Oct 4)
+        - Sprint 1 (Sep 1–Sep 14)
+        - Sprint 2 (Sep 15–Sep 28)
+        - Sprint 3 (Sep 29–Oct 12)
         - Backlog
     validations:
       required: false
