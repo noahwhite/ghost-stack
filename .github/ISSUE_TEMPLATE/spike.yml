@@ -86,8 +86,6 @@ body:
         - Sprint 2
         - Sprint 3
         - Backlog
-      validations:
-        required: false
 
   - type: input
     attributes:
