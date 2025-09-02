@@ -1,0 +1,98 @@
+name: 🧪 Spike
+description: Time-boxed research to reduce uncertainty and enable better implementation decisions.
+title: "[Spike] <Brief summary of the research goal>"
+labels: [type: spike]
+assignees: []
+
+body:
+  - type: dropdown
+    attributes:
+      label: 📊 Status
+      description: Current status of this story or spike.
+      options:
+        - Planned
+        - Ready for Sprint
+        - In Progress
+        - Blocked
+        - In Review
+        - Done
+
+  - type: textarea
+    attributes:
+      label: Problem / Question
+      description: >
+        What is unclear or unknown? What decision or technical detail needs exploration?
+      placeholder: >
+        Example: How can we build a Caddy Docker image that supports DNS-01 challenges with Cloudflare?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Research Goal
+      description: >
+        What do you hope to learn or decide by the end of this spike? Define a clear, actionable outcome.
+      placeholder: >
+        Example: Determine the steps to compile Caddy with Cloudflare DNS plugin and test local TLS issuance.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Timebox
+      description: How much time will you spend on this spike? (e.g., 4h, 1d, 2d)
+      placeholder: 1d
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Acceptance Criteria / Deliverables
+      description: >
+        What artifacts, documentation, or clarity should this spike produce? Be concrete.
+      placeholder: >
+        - Working Dockerfile (even if not production-ready)
+        - Test logs or screenshots
+        - Follow-up story created to build final version
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Notes / Links / Resources
+      description: Optional scratchpad for findings, links, or notes throughout the spike.
+      placeholder: |
+        - https://docs.ghost.org/install/docker
+        - https://caddyserver.com/docs/build
+        - Observations or obstacles…
+    validations:
+      required: false
+
+  - type: checkboxes
+    attributes:
+      label: Outcomes
+      description: Tick when completed.
+      options:
+        - label: Spike completed within timebox
+        - label: Key decision or insight reached
+        - label: Follow-up stories or tasks created
+
+  - type: dropdown
+    attributes:
+      label: Sprint
+      description: Which sprint is this spike part of?
+      options:
+        - Sprint 1
+        - Sprint 2
+        - Sprint 3
+        - Backlog
+      validations:
+        required: false
+
+  - type: input
+    attributes:
+      label: Related Epic
+      description: Link to the Epic this spike supports (if any)
+      placeholder: https://github.com/org/repo/issues/42
+    validations:
+      required: false
