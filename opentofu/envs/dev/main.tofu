@@ -39,6 +39,7 @@ data "terraform_remote_state" "bootstrap" {
 module "dns_records" {
   source              = "../../modules/cloudflare/dns_records"
   cloudflare_zone_id  = data.terraform_remote_state.bootstrap.outputs.cloudflare_zone_id
+  origin_ipv4         = module.vm.main_ip
 }
 
 module "fw" {

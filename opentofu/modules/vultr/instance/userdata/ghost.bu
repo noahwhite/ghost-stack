@@ -42,24 +42,42 @@ storage:
       hard: false
 
   directories:
-    - path: /var/lib/ghost/content
-      mode: 0755
-
     - path: /etc/ghost
       mode: 0755
 
 systemd:
   units:
-    - name: var-lib-ghost-content.mount
+    - name: var-mnt-storage.mount
       enabled: true
       contents: |
         [Mount]
         What=/dev/disk/by-label/ghost-storage
-        Where=/var/lib/ghost/content
+        Where=/var/mnt/storage
         Type=ext4
 
         [Install]
         RequiredBy=local-fs.target
+
+    - name: create-storage-dirs.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Create Ghost and Caddy storage directories after block device mount
+        After=var-mnt-storage.mount
+        Requires=var-mnt-storage.mount
+        
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/bash -c '\
+        mkdir -p /var/mnt/storage/ghost/content && chmod 0755 /var/mnt/storage/ghost/content && \
+        mkdir -p /var/mnt/storage/ghost/upload/data && chmod 0755 /var/mnt/storage/ghost/upload/data && \
+        mkdir -p /var/mnt/storage/caddy/data && chmod 0755 /var/mnt/storage/caddy/data && \
+        mkdir -p /var/mnt/storage/caddy/config && chmod 0755 /var/mnt/storage/caddy/config && \
+        mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data\'
+        RemainAfterExit=true
+        
+        [Install]
+        WantedBy=multi-user.target
 
     - name: docker.service
       enabled: true

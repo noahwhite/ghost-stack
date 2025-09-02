@@ -17,3 +17,7 @@ output "mailgun_tracking_cname" {
   value       = module.dns_records.mailgun_tracking_cname
   description = "CNAME record used for email tracking."
 }
+
+output "ignition_output" {
+  value = module.vm.ghost_ignition
+}

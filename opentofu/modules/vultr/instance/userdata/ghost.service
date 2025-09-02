@@ -1,8 +1,8 @@
 [Unit]
 Description=Ghost CMS Container
-After=docker.service var-lib-ghost-content.mount
-Requires=docker.service var-lib-ghost-content.mount
-RequiresMountsFor=/var/lib/ghost/conent
+After=docker.service var-mnt-storage.mount
+Requires=docker.service var-mnt-storage.mount
+RequiresMountsFor=/var/mnt/storage
 
 [Service]
 Restart=always
@@ -13,7 +13,7 @@ ExecStart=/usr/bin/docker run --name ghost \
   --env-file /etc/ghost.env \
   -p 80:2368 \
   --log-driver json-file --log-opt max-size=5m --log-opt max-file=3 \
-  -v /var/lib/ghost/content:/var/lib/ghost/content \
+  -v /var/mnt/storage/ghost/content:/var/lib/ghost/content \
   --restart unless-stopped \
   ghost:5
 ExecStop=/usr/bin/docker stop ghost

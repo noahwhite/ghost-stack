@@ -1,0 +1,119 @@
+name: 🧩 User Story
+description: Track a user-facing feature or behavior aligned with Scrum methodology
+title: "[Story] <Concise title here>"
+labels: ["user story", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🧩 User Story
+
+        _Please fill in the details below. This format aligns with Scrum best practices and will help the team groom, prioritize, and complete the story._
+
+  - type: dropdown
+    attributes:
+      label: 📊 Status
+      description: Current status of this story or spike.
+      options:
+        - Planned
+        - Ready for Sprint
+        - In Progress
+        - Blocked
+        - In Review
+        - Done
+        -
+  - type: input
+    id: story-summary
+    attributes:
+      label: Story Summary
+      description: Concise summary of the story (e.g., "User can reset password via email link")
+      placeholder: As a <user type>, I want to <do something> so that <benefit>
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: ✅ Acceptance Criteria
+      description: Define "done" in clear, testable terms. Use Given/When/Then format if helpful.
+      placeholder: |
+        - [ ] Given a user is logged out, when they request a password reset, then they receive an email with a link.
+        - [ ] The reset link expires after 15 minutes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📝 Additional Context
+      description: Add diagrams, links to mockups, or related issues/PRs
+      placeholder: |
+        - Design: [Figma mockup](https://...)
+        - Docs: [API Spec](https://...)
+        - Related: #123, #456
+
+  - type: textarea
+    id: definition-of-ready
+    attributes:
+      label: 📦 Definition of Ready
+      description: Confirm all conditions are met to include this story in a sprint.
+      value: |
+        - [ ] Acceptance criteria defined
+        - [ ] No unresolved external dependencies
+        - [ ] Story is estimated
+        - [ ] Team has necessary skills and access
+        - [ ] Priority is clear
+        - [ ] Business value understood
+
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: ✅ Definition of Done
+      description: Must be satisfied before the story is marked complete.
+      value: |
+        - [ ] All acceptance criteria met
+        - [ ] Unit/integration tests written & passing
+        - [ ] Peer-reviewed (PR approved)
+        - [ ] Docs updated (if applicable)
+        - [ ] Verified in staging (if needed)
+        - [ ] No critical bugs/regressions
+    validations:
+      required: false
+
+  - type: input
+    id: epic-link
+    attributes:
+      label: 📂 Epic Link
+      description: Optional. Link this story to a larger body of work or sprint goal.
+      placeholder: "#epic-id"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: sprint
+    attributes:
+      label: 🗓 Sprint
+      description: Select the sprint this issue belongs to.
+      options:
+        - Sprint 1 (Aug 26–Sep 6)
+        - Sprint 2 (Sep 9–Sep 20)
+        - Sprint 3 (Sep 23–Oct 4)
+        - Backlog
+    validations:
+      required: false
+
+  - type: dropdown
+    id: story-points
+    attributes:
+      label: 📈 Story Points (Effort Estimate)
+      description: Relative complexity/effort. Use Fibonacci scale.
+      options:
+        - 1
+        - 2
+        - 3
+        - 5
+        - 8
+    validations:
+      required: false

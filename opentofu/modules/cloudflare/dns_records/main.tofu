@@ -48,3 +48,21 @@ resource "cloudflare_dns_record" "mailgun_tracking" {
   content = "mailgun.org"
   ttl     = 3600
 }
+
+resource "cloudflare_dns_record" "root_domain" {
+  zone_id = var.cloudflare_zone_id
+  name    = "separationofconcerns.dev"
+  type    = "A"
+  content   = var.origin_ipv4
+  ttl     = 1
+  proxied = true
+}
+
+resource "cloudflare_dns_record" "admin_domain" {
+  zone_id = var.cloudflare_zone_id
+  name    = "admin.separationofconcerns.dev"
+  type    = "A"
+  content   = var.origin_ipv4
+  ttl     = 1
+  proxied = true
+}

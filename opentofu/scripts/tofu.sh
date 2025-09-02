@@ -124,7 +124,7 @@ case "${ACTION}" in
     tofu -chdir="${ENV_DIR}" init -reconfigure -backend-config="${OUT}" "${EXTRA_ARGS[@]}"
     ;;
 
-  plan|apply|destroy|output)
+  plan|apply|destroy|taint|output)
     # Always ensure backend is generated and initialized (cheap & robust)
     ensure_backend
     # For provider auth (e.g., Vultr), expect env to be exported outside this script.
@@ -132,7 +132,7 @@ case "${ACTION}" in
     ;;
 
   *)
-    echo "Usage: $0 <env> <init|plan|apply|destroy|output> [extra args...]"
+    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|output> [extra args...]"
     exit 1
     ;;
 esac
