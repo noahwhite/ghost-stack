@@ -12,6 +12,16 @@ body:
         - In Progress
         - Blocked
         - Completed
+  - type: dropdown
+    attributes:
+      label: 📏 T-Shirt Size
+      description: Estimate of the epic's scope/complexity.
+      options:
+        - XS (1–2 weeks)
+        - S (2–4 weeks)
+        - M (4–6 weeks)
+        - L (6–8 weeks)
+        - XL (8–12+ weeks)
   - type: textarea
     attributes:
       label: ✨ Goal
