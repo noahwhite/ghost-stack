@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./opentofu/scripts/tofu.sh <env> <init|plan|apply|destroy|output> [extra args...]
+# Usage: ./opentofu/scripts/tofu.sh <env> <init|plan|apply|destroy|taint|state|output> [extra args...]
 # Example:
 #   ./opentofu/scripts/tofu.sh dev init
 #   ./opentofu/scripts/tofu.sh dev plan
@@ -10,7 +10,7 @@ set -euo pipefail
 ENV="${1:-}"; ACTION="${2:-}"; shift 2 || true
 EXTRA_ARGS=("$@")
 if [[ -z "${ENV}" || -z "${ACTION}" ]]; then
-  echo "Usage: $0 <env> <init|plan|apply|destroy|output> [extra args...]"
+  echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|output> [extra args...]"
   exit 1
 fi
 
@@ -124,7 +124,7 @@ case "${ACTION}" in
     tofu -chdir="${ENV_DIR}" init -reconfigure -backend-config="${OUT}" "${EXTRA_ARGS[@]}"
     ;;
 
-  plan|apply|destroy|taint|output)
+  plan|apply|destroy|taint|state|output)
     # Always ensure backend is generated and initialized (cheap & robust)
     ensure_backend
     # For provider auth (e.g., Vultr), expect env to be exported outside this script.
@@ -132,7 +132,7 @@ case "${ACTION}" in
     ;;
 
   *)
-    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|output> [extra args...]"
+    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|output> [extra args...]"
     exit 1
     ;;
 esac
