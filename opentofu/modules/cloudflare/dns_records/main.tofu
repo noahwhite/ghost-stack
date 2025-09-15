@@ -58,6 +58,15 @@ resource "cloudflare_dns_record" "root_domain" {
   proxied = true
 }
 
+resource "cloudflare_dns_record" "www_cname" {
+  zone_id = var.cloudflare_zone_id
+  name    = "www"
+  type    = "CNAME"
+  content = "separationofconcerns.dev"
+  proxied = true
+  ttl     = 1
+}
+
 resource "cloudflare_dns_record" "admin_domain" {
   zone_id = var.cloudflare_zone_id
   name    = "admin.separationofconcerns.dev"
