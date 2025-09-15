@@ -17,13 +17,7 @@ data "vultr_os" "flatcar" {
 }
 
 locals {
-  ghost_env     = <<-EOT
-url=${var.ghost_url}
-database__client=sqlite3
-database__connection__filename=/var/lib/ghost/content/data/ghost.db
-EOT
-  ghost_env_b64 = base64encode(local.ghost_env)
-  ghost_service_b64 = filebase64("${path.module}/userdata/ghost.service")
+  ghost_service_b64 = filebase64("${path.module}/userdata/ghost-compose.service")
   # stringify bool for the template condition (templatefile only supports strings)
   locksmith_mask     = var.locksmith_mask ? "true" : "false"
 }
@@ -36,7 +30,6 @@ resource "vultr_ssh_key" "this" {
 
 data "ct_config" "ghost" {
   content = templatefile("${path.module}/userdata/ghost.bu", {
-    ghost_env     = local.ghost_env_b64,
     ghost_service = local.ghost_service_b64,
     locksmith_mask    = local.locksmith_mask
   })
