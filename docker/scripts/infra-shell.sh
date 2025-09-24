@@ -30,6 +30,16 @@ printf "🆔 Enter your Cloudflare Account ID: "
 IFS= read -r TF_VAR_cloudflare_account_id
 printf "\n"
 
+# Prompt for Tailscale API Key
+printf "🔐 Enter your Tailscale API Key: "
+IFS= read -rs TAILSCALE_API_KEY
+printf "\n"
+
+# Prompt for Tailscale TAILNET Name
+printf "🆔 Enter your Tailscale TAILNET Name: "
+IFS= read -r TAILSCALE_TAILNET
+printf "\n"
+
 # Discover caller public IPv4 and pass it to OpenTofu as admin_subnets
 MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
 if [[ -z "$MYIP" ]]; then
@@ -68,6 +78,8 @@ export R2_SECRET_ACCESS_KEY
 export TF_VAR_cloudflare_account_id
 export TF_VAR_cloudflare_api_token
 export CLOUDFLARE_API_TOKEN="$TF_VAR_cloudflare_api_token"
+export TAILSCALE_API_KEY
+export TAILSCALE_TAILNET
 
 # Ensure required secrets are available in the host environment
 : "${TF_VAR_vultr_api_key:?Environment variable not set}"
@@ -75,6 +87,8 @@ export CLOUDFLARE_API_TOKEN="$TF_VAR_cloudflare_api_token"
 : "${R2_SECRET_ACCESS_KEY:?Environment variable not set}"
 : "${TF_VAR_cloudflare_account_id:?Environment variable not set}"
 : "${TF_VAR_cloudflare_api_token:?Environment variable not set}"
+: "${TAILSCALE_API_KEY:?Environment variable not set}"
+: "${TAILSCALE_TAILNET:?Environment variable not set}"
 
 # Build container if needed
 docker build -t ghost_stack_shell ./docker
@@ -88,6 +102,8 @@ HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 docker run --rm -it \
   -e TF_VAR_admin_subnets="$TF_VAR_admin_subnets" \
   -e R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" \
   -e R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" \
+  -e TAILSCALE_API_KEY="$TAILSCALE_API_KEY" \
+  -e TAILSCALE_TAILNET="$TAILSCALE_TAILNET" \
   -e USER_UID="$(id -u)" \
   -e USER_GID="$(id -g)" \
   -v "$(pwd)":/home/devops/app \

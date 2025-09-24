@@ -30,8 +30,9 @@ resource "vultr_ssh_key" "this" {
 
 data "ct_config" "ghost" {
   content = templatefile("${path.module}/userdata/ghost.bu", {
-    ghost_service = local.ghost_service_b64,
-    locksmith_mask    = local.locksmith_mask
+    ghost_service     = local.ghost_service_b64,
+    locksmith_mask    = local.locksmith_mask,
+    tailscale_authkey = var.tailscale_authkey
   })
   strict       = true
 }

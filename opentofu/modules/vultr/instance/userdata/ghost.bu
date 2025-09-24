@@ -31,6 +31,51 @@ storage:
       contents:
         source: https://extensions.flatcar.org/extensions/noop.conf
 
+    - path: /opt/tailscale-install.sh
+      mode: 0777
+      contents:
+        inline: |
+          #!/usr/bin/env bash
+          set -e
+        
+          # Only re-download if not already existing
+          if ! test -e /etc/tailscale; then
+            echo "Downloading tailscale"
+            wget https://pkgs.tailscale.com/stable/tailscale_1.88.1_amd64.tgz -O tailscale_1.88.1.tgz
+        
+            echo "Unpacking tailscale"
+            tar xvf tailscale_1.88.1.tgz -C /tmp
+        
+            echo "Removing tgz"
+            rm tailscale_1.88.1.tgz
+        
+            echo "Moving binaries (if not exist)"
+            sudo mkdir -p /etc/tailscale
+            sudo cp -n /tmp/tailscale_1.88.1_amd64/tailscale /etc/tailscale/tailscale
+            sudo cp -n /tmp/tailscale_1.88.1_amd64/tailscaled /etc/tailscale/tailscaled
+        
+            echo "Enabling service"
+            sudo systemctl enable tailscaled.service
+        
+            echo "Reloading systemd"
+            systemctl daemon-reload
+        
+            echo "Cleaning up tmp folder"
+            rm -r /tmp/tailscale_1.88.1_amd64
+          fi
+        
+          echo "Starting service"
+          sudo systemctl restart tailscaled.service
+        
+          echo "Allowing IP forwarding"
+          sudo rm -f /etc/sysctl.d/99-tailscale.conf
+          echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+          echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+          sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+          
+          echo "Bringing up Tailscale interface"
+          sudo /etc/tailscale/tailscale up --authkey=${tailscale_authkey}
+
   links:
     - target: /opt/extensions/docker-compose/docker-compose-2.34.0-x86-64.raw
       path: /etc/extensions/docker-compose.raw
@@ -67,6 +112,55 @@ systemd:
         mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data\'
         RemainAfterExit=true
         
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: tailscale-install.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run Tailscale installation script
+        Wants=network-online.target
+        After=network.target network-online.target
+        ConditionPathExists=/opt/tailscale-install.sh
+        ConditionPathExists=!/etc/tailscale/tailscaled
+
+        [Service]
+        Type=forking
+        TimeoutStartSec=180
+        RemainAfterExit=yes
+        KillMode=process
+        ExecStartPre=/bin/sleep 30
+        ExecStart=/usr/bin/sh -c "/opt/tailscale-install.sh"
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: tailscaled.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Tailscale node agent
+        Documentation=https://tailscale.com/kb/
+        Wants=network-pre.target tailscale-install.service
+        After=network-pre.target NetworkManager.service systemd-resolved.service
+
+        [Service]
+        User=0
+        Group=0
+        ExecStartPre=/etc/tailscale/tailscaled --cleanup
+        ExecStart=/etc/tailscale/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
+        ExecStopPost=/etc/tailscale/tailscaled --cleanup
+        Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/bin:/etc/tailscale"
+        Restart=on-failure
+        RuntimeDirectory=tailscale
+        RuntimeDirectoryMode=0755
+        StateDirectory=tailscale
+        StateDirectoryMode=0700
+        CacheDirectory=tailscale
+        CacheDirectoryMode=0750
+        Type=notify
+
         [Install]
         WantedBy=multi-user.target
 

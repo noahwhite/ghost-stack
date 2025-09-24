@@ -46,3 +46,8 @@ variable "locksmith_mask" {
   type        = bool
   default     = true
 }
+
+variable "tailscale_authkey" {
+  type      = string
+  sensitive = true
+}

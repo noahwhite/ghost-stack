@@ -13,6 +13,10 @@ terraform {
         source  = "poseidon/ct"
         version = "0.13.0"
     }
+    tailscale = {
+      source  = "tailscale/tailscale"
+      version = "~> 0.22.0"
+    }
   }
 }
 
@@ -34,6 +38,10 @@ data "terraform_remote_state" "bootstrap" {
   config = {
     path = "${path.module}/../../bootstrap/envs/dev/terraform.tfstate"
   }
+}
+
+module "tailscale" {
+  source              = "../../modules/tailscale"
 }
 
 module "dns_records" {
@@ -63,6 +71,7 @@ module "vm" {
   firewall_group_id = module.fw.id
   ghost_url         = var.ghost_url
   locksmith_mask    = var.locksmith_mask
+  tailscale_authkey = module.tailscale.tailscale_auth_key
 }
 
 module "block_storage" {
