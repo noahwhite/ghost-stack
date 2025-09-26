@@ -39,20 +39,20 @@ storage:
           set -e
         
           # Only re-download if not already existing
-          if ! test -e /etc/tailscale; then
+          if ! test -e /opt/tailscale; then
             echo "Downloading tailscale"
-            wget https://pkgs.tailscale.com/stable/tailscale_1.88.1_amd64.tgz -O tailscale_1.88.1.tgz
+            wget https://pkgs.tailscale.com/stable/tailscale_1.88.3_amd64.tgz -O tailscale_1.88.3.tgz
         
             echo "Unpacking tailscale"
-            tar xvf tailscale_1.88.1.tgz -C /tmp
+            tar xvf tailscale_1.88.3.tgz -C /tmp
         
             echo "Removing tgz"
-            rm tailscale_1.88.1.tgz
+            rm tailscale_1.88.3.tgz
         
             echo "Moving binaries (if not exist)"
-            sudo mkdir -p /etc/tailscale
-            sudo cp -n /tmp/tailscale_1.88.1_amd64/tailscale /etc/tailscale/tailscale
-            sudo cp -n /tmp/tailscale_1.88.1_amd64/tailscaled /etc/tailscale/tailscaled
+            sudo mkdir -p /opt/tailscale
+            sudo cp -n /tmp/tailscale_1.88.3_amd64/tailscale /opt/tailscale/tailscale
+            sudo cp -n /tmp/tailscale_1.88.3_amd64/tailscaled /opt/tailscale/tailscaled
         
             echo "Enabling service"
             sudo systemctl enable tailscaled.service
@@ -61,20 +61,14 @@ storage:
             systemctl daemon-reload
         
             echo "Cleaning up tmp folder"
-            rm -r /tmp/tailscale_1.88.1_amd64
+            rm -r /tmp/tailscale_1.88.3_amd64
           fi
         
           echo "Starting service"
           sudo systemctl restart tailscaled.service
-        
-          echo "Allowing IP forwarding"
-          sudo rm -f /etc/sysctl.d/99-tailscale.conf
-          echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
-          echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
-          sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
           
           echo "Bringing up Tailscale interface"
-          sudo /etc/tailscale/tailscale up --authkey=${tailscale_authkey}
+          sudo /opt/tailscale/tailscale up --authkey=${tailscale_authkey} --ssh
 
   links:
     - target: /opt/extensions/docker-compose/docker-compose-2.34.0-x86-64.raw
@@ -123,7 +117,7 @@ systemd:
         Wants=network-online.target
         After=network.target network-online.target
         ConditionPathExists=/opt/tailscale-install.sh
-        ConditionPathExists=!/etc/tailscale/tailscaled
+        ConditionPathExists=!/opt/tailscale/tailscaled
 
         [Service]
         Type=forking
@@ -146,13 +140,12 @@ systemd:
         After=network-pre.target NetworkManager.service systemd-resolved.service
 
         [Service]
-        User=0
-        Group=0
-        ExecStartPre=/etc/tailscale/tailscaled --cleanup
-        ExecStart=/etc/tailscale/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
-        ExecStopPost=/etc/tailscale/tailscaled --cleanup
-        Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/bin:/etc/tailscale"
+        Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/bin:/opt/tailscale"
+        ExecStart=/opt/tailscale/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
+        ExecStopPost=/opt/tailscale/tailscaled --cleanup
+  
         Restart=on-failure
+  
         RuntimeDirectory=tailscale
         RuntimeDirectoryMode=0755
         StateDirectory=tailscale
