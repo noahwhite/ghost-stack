@@ -40,6 +40,26 @@ printf "🆔 Enter your Tailscale TAILNET Name: "
 IFS= read -r TAILSCALE_TAILNET
 printf "\n"
 
+# Prompt for PagerDuty Client ID
+printf "🆔 Enter your PagerDuty client id: "
+IFS= read -r PD_CLIENT_ID
+printf "\n"
+
+# Prompt for PagerDuty client secret
+printf "🔐 Enter your PagerDuty client secret: "
+IFS= read -rs PD_CLIENT_SECRET
+printf "\n"
+
+# Prompt for PagerDuty subdomain
+printf "🆔 Enter your PagerDuty subdomain: "
+IFS= read -r PD_SUBDOMAIN
+printf "\n"
+
+# Prompt for PagerDuty user token
+printf "🆔 Enter your PagerDuty user API token: "
+IFS= read -rs PD_USER_TOK
+printf "\n"
+
 # Discover caller public IPv4 and pass it to OpenTofu as admin_subnets
 MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
 if [[ -z "$MYIP" ]]; then
@@ -80,6 +100,10 @@ export TF_VAR_cloudflare_api_token
 export CLOUDFLARE_API_TOKEN="$TF_VAR_cloudflare_api_token"
 export TAILSCALE_API_KEY
 export TAILSCALE_TAILNET
+export PD_CLIENT_ID
+export PD_CLIENT_SECRET
+export PD_SUBDOMAIN
+export PD_USER_TOK
 
 # Ensure required secrets are available in the host environment
 : "${TF_VAR_vultr_api_key:?Environment variable not set}"
@@ -89,6 +113,10 @@ export TAILSCALE_TAILNET
 : "${TF_VAR_cloudflare_api_token:?Environment variable not set}"
 : "${TAILSCALE_API_KEY:?Environment variable not set}"
 : "${TAILSCALE_TAILNET:?Environment variable not set}"
+: "${PD_CLIENT_ID:?Environment variable not set}"
+: "${PD_CLIENT_SECRET:?Environment variable not set}"
+: "${PD_SUBDOMAIN:?Environment variable not set}"
+: "${PD_USER_TOK:?Environment variable not set}"
 
 # Build container if needed
 docker build -t ghost_stack_shell ./docker
@@ -104,6 +132,10 @@ HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 docker run --rm -it \
   -e R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" \
   -e TAILSCALE_API_KEY="$TAILSCALE_API_KEY" \
   -e TAILSCALE_TAILNET="$TAILSCALE_TAILNET" \
+  -e TF_VAR_PD_CLIENT_ID="$PD_CLIENT_ID" \
+  -e TF_VAR_PD_CLIENT_SECRET="$PD_CLIENT_SECRET" \
+  -e TF_VAR_pd_subdomain="$PD_SUBDOMAIN" \
+  -e TF_VAR_pd_user_tok="$PD_USER_TOK" \
   -e USER_UID="$(id -u)" \
   -e USER_GID="$(id -g)" \
   -v "$(pwd)":/home/devops/app \

@@ -10,3 +10,5 @@ ghost_url = "http://separationofconverns.dev"
 
 block_storage_size_gb = 25
 block_storage_label   = "ghost-block"
+
+#pd_subdomain = "noahwhite"

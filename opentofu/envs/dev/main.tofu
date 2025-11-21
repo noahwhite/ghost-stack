@@ -17,6 +17,10 @@ terraform {
       source  = "tailscale/tailscale"
       version = "~> 0.22.0"
     }
+    pagerduty = {
+      source  = "pagerduty/pagerduty"
+      version = "~> 3.30.4" # Mind the supported Provider version
+    }
   }
 }
 
@@ -30,6 +34,17 @@ provider "cloudflare" {
 
 provider "ct" {}
 
+provider "pagerduty" {
+  # Configure use of App Oauth scoped token
+  use_app_oauth_scoped_token {
+    pd_client_id     = var.PD_CLIENT_ID
+    pd_client_secret = var.PD_CLIENT_SECRET
+    pd_subdomain     = var.pd_subdomain
+  }
+
+  user_token = var.pd_user_tok
+}
+
 data "terraform_remote_state" "bootstrap" {
   backend = "local"
 
@@ -38,6 +53,10 @@ data "terraform_remote_state" "bootstrap" {
   config = {
     path = "${path.module}/../../bootstrap/envs/dev/terraform.tfstate"
   }
+}
+
+module "pagerduty" {
+  source = "../../modules/pagerduty"
 }
 
 module "tailscale" {

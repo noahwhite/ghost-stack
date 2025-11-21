@@ -8,6 +8,13 @@ storage:
       label: ghost-storage
 
   files:
+    - path: /opt/extensions/alloy/alloy-1.10.2-amd64.raw
+      mode: 0644
+      contents:
+        source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.10.2-amd64.raw
+        verification:
+          hash: sha256-feb76c5aa5408c267d59508bd39d322c20d6fce44abd686296f4d0ca87e42671
+
     - path: /etc/systemd/system/ghost-compose.service
       mode: 0644
       contents:
@@ -75,6 +82,10 @@ storage:
       path: /etc/extensions/docker-compose.raw
       hard: false
 
+    - target: /opt/extensions/alloy/alloy-1.10.2-amd64.raw
+      path: /etc/extensions/alloy.raw
+      hard: false
+
 systemd:
   units:
     - name: var-mnt-storage.mount
@@ -103,6 +114,7 @@ systemd:
         mkdir -p /var/mnt/storage/ghost/upload/data && chmod 0755 /var/mnt/storage/ghost/upload/data && \
         mkdir -p /var/mnt/storage/caddy/data && chmod 0755 /var/mnt/storage/caddy/data && \
         mkdir -p /var/mnt/storage/caddy/config && chmod 0755 /var/mnt/storage/caddy/config && \
+        mkdir -p /var/mnt/storage/alloy && chmod 0750 /var/mnt/storage/alloy && \
         mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data\'
         RemainAfterExit=true
         
@@ -157,10 +169,54 @@ systemd:
         [Install]
         WantedBy=multi-user.target
 
+    # Tailscale Connection Monitor Service
+    - name: tailscale-monitor.service
+      enabled: false
+      contents: |
+        [Unit]
+        Description=Tailscale Connection Monitor
+        After=network-online.target var-mnt-storage.mount tailscaled.service
+        Wants=network-online.target
+        Requires=var-mnt-storage.mount
+
+        [Service]
+        Type=oneshot
+        ExecStart=/var/mnt/storage/sbin/tailscale_monitor/monitor_tailscale_conn.sh --prometheus
+        WorkingDirectory=/var/mnt/storage/sbin/tailscale_monitor
+        ExecStartPre=/usr/bin/chmod +x /var/mnt/storage/sbin/tailscale_monitor/monitor_tailscale_conn.sh
+        StandardOutput=journal
+        StandardError=journal
+        Restart=no
+        TimeoutStartSec=30s
+
+        [Install]
+        WantedBy=multi-user.target
+
+    # Timer for running the monitoring service every minute
+    - name: tailscale-monitor.timer
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run Tailscale Connection Monitor every minute
+        Requires=tailscale-monitor.service
+        After=var-mnt-storage.mount tailscaled.service
+
+        [Timer]
+        OnCalendar=*:0/5:00
+        Persistent=true
+        RandomizedDelaySec=5s
+        AccuracySec=1s
+
+        [Install]
+        WantedBy=timers.target
+
     - name: docker.service
       enabled: true
 
     - name: ghost-compose.service
+      enabled: true
+
+    - name: alloy.service
       enabled: true
 
     - name: update-engine.service
@@ -177,7 +233,7 @@ systemd:
         - name: docker-compose.conf
           contents: |
             [Service]
-            ExecStartPre=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose"
+            ExecStartPre=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose.txt"
             ExecStartPre=/usr/lib/systemd/systemd-sysupdate -C docker-compose update
-            ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose-new"
-            ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/docker-compose /tmp/docker-compose-new; then touch /run/reboot-required; fi"
+            ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose-new.txt"
+            ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/docker-compose.txt /tmp/docker-compose-new.txt; then touch /run/reboot-required; fi"

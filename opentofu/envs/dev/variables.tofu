@@ -61,3 +61,26 @@ variable "block_storage_label" {
   type        = string
   default     = "ghost-block"
 }
+
+variable "PD_CLIENT_ID" {
+  description = "Pagerduty OAUTH client id"
+  type        = string
+  sensitive   = true
+}
+
+variable "PD_CLIENT_SECRET" {
+  description = "Pagerduty client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "pd_subdomain" {
+  description = "Pagerduty subdomain"
+  type        = string
+}
+
+variable "pd_user_tok" {
+   description = "Pagerduty user token"
+   type        = string
+   sensitive   = true
+}
