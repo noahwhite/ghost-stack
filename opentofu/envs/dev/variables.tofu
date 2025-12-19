@@ -84,3 +84,15 @@ variable "pd_user_tok" {
    type        = string
    sensitive   = true
 }
+
+variable "GC_ACCESS_TOK" {
+  description = "Grafana Cloud access token"
+  type        = string
+  sensitive   = true
+}
+
+variable "SOC_DEV_TERRAFORM_SA_TOK" {
+  description = "Grafana Cloud SOC DEV Service Account Token"
+  type        = string
+  sensitive   = true
+}

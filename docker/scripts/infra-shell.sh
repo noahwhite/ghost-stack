@@ -219,6 +219,9 @@ HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 docker run --rm -it \
   -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="$TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" \
   -e USER_UID="$(id -u)" \
   -e USER_GID="$(id -g)" \
+  -e DISPLAY=$DISPLAY \
+  -e XAUTHORITY=$XAUTHORITY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v "$(pwd)":/home/devops/app \
   -v tofu_plugins:/home/devops/.tofu.d \
   ghost_stack_shell \

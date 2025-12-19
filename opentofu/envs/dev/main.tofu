@@ -19,7 +19,11 @@ terraform {
     }
     pagerduty = {
       source  = "pagerduty/pagerduty"
-      version = "~> 3.30.4" # Mind the supported Provider version
+      version = "~> 3.30.7" # Mind the supported Provider version
+    }
+    grafana = {
+      source  = "grafana/grafana"
+      version = "~> 4.21.0"
     }
   }
 }
@@ -45,6 +49,11 @@ provider "pagerduty" {
   user_token = var.pd_user_tok
 }
 
+provider "grafana" {
+  alias = "cloud"
+  cloud_access_policy_token = var.GC_ACCESS_TOK
+}
+
 data "terraform_remote_state" "bootstrap" {
   backend = "local"
 
@@ -53,6 +62,14 @@ data "terraform_remote_state" "bootstrap" {
   config = {
     path = "${path.module}/../../bootstrap/envs/dev/terraform.tfstate"
   }
+}
+
+module "grafana-cloud" {
+  source = "../../modules/grafana-cloud"
+  providers = {
+    grafana = grafana.cloud
+  }
+  SOC_DEV_TERRAFORM_SA_TOK = var.SOC_DEV_TERRAFORM_SA_TOK
 }
 
 module "pagerduty" {
