@@ -1,4 +1,4 @@
-name: Feature branch tofu checks (containerized)
+name: Feature branch tofu checks (containerized) with tok
 
 on:
   push:
