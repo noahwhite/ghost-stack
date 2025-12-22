@@ -1,0 +1,39 @@
+name: Feature branch tofu checks (containerized)
+
+on:
+  push:
+    branches:
+      - "feature/**"
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  tofu-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Required if the GHCR image is private
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          docker login ghcr.io -u "${{ github.actor }}" --password-stdin <<< "$GHCR_TOKEN"
+
+      - name: Pull OpenTofu tools image
+        run: |
+          docker pull ghcr.io/noahwhite/ghost-stack-shell:latest
+
+      - name: Run tofu fmt check (recursive)
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            tofu fmt -check -recursive
