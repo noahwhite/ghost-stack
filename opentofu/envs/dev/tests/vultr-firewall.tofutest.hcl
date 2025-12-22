@@ -108,7 +108,7 @@ run "cloudflare_rules_tests" {
   }
 
   variables {
-    name = "test-firewall"
+    name          = "test-firewall"
     admin_subnets = []
   }
 
@@ -149,7 +149,7 @@ run "outputs_test" {
   }
 
   variables {
-    name = "test-firewall"
+    name          = "test-firewall"
     admin_subnets = []
   }
 
@@ -167,7 +167,7 @@ run "no_admin_subnets_test" {
   }
 
   variables {
-    name = "test-firewall"
+    name          = "test-firewall"
     admin_subnets = []
   }
 

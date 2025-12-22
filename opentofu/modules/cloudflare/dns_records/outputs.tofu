@@ -1,6 +1,6 @@
 output "mailgun_dns_txt_records" {
   value = {
-    txt_spf = cloudflare_dns_record.mailgun_spf,
+    txt_spf  = cloudflare_dns_record.mailgun_spf,
     txt_dkim = cloudflare_dns_record.mailgun_dkim
   }
   description = "Mailgun TXT records created (SPF and DKIM)."

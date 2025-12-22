@@ -4,5 +4,5 @@ variable "cloudflare_account_id" {
 }
 
 variable "r2_bucket_name" {
-  type    = string
+  type = string
 }

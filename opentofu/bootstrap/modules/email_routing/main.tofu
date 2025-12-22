@@ -1,6 +1,6 @@
 resource "cloudflare_email_routing_address" "forwarding_target" {
-  account_id  = var.cloudflare_account_id
-  email       = var.destination_email
+  account_id = var.cloudflare_account_id
+  email      = var.destination_email
 }
 
 resource "cloudflare_email_routing_rule" "forward" {
@@ -9,12 +9,12 @@ resource "cloudflare_email_routing_rule" "forward" {
   enabled = true
 
   actions = [{
-    type = "forward"
+    type  = "forward"
     value = [var.destination_email]
   }]
 
   matchers = [{
-    type = "literal"
+    type  = "literal"
     field = "to"
     value = var.source_email
   }]

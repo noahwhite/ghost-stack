@@ -19,18 +19,18 @@ resource "tailscale_acl" "my_tailnet_acl" {
   acl = jsonencode({
     "grants" = [
       {
-        "src": ["noah@noahwhite.net"],
-        "dst": ["tag:ghost-dev"],
-        "ip":  ["22"]
+        "src" : ["noah@noahwhite.net"],
+        "dst" : ["tag:ghost-dev"],
+        "ip" : ["22"]
       },
       {
-        "src": ["noah@noahwhite.net"],
-        "dst": ["tag:ghost-dev-workstation"],
-        "ip":  ["22",
+        "src" : ["noah@noahwhite.net"],
+        "dst" : ["tag:ghost-dev-workstation"],
+        "ip" : ["22",
           "tcp:21118",
           "udp:21119",
           "udp:43178",
-          "tcp:21119"]
+        "tcp:21119"]
       }
     ],
     "ssh" = [
@@ -52,8 +52,8 @@ resource "tailscale_acl" "my_tailnet_acl" {
       "group:devs" = ["noah@noahwhite.net"],
     },
     "tagOwners" = {
-      "tag:ghost-dev"                 = ["group:devs"],
-      "tag:ghost-dev-workstation"     = ["group:devs"]
+      "tag:ghost-dev"             = ["group:devs"],
+      "tag:ghost-dev-workstation" = ["group:devs"]
     },
   })
 }

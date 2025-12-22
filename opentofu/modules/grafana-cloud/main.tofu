@@ -8,9 +8,9 @@ terraform {
 }
 
 resource "grafana_cloud_stack" "soc_dev" {
-  name                = "separationofconcerns0dev.grafana.net"
-  region_slug         = "prod-us-east-0"
-  slug                = "separationofconcerns0dev"
+  name        = "separationofconcerns0dev.grafana.net"
+  region_slug = "prod-us-east-0"
+  slug        = "separationofconcerns0dev"
 }
 
 # Associated service account and service account token were created manually in the dashboard and the
@@ -30,14 +30,14 @@ resource "grafana_cloud_stack_service_account" "terraform_sa" {
 }
 
 resource "grafana_folder" "tailscale_folder" {
-  provider  = grafana.soc_dev
-  title     = "tailscale"
+  provider = grafana.soc_dev
+  title    = "tailscale"
 }
 
 resource "grafana_folder_permission" "soc_dev_tailscale_folder_permission" {
-  provider    = grafana.soc_dev
-  folder_uid  = grafana_folder.tailscale_folder.uid
-  org_id      = "0"
+  provider   = grafana.soc_dev
+  folder_uid = grafana_folder.tailscale_folder.uid
+  org_id     = "0"
 
   permissions {
     permission = "Admin"
@@ -54,22 +54,22 @@ resource "grafana_folder_permission" "soc_dev_tailscale_folder_permission" {
 }
 
 resource "grafana_dashboard" "soc_dev_tailscale_connection" {
-  provider      = grafana.soc_dev
-  folder        = grafana_folder.tailscale_folder.id
-  config_json   = jsonencode({
+  provider = grafana.soc_dev
+  folder   = grafana_folder.tailscale_folder.id
+  config_json = jsonencode({
     annotations = {
       list = [
         {
-          builtIn    = 1
+          builtIn = 1
           datasource = {
             type = "grafana"
             uid  = "-- Grafana --"
           }
-          enable     = true
-          hide       = true
-          iconColor  = "rgba(0, 211, 255, 1)"
-          name       = "Annotations & Alerts"
-          type       = "dashboard"
+          enable    = true
+          hide      = true
+          iconColor = "rgba(0, 211, 255, 1)"
+          name      = "Annotations & Alerts"
+          type      = "dashboard"
         },
       ]
     }
@@ -77,29 +77,29 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
     fiscalYearStartMonth = 0
     graphTooltip         = 0
     links                = []
-    panels               = [
+    panels = [
       {
-        datasource    = {
+        datasource = {
           type = "prometheus"
           uid  = "grafanacloud-prom"
         }
-        fieldConfig   = {
-          defaults  = {
-            color      = {
+        fieldConfig = {
+          defaults = {
+            color = {
               mode = "palette-classic"
             }
-            custom     = {
-              axisBorderShow    = false
-              axisCenteredZero  = false
-              axisColorMode     = "text"
-              axisLabel         = ""
-              axisPlacement     = "auto"
-              barAlignment      = 0
-              barWidthFactor    = 0.6
-              drawStyle         = "line"
-              fillOpacity       = 0
-              gradientMode      = "none"
-              hideFrom          = {
+            custom = {
+              axisBorderShow   = false
+              axisCenteredZero = false
+              axisColorMode    = "text"
+              axisLabel        = ""
+              axisPlacement    = "auto"
+              barAlignment     = 0
+              barWidthFactor   = 0.6
+              drawStyle        = "line"
+              fillOpacity      = 0
+              gradientMode     = "none"
+              hideFrom = {
                 legend  = false
                 tooltip = false
                 viz     = false
@@ -111,20 +111,20 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
               scaleDistribution = {
                 type = "linear"
               }
-              showPoints        = "auto"
-              showValues        = false
-              spanNulls         = false
-              stacking          = {
+              showPoints = "auto"
+              showValues = false
+              spanNulls  = false
+              stacking = {
                 group = "A"
                 mode  = "none"
               }
-              thresholdsStyle   = {
+              thresholdsStyle = {
                 mode = "off"
               }
             }
-            mappings   = []
+            mappings = []
             thresholds = {
-              mode  = "absolute"
+              mode = "absolute"
               steps = [
                 {
                   color = "green"
@@ -139,14 +139,14 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
           }
           overrides = []
         }
-        gridPos       = {
+        gridPos = {
           h = 8
           w = 12
           x = 0
           y = 0
         }
-        options       = {
-          legend  = {
+        options = {
+          legend = {
             calcs       = []
             displayMode = "list"
             placement   = "bottom"
@@ -159,7 +159,7 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
           }
         }
         pluginVersion = "12.2.0-17638611789.patch2"
-        targets       = [
+        targets = [
           {
             editorMode   = "builder"
             expr         = "tailscale_device_connected{device_name=\"ghost-dev-01\"}"
@@ -168,22 +168,22 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
             refId        = "A"
           },
         ]
-        title         = "ghost-dev-01 connected series"
-        type          = "timeseries"
+        title = "ghost-dev-01 connected series"
+        type  = "timeseries"
       },
       {
-        datasource    = {
+        datasource = {
           type = "prometheus"
           uid  = "grafanacloud-prom"
         }
-        fieldConfig   = {
-          defaults  = {
-            color      = {
+        fieldConfig = {
+          defaults = {
+            color = {
               mode = "thresholds"
             }
-            mappings   = []
+            mappings = []
             thresholds = {
-              mode  = "absolute"
+              mode = "absolute"
               steps = [
                 {
                   color = "dark-red"
@@ -195,22 +195,22 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
                 },
               ]
             }
-            unit       = "bool_on_off"
+            unit = "bool_on_off"
           }
           overrides = []
         }
-        gridPos       = {
+        gridPos = {
           h = 8
           w = 12
           x = 0
           y = 8
         }
-        options       = {
-          minVizHeight         = 75
-          minVizWidth          = 75
-          orientation          = "auto"
-          reduceOptions        = {
-            calcs  = [
+        options = {
+          minVizHeight = 75
+          minVizWidth  = 75
+          orientation  = "auto"
+          reduceOptions = {
+            calcs = [
               "lastNotNull",
             ]
             fields = ""
@@ -221,9 +221,9 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
           sizing               = "auto"
         }
         pluginVersion = "12.2.0-17638611789.patch2"
-        targets       = [
+        targets = [
           {
-            datasource   = {
+            datasource = {
               type = "prometheus"
               uid  = "grafanacloud-prom"
             }
@@ -234,24 +234,24 @@ resource "grafana_dashboard" "soc_dev_tailscale_connection" {
             refId        = "A"
           },
         ]
-        title         = "ghost-dev-1 tailscale connection status"
-        type          = "gauge"
+        title = "ghost-dev-1 tailscale connection status"
+        type  = "gauge"
       },
     ]
-    preload              = false
-    schemaVersion        = 42
-    tags                 = []
-    templating           = {
+    preload       = false
+    schemaVersion = 42
+    tags          = []
+    templating = {
       list = []
     }
-    time                 = {
+    time = {
       from = "2025-09-30T00:08:08.411Z"
       to   = "2025-09-30T02:25:47.235Z"
     }
-    timepicker  = {}
-    timezone    = "browser"
-    title       = "Ghost-Dev-01-TS-Connection"
-    uid         = "nodlbz4"
+    timepicker = {}
+    timezone   = "browser"
+    title      = "Ghost-Dev-01-TS-Connection"
+    uid        = "nodlbz4"
   })
 }
 
@@ -262,14 +262,14 @@ resource "grafana_dashboard_permission" "soc_dev_tailscale_connection_permission
 }
 
 resource "grafana_folder" "integration_linux_node" {
-  provider  = grafana.soc_dev
-  org_id    = "0"
-  title     = "Integration - Linux Node"
+  provider = grafana.soc_dev
+  org_id   = "0"
+  title    = "Integration - Linux Node"
 }
 
 resource "grafana_folder_permission" "integration_linux_node" {
-  provider    = grafana.soc_dev
-  folder_uid  = grafana_folder.integration_linux_node.uid
+  provider   = grafana.soc_dev
+  folder_uid = grafana_folder.integration_linux_node.uid
   org_id     = "0"
 
   permissions {
@@ -287,119 +287,119 @@ resource "grafana_folder_permission" "integration_linux_node" {
 }
 
 data "grafana_data_source" "soc_dev_prometheus" {
-  provider    = grafana.soc_dev
-  name        = "grafanacloud-separationofconcerns0dev-prom"
+  provider = grafana.soc_dev
+  name     = "grafanacloud-separationofconcerns0dev-prom"
 }
 
 data "grafana_data_source" "soc_dev_loki" {
-  provider    = grafana.soc_dev
-  name        = "grafanacloud-separationofconcerns0dev-logs"
+  provider = grafana.soc_dev
+  name     = "grafanacloud-separationofconcerns0dev-logs"
 }
 
 resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
-  provider      = grafana.soc_dev
-  folder        = grafana_folder.integration_linux_node.id
-  config_json   = jsonencode(
+  provider = grafana.soc_dev
+  folder   = grafana_folder.integration_linux_node.id
+  config_json = jsonencode(
     {
       annotations = {
         list = [
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", transport=\"kernel\", level=\"emerg\"}"
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", transport=\"kernel\", level=\"emerg\"}"
+            hide        = true
             iconColor   = "light-purple"
-            name = "Critical system event"
-            tagKeys = "cluster,job,instance,level"
+            name        = "Critical system event"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Critical system event"
           },
           {
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
-            enable = true
-            expr = <<-EOT
+            enable      = true
+            expr        = <<-EOT
                             changes(
                             sum by (instance) (
                                 group by (instance,release) (node_uname_info{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance"})
                                 )
                             [$__interval:1m] offset -$__interval) > 1
                         EOT
-            hide = true
-            iconColor = "light-blue"
-            name = "Kernel update"
-            step = "5m"
-            tagKeys = "cluster,job,instance"
-            textFormat = ""
+            hide        = true
+            iconColor   = "light-blue"
+            name        = "Kernel update"
+            step        = "5m"
+            tagKeys     = "cluster,job,instance"
+            textFormat  = ""
             titleFormat = "Kernel update"
           },
           {
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
-            enable = true
-            expr = "increase(node_vmstat_oom_kill{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__interval:] offset -$__interval)"
-            hide = true
+            enable      = true
+            expr        = "increase(node_vmstat_oom_kill{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__interval:] offset -$__interval)"
+            hide        = true
             iconColor   = "light-purple"
-            name = "OOMkill"
-            tagKeys = "cluster,job,instance"
-            textFormat = ""
+            name        = "OOMkill"
+            tagKeys     = "cluster,job,instance"
+            textFormat  = ""
             titleFormat = "OOMkill"
           },
           {
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
-            enable = true
-            expr = "node_boot_time_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}*1000 > $__from < $__to"
-            hide = true
+            enable          = true
+            expr            = "node_boot_time_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}*1000 > $__from < $__to"
+            hide            = true
             iconColor       = "light-yellow"
-            name = "Reboot"
-            tagKeys = "cluster,job,instance"
-            titleFormat = "Reboot"
+            name            = "Reboot"
+            tagKeys         = "cluster,job,instance"
+            titleFormat     = "Reboot"
             useValueForTime = "on"
           },
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"init.scope\"} |= \"code=exited, status=1/FAILURE\""
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"init.scope\"} |= \"code=exited, status=1/FAILURE\""
+            hide        = true
             iconColor   = "light-orange"
-            name = "Service failed"
-            tagKeys = "cluster,job,instance,level"
+            name        = "Service failed"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Service failed"
           },
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
+            hide        = true
             name        = "Session closed"
-            tagKeys = "cluster,job,instance,level"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Session closed"
           },
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
+            hide        = true
             name        = "Session opened"
-            tagKeys = "cluster,job,instance,level"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Session opened"
           },
         ]
@@ -408,25 +408,25 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
       links = [
         {
           keepTime = true
-          title = "Back to Linux node / fleet"
-          type = "link"
+          title    = "Back to Linux node / fleet"
+          type     = "link"
           url      = "/d/node-fleet"
         },
         {
           keepTime = true
-          title = "Back to Linux node / overview"
-          type = "link"
+          title    = "Back to Linux node / overview"
+          type     = "link"
           url      = "/d/nodes"
         },
         {
-          asDropdown = true
+          asDropdown  = true
           includeVars = true
-          keepTime = true
-          tags        = [
+          keepTime    = true
+          tags = [
             "linux-node-integration",
           ]
           title = "All Linux node /  dashboards"
-          type = "dashboards"
+          type  = "dashboards"
         },
       ]
       panels = [
@@ -439,13 +439,13 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             y = 0
           }
           panels = []
-          title = "System"
-          type = "row"
+          title  = "System"
+          type   = "row"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         Total CPU utilization percent is a metric that indicates the overall level of central processing unit (CPU) usage in a computer system.
@@ -458,11 +458,11 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             defaults = {
               color = {
                 fixedColor = "text"
-                mode = "continuous-BlYlRd"
+                mode       = "continuous-BlYlRd"
               }
               decimals = 1
-              max = 100
-              min = 0
+              max      = 100
+              min      = 0
               unit     = "percent"
             }
           }
@@ -485,9 +485,9 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 (((count by (instance) (count(node_cpu_seconds_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance"}) by (cpu, instance)))
                                 -
                                 sum by (instance) (sum by (instance, mode)(irate(node_cpu_seconds_total{mode=~'idle|iowait|steal',job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance"}[$__rate_interval])))) * 100)
@@ -498,12 +498,12 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             },
           ]
           title = "CPU usage"
-          type = "stat"
+          type  = "stat"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         Total CPU utilization percent is a metric that indicates the overall level of central processing unit (CPU) usage in a computer system.
@@ -518,15 +518,15 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                 mode = "continuous-BlYlRd"
               }
               custom = {
-                fillOpacity = 30
-                gradientMode = "scheme"
+                fillOpacity       = 30
+                gradientMode      = "scheme"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
               decimals = 1
-              max = 100
-              min = 0
+              max      = 100
+              min      = 0
               unit     = "percent"
             }
           }
@@ -538,7 +538,7 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -551,21 +551,21 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 (100 - sum without (mode) (rate(node_cpu_seconds_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", mode=~"idle|iowait|steal"}[$__rate_interval])) * 100 )
                             EOT
               legendFormat = "CPU {{cpu}}"
             },
           ]
           title = "CPU usage"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         - System: Processes executing in kernel mode.
@@ -580,23 +580,23 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 80
-                gradientMode = "opacity"
+                fillOpacity       = 80
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
                 stacking = {
                   mode = "normal"
                 }
               }
-              max = 100
-              min = 0
+              max  = 100
+              min  = 0
               unit = "percent"
             }
             overrides = [
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "idle"
                 }
                 properties = [
@@ -604,14 +604,14 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                     id = "color"
                     value = {
                       fixedColor = "light-blue"
-                      mode = "fixed"
+                      mode       = "fixed"
                     }
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "interrupt"
                 }
                 properties = [
@@ -619,14 +619,14 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                     id = "color"
                     value = {
                       fixedColor = "light-purple"
-                      mode = "fixed"
+                      mode       = "fixed"
                     }
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "user"
                 }
                 properties = [
@@ -634,14 +634,14 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                     id = "color"
                     value = {
                       fixedColor = "light-orange"
-                      mode = "fixed"
+                      mode       = "fixed"
                     }
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byRegexp"
+                  id      = "byRegexp"
                   options = "system|privileged"
                 }
                 properties = [
@@ -649,7 +649,7 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                     id = "color"
                     value = {
                       fixedColor = "light-red"
-                      mode = "fixed"
+                      mode       = "fixed"
                     }
                   },
                 ]
@@ -664,7 +664,7 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -677,9 +677,9 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 sum by(instance, mode) (irate(node_cpu_seconds_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance"}[$__rate_interval]))
                                 / on(instance)
                                 group_left sum by (instance)((irate(node_cpu_seconds_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance"}[$__rate_interval]))) * 100
@@ -688,12 +688,12 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             },
           ]
           title = "CPU usage by modes"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         System load average over the previous 1, 5, and 15 minute ranges.
@@ -703,19 +703,19 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 0
-                gradientMode = "opacity"
+                fillOpacity       = 0
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
-              min = 0
+              min  = 0
               unit = "short"
             }
             overrides = [
               {
                 matcher = {
-                  id = "byRegexp"
+                  id      = "byRegexp"
                   options = "Cores"
                 }
                 properties = [
@@ -723,11 +723,11 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                     id = "color"
                     value = {
                       fixedColor = "light-orange"
-                      mode = "fixed"
+                      mode       = "fixed"
                     }
                   },
                   {
-                    id = "custom.fillOpacity"
+                    id    = "custom.fillOpacity"
                     value = 0
                   },
                   {
@@ -752,7 +752,7 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -765,43 +765,43 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_load1{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_load1{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "1m"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_load5{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_load5{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "5m"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_load15{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_load15{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "15m"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "count without (cpu) (node_cpu_seconds_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", mode=\"idle\"})"
+              expr         = "count without (cpu) (node_cpu_seconds_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", mode=\"idle\"})"
               legendFormat = "Cores"
             },
           ]
           title = "Load average"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         Context switches occur when the operating system switches from running one process to another. Interrupts are signals sent to the CPU by external devices to request its attention.
@@ -811,11 +811,11 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 30
-                gradientMode = "opacity"
+                fillOpacity       = 30
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
             }
           }
@@ -827,7 +827,7 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -840,22 +840,22 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "irate(node_context_switches_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__rate_interval])"
+              expr         = "irate(node_context_switches_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__rate_interval])"
               legendFormat = "Context switches"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "irate(node_intr_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__rate_interval])"
+              expr         = "irate(node_intr_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__rate_interval])"
               legendFormat = "Interrupts"
             },
           ]
           title = "Context switches/Interrupts"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           collapsed = false
@@ -866,20 +866,20 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             y = 15
           }
           panels = []
-          title = "Time"
-          type = "row"
+          title  = "Time"
+          type   = "row"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "Current system timezone."
           fieldConfig = {
             defaults = {
               color = {
                 fixedColor = "text"
-                mode = "fixed"
+                mode       = "fixed"
               }
             }
           }
@@ -904,19 +904,19 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_time_zone_offset_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr   = "node_time_zone_offset_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               format = "table"
             },
           ]
           title = "Timezone"
-          type = "stat"
+          type  = "stat"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "Status of time synchronization."
           fieldConfig = {
@@ -930,12 +930,12 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
                     "0" = {
                       color = "light-yellow"
                       index = 1
-                      text = "Not in sync"
+                      text  = "Not in sync"
                     }
                     "1" = {
                       color = "light-green"
                       index = 0
-                      text = "In sync"
+                      text  = "In sync"
                     }
                   }
                   type = "value"
@@ -959,19 +959,19 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_timex_sync_status{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_timex_sync_status{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "NTP status"
             },
           ]
           title = "NTP status"
-          type = "status-history"
+          type  = "status-history"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         Time synchronization is essential to ensure accurate timekeeping, which is critical for many system operations such as logging, authentication, and network communication, as well as distributed systems or clusters where data consistency is important.
@@ -979,14 +979,14 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 30
-                gradientMode = "opacity"
+                fillOpacity       = 30
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
               noValue = "No data."
-              unit = "s"
+              unit    = "s"
             }
           }
           gridPos = {
@@ -997,7 +997,7 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1010,33 +1010,33 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_timex_estimated_error_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_timex_estimated_error_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "Estimated error in seconds"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_timex_offset_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_timex_offset_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "Time offset"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_timex_maxerror_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_timex_maxerror_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "Maximum error in seconds"
             },
           ]
           title = "Time synchronized drift"
-          type = "timeseries"
+          type  = "timeseries"
         },
       ]
-      refresh = "30s"
+      refresh       = "30s"
       schemaVersion = 39
       tags = [
         "linux-node-integration",
@@ -1045,73 +1045,73 @@ resource "grafana_dashboard" "soc_dev_linux_cpu_sys" {
         list = [
           {
             label = "Prometheus data source"
-            name = "prometheus_datasource"
+            name  = "prometheus_datasource"
             query = "prometheus"
             regex = "(?!grafanacloud-usage|grafanacloud-ml-metrics).+"
-            type = "datasource"
+            type  = "datasource"
           },
           {
             allValue = ".*"
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
             includeAll = true
-            label = "Cluster"
-            multi = true
+            label      = "Cluster"
+            multi      = true
             name       = "cluster"
-            query = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\"}, cluster)"
-            refresh = 2
-            sort = 1
-            type = "query"
+            query      = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\"}, cluster)"
+            refresh    = 2
+            sort       = 1
+            type       = "query"
           },
           {
             allValue = ".+"
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
             includeAll = true
-            label = "Job"
-            multi = true
+            label      = "Job"
+            multi      = true
             name       = "job"
-            query = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\"}, job)"
-            refresh = 2
-            sort = 1
-            type = "query"
+            query      = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\"}, job)"
+            refresh    = 2
+            sort       = 1
+            type       = "query"
           },
           {
             allValue = ".+"
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
             includeAll = false
-            label = "Instance"
-            multi = false
+            label      = "Instance"
+            multi      = false
             name       = "instance"
-            query = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\"}, instance)"
-            refresh = 2
-            sort = 1
-            type = "query"
+            query      = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\"}, instance)"
+            refresh    = 2
+            sort       = 1
+            type       = "query"
           },
           {
-            hide = 2
+            hide  = 2
             label = "Loki data source"
-            name = "loki_datasource"
+            name  = "loki_datasource"
             query = "loki"
             regex = "(?!grafanacloud.+usage-insights|grafanacloud.+alert-state-history).+"
-            type = "datasource"
+            type  = "datasource"
           },
         ]
       }
       time = {
         from = "now-30m"
-        to = "now"
+        to   = "now"
       }
       timezone = "default"
-      title = "Linux node / CPU and system"
-      uid = "node-system"
+      title    = "Linux node / CPU and system"
+      uid      = "node-system"
     }
   )
 }
@@ -1126,100 +1126,100 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", transport=\"kernel\", level=\"emerg\"}"
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", transport=\"kernel\", level=\"emerg\"}"
+            hide        = true
             iconColor   = "light-purple"
-            name = "Critical system event"
-            tagKeys = "cluster,job,instance,level"
+            name        = "Critical system event"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Critical system event"
           },
           {
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
-            enable = true
-            expr = <<-EOT
+            enable      = true
+            expr        = <<-EOT
                             changes(
                             sum by (instance) (
                                 group by (instance,release) (node_uname_info{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance"})
                                 )
                             [$__interval:1m] offset -$__interval) > 1
                         EOT
-            hide = true
-            iconColor = "light-blue"
-            name = "Kernel update"
-            step = "5m"
-            tagKeys = "cluster,job,instance"
-            textFormat = ""
+            hide        = true
+            iconColor   = "light-blue"
+            name        = "Kernel update"
+            step        = "5m"
+            tagKeys     = "cluster,job,instance"
+            textFormat  = ""
             titleFormat = "Kernel update"
           },
           {
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
-            enable = true
-            expr = "increase(node_vmstat_oom_kill{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__interval:] offset -$__interval)"
-            hide = true
+            enable      = true
+            expr        = "increase(node_vmstat_oom_kill{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}[$__interval:] offset -$__interval)"
+            hide        = true
             iconColor   = "light-purple"
-            name = "OOMkill"
-            tagKeys = "cluster,job,instance"
-            textFormat = ""
+            name        = "OOMkill"
+            tagKeys     = "cluster,job,instance"
+            textFormat  = ""
             titleFormat = "OOMkill"
           },
           {
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
-            enable = true
-            expr = "node_boot_time_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}*1000 > $__from < $__to"
-            hide = true
+            enable          = true
+            expr            = "node_boot_time_seconds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}*1000 > $__from < $__to"
+            hide            = true
             iconColor       = "light-yellow"
-            name = "Reboot"
-            tagKeys = "cluster,job,instance"
-            titleFormat = "Reboot"
+            name            = "Reboot"
+            tagKeys         = "cluster,job,instance"
+            titleFormat     = "Reboot"
             useValueForTime = "on"
           },
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"init.scope\"} |= \"code=exited, status=1/FAILURE\""
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"init.scope\"} |= \"code=exited, status=1/FAILURE\""
+            hide        = true
             iconColor   = "light-orange"
-            name = "Service failed"
-            tagKeys = "cluster,job,instance,level"
+            name        = "Service failed"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Service failed"
           },
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
+            hide        = true
             name        = "Session closed"
-            tagKeys = "cluster,job,instance,level"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Session closed"
           },
           {
             datasource = {
               type = "loki"
-              uid = data.grafana_data_source.soc_dev_loki.uid
+              uid  = data.grafana_data_source.soc_dev_loki.uid
             }
-            enable = true
-            expr = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
-            hide = true
+            enable      = true
+            expr        = "{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", unit=\"systemd-logind.service\"}|= \"New session\""
+            hide        = true
             name        = "Session opened"
-            tagKeys = "cluster,job,instance,level"
+            tagKeys     = "cluster,job,instance,level"
             titleFormat = "Session opened"
           },
         ]
@@ -1228,25 +1228,25 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
       links = [
         {
           keepTime = true
-          title = "Back to Linux node / fleet"
-          type = "link"
+          title    = "Back to Linux node / fleet"
+          type     = "link"
           url      = "/d/node-fleet"
         },
         {
           keepTime = true
-          title = "Back to Linux node / overview"
-          type = "link"
+          title    = "Back to Linux node / overview"
+          type     = "link"
           url      = "/d/nodes"
         },
         {
-          asDropdown = true
+          asDropdown  = true
           includeVars = true
-          keepTime = true
-          tags        = [
+          keepTime    = true
+          tags = [
             "linux-node-integration",
           ]
           title = "All Linux node /  dashboards"
-          type = "dashboards"
+          type  = "dashboards"
         },
       ]
       panels = [
@@ -1259,25 +1259,25 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             y = 0
           }
           panels = []
-          title = "Filesystem"
-          type = "row"
+          title  = "Filesystem"
+          type   = "row"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "Filesystem space utilisation in bytes, by mountpoint."
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 1
-                gradientMode = "opacity"
+                fillOpacity       = 1
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
-              min = 0
+              min  = 0
               unit = "bytes"
             }
           }
@@ -1289,7 +1289,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1302,19 +1302,19 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_avail_bytes{fstype!=\"\", mountpoint!=\"\", job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "node_filesystem_avail_bytes{fstype!=\"\", mountpoint!=\"\", job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "{{ mountpoint }} free"
             },
           ]
           title = "Filesystem space availabe"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "Disk utilisation in percent, by mountpoint. Some duplication can occur if the same filesystem is mounted in multiple locations."
           fieldConfig = {
@@ -1340,76 +1340,76 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             overrides = [
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "Mounted on"
                 }
                 properties = [
                   {
-                    id = "custom.width"
+                    id    = "custom.width"
                     value = 260
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "Size"
                 }
                 properties = [
                   {
-                    id = "custom.width"
+                    id    = "custom.width"
                     value = 80
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "Used"
                 }
                 properties = [
                   {
-                    id = "custom.width"
+                    id    = "custom.width"
                     value = 80
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "Available"
                 }
                 properties = [
                   {
-                    id = "custom.width"
+                    id    = "custom.width"
                     value = 80
                   },
                 ]
               },
               {
                 matcher = {
-                  id = "byName"
+                  id      = "byName"
                   options = "Used, %"
                 }
                 properties = [
                   {
                     id = "custom.cellOptions"
                     value = {
-                      mode = "basic"
-                      type = "gauge"
+                      mode             = "basic"
+                      type             = "gauge"
                       valueDisplayMode = "text"
                     }
                   },
                   {
-                    id = "max"
+                    id    = "max"
                     value = 1
                   },
                   {
-                    id = "min"
+                    id    = "min"
                     value = 0
                   },
                   {
-                    id = "unit"
+                    id    = "unit"
                     value = "percentunit"
                   },
                 ]
@@ -1427,23 +1427,23 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_size_bytes{fstype!=\"\", mountpoint!=\"\", job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
-              format = "table"
+              expr    = "node_filesystem_size_bytes{fstype!=\"\", mountpoint!=\"\", job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              format  = "table"
               instant = true
-              refId      = "TOTAL"
+              refId   = "TOTAL"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_avail_bytes{fstype!=\"\", mountpoint!=\"\", job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
-              format = "table"
-              instant = true
+              expr         = "node_filesystem_avail_bytes{fstype!=\"\", mountpoint!=\"\", job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              format       = "table"
+              instant      = true
               legendFormat = "{{ mountpoint }} free"
-              refId = "FREE"
+              refId        = "FREE"
             },
           ]
           title = "Disk space usage"
@@ -1466,13 +1466,13 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
                   }
                   mountpoint = {
                     aggregations = []
-                    operation = "groupby"
+                    operation    = "groupby"
                   }
                 }
               }
             },
             {
-              id = "merge"
+              id      = "merge"
               options = {}
             },
             {
@@ -1480,9 +1480,9 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
               options = {
                 alias = "Used"
                 binary = {
-                  left = "Value #TOTAL (lastNotNull)"
+                  left     = "Value #TOTAL (lastNotNull)"
                   operator = "-"
-                  reducer = "sum"
+                  reducer  = "sum"
                   right    = "Value #FREE (lastNotNull)"
                 }
                 mode = "binary"
@@ -1496,9 +1496,9 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
               options = {
                 alias = "Used, %"
                 binary = {
-                  left = "Used"
+                  left     = "Used"
                   operator = "/"
-                  reducer = "sum"
+                  reducer  = "sum"
                   right    = "Value #TOTAL (lastNotNull)"
                 }
                 mode = "binary"
@@ -1512,16 +1512,16 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
               options = {
                 excludeByName = {}
                 indexByName = {
-                  Used = 3
-                  "Used, %" = 4
-                  "Value #FREE (lastNotNull)" = 2
+                  Used                         = 3
+                  "Used, %"                    = 4
+                  "Value #FREE (lastNotNull)"  = 2
                   "Value #TOTAL (lastNotNull)" = 1
-                  mountpoint = 0
+                  mountpoint                   = 0
                 }
                 renameByName = {
-                  "Value #FREE (lastNotNull)" = "Available"
+                  "Value #FREE (lastNotNull)"  = "Available"
                   "Value #TOTAL (lastNotNull)" = "Size"
-                  mountpoint = "Mounted on"
+                  mountpoint                   = "Mounted on"
                 }
               }
             },
@@ -1531,7 +1531,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
                 fields = {}
                 sort = [
                   {
-                    desc = false
+                    desc  = false
                     field = "Mounted on"
                   },
                 ]
@@ -1543,17 +1543,17 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "The inode is a data structure in a Unix-style file system that describes a file-system object such as a file or a directory."
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 1
-                gradientMode = "opacity"
+                fillOpacity       = 1
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
               unit = "short"
             }
@@ -1566,7 +1566,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1579,29 +1579,29 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_files_free{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
+              expr         = "node_filesystem_files_free{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
               legendFormat = "{{ mountpoint }} inodes free"
             },
           ]
           title = "Free inodes"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "The inode is a data structure in a Unix-style file system that describes a file-system object such as a file or a directory."
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 1
-                gradientMode = "opacity"
+                fillOpacity       = 1
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
               unit = "short"
             }
@@ -1614,7 +1614,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1627,29 +1627,29 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_files{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
+              expr         = "node_filesystem_files{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
               legendFormat = "{{ mountpoint }} inodes total"
             },
           ]
           title = "Total inodes"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = ""
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 1
-                gradientMode = "opacity"
+                fillOpacity       = 1
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
               max = 1
             }
@@ -1662,7 +1662,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1675,40 +1675,40 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_device_error{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
+              expr         = "node_filesystem_device_error{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
               legendFormat = "{{ mountpoint }} device error"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "node_filesystem_readonly{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
+              expr         = "node_filesystem_readonly{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", fstype!=\"\", mountpoint!=\"\"}"
               legendFormat = "{{ mountpoint }} read-only"
             },
           ]
           title = "Filesystems with errors / read-only"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         File descriptor is a handle to an open file or input/output (I/O) resource, such as a network socket or a pipe.
                         The operating system uses file descriptors to keep track of open files and I/O resources, and provides a way for programs to read from and write to them.
                     EOT
-          fieldConfig   = {
+          fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 1
-                gradientMode = "opacity"
+                fillOpacity       = 1
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
             }
           }
@@ -1720,7 +1720,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1733,22 +1733,22 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "process_max_fds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "process_max_fds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "Maximum open file descriptors"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "process_open_fds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
+              expr         = "process_open_fds{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\"}"
               legendFormat = "Open file descriptors"
             },
           ]
           title = "File descriptors"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           collapsed = false
@@ -1759,43 +1759,43 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             y = 25
           }
           panels = []
-          title = "Disk"
-          type = "row"
+          title  = "Disk"
+          type   = "row"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "Disk read/writes in bytes per second."
           fieldConfig = {
             defaults = {
               custom = {
-                fillOpacity = 1
-                gradientMode = "opacity"
+                fillOpacity       = 1
+                gradientMode      = "opacity"
                 lineInterpolation = "smooth"
                 lineWidth         = 2
-                showPoints = "never"
+                showPoints        = "never"
               }
               unit = "Bps"
             }
             overrides = [
               {
                 matcher = {
-                  id = "byRegexp"
+                  id      = "byRegexp"
                   options = "/time|used|busy|util/"
                 }
                 properties = [
                   {
-                    id = "custom.axisSoftMax"
+                    id    = "custom.axisSoftMax"
                     value = 100
                   },
                   {
-                    id = "custom.drawStyle"
+                    id    = "custom.drawStyle"
                     value = "points"
                   },
                   {
-                    id = "unit"
+                    id    = "unit"
                     value = "percent"
                   },
                 ]
@@ -1810,7 +1810,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1823,35 +1823,35 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "irate(node_disk_read_bytes_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
+              expr         = "irate(node_disk_read_bytes_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
               legendFormat = "{{ device }} read"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "irate(node_disk_written_bytes_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
+              expr         = "irate(node_disk_written_bytes_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
               legendFormat = "{{ device }} written"
             },
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "irate(node_disk_io_time_seconds_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
+              expr         = "irate(node_disk_io_time_seconds_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
               legendFormat = "{{ device }} io util"
             },
           ]
           title = "Disk reads/writes"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         The number of I/O requests per second for the device/volume.
@@ -1859,25 +1859,25 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           fieldConfig = {
             defaults = {
               custom = {
-                axisCenteredZero = true
-                axisLabel = "write(-) | read(+)"
-                fillOpacity = 1
+                axisCenteredZero  = true
+                axisLabel         = "write(-) | read(+)"
+                fillOpacity       = 1
                 gradientMode      = "opacity"
                 lineInterpolation = "smooth"
-                lineWidth = 2
-                showPoints = "never"
+                lineWidth         = 2
+                showPoints        = "never"
               }
               unit = "iops"
             }
             overrides = [
               {
                 matcher = {
-                  id = "byRegexp"
+                  id      = "byRegexp"
                   options = "/write|written/"
                 }
                 properties = [
                   {
-                    id = "custom.transform"
+                    id    = "custom.transform"
                     value = "negative-Y"
                   },
                 ]
@@ -1892,7 +1892,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1905,9 +1905,9 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 irate(node_disk_reads_completed_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", device!=""}[$__rate_interval])
                             EOT
               legendFormat = "{{ device }} reads"
@@ -1915,48 +1915,48 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 irate(node_disk_writes_completed_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", device!=""}[$__rate_interval])
                             EOT
               legendFormat = "{{ device }} writes"
             },
           ]
           title = "Disk I/O"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = <<-EOT
                         The average time for requests issued to the device to be served.
                         This includes the time spent by the requests in queue and the time spent servicing them.'
                     EOT
-          fieldConfig   = {
+          fieldConfig = {
             defaults = {
               custom = {
-                axisCenteredZero = true
-                axisLabel = "write(-) | read(+)"
-                fillOpacity = 1
+                axisCenteredZero  = true
+                axisLabel         = "write(-) | read(+)"
+                fillOpacity       = 1
                 gradientMode      = "opacity"
                 lineInterpolation = "smooth"
-                lineWidth = 2
-                showPoints = "never"
+                lineWidth         = 2
+                showPoints        = "never"
               }
               unit = "s"
             }
             overrides = [
               {
                 matcher = {
-                  id = "byRegexp"
+                  id      = "byRegexp"
                   options = "/write|written/"
                 }
                 properties = [
                   {
-                    id = "custom.transform"
+                    id    = "custom.transform"
                     value = "negative-Y"
                   },
                 ]
@@ -1971,7 +1971,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -1984,9 +1984,9 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 irate(node_disk_read_time_seconds_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", device!=""}[$__rate_interval])
                                 /
                                 irate(node_disk_reads_completed_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", device!=""}[$__rate_interval])
@@ -1996,9 +1996,9 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = <<-EOT
+              expr         = <<-EOT
                                 irate(node_disk_write_time_seconds_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", device!=""}[$__rate_interval])
                                 /
                                 irate(node_disk_writes_completed_total{job=~"integrations/(node_exporter|unix)",cluster=~"$cluster",job=~"$job",instance=~"$instance", device!=""}[$__rate_interval])
@@ -2007,35 +2007,35 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             },
           ]
           title = "Disk average wait time"
-          type = "timeseries"
+          type  = "timeseries"
         },
         {
           datasource = {
             type = "prometheus"
-            uid = data.grafana_data_source.soc_dev_prometheus.uid
+            uid  = data.grafana_data_source.soc_dev_prometheus.uid
           }
           description = "Disk average IO queue."
           fieldConfig = {
             defaults = {
               custom = {
-                axisCenteredZero = true
-                axisLabel = "write(-) | read(+)"
-                fillOpacity = 1
+                axisCenteredZero  = true
+                axisLabel         = "write(-) | read(+)"
+                fillOpacity       = 1
                 gradientMode      = "opacity"
                 lineInterpolation = "smooth"
-                lineWidth = 2
-                showPoints = "never"
+                lineWidth         = 2
+                showPoints        = "never"
               }
             }
             overrides = [
               {
                 matcher = {
-                  id = "byRegexp"
+                  id      = "byRegexp"
                   options = "/write|written/"
                 }
                 properties = [
                   {
-                    id = "custom.transform"
+                    id    = "custom.transform"
                     value = "negative-Y"
                   },
                 ]
@@ -2050,7 +2050,7 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -2063,17 +2063,17 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
             {
               datasource = {
                 type = "prometheus"
-                uid = data.grafana_data_source.soc_dev_prometheus.uid
+                uid  = data.grafana_data_source.soc_dev_prometheus.uid
               }
-              expr = "irate(node_disk_io_time_weighted_seconds_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
+              expr         = "irate(node_disk_io_time_weighted_seconds_total{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\",instance=~\"$instance\", device!=\"\"}[$__rate_interval])"
               legendFormat = "{{ device }} avg queue"
             },
           ]
           title = "Disk average queue"
-          type = "timeseries"
+          type  = "timeseries"
         },
       ]
-      refresh = "30s"
+      refresh       = "30s"
       schemaVersion = 39
       tags = [
         "linux-node-integration",
@@ -2082,73 +2082,73 @@ resource "grafana_dashboard" "soc_dev_linux_fs_disk" {
         list = [
           {
             label = "Prometheus data source"
-            name = "prometheus_datasource"
+            name  = "prometheus_datasource"
             query = "prometheus"
             regex = "(?!grafanacloud-usage|grafanacloud-ml-metrics).+"
-            type = "datasource"
+            type  = "datasource"
           },
           {
             allValue = ".*"
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
             includeAll = true
-            label = "Cluster"
-            multi = true
+            label      = "Cluster"
+            multi      = true
             name       = "cluster"
-            query = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\"}, cluster)"
-            refresh = 2
-            sort = 1
-            type = "query"
+            query      = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\"}, cluster)"
+            refresh    = 2
+            sort       = 1
+            type       = "query"
           },
           {
             allValue = ".+"
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
             includeAll = true
-            label = "Job"
-            multi = true
+            label      = "Job"
+            multi      = true
             name       = "job"
-            query = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\"}, job)"
-            refresh = 2
-            sort = 1
-            type = "query"
+            query      = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\"}, job)"
+            refresh    = 2
+            sort       = 1
+            type       = "query"
           },
           {
             allValue = ".+"
             datasource = {
               type = "prometheus"
-              uid = data.grafana_data_source.soc_dev_prometheus.uid
+              uid  = data.grafana_data_source.soc_dev_prometheus.uid
             }
             includeAll = false
-            label = "Instance"
-            multi = false
+            label      = "Instance"
+            multi      = false
             name       = "instance"
-            query = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\"}, instance)"
-            refresh = 2
-            sort = 1
-            type = "query"
+            query      = "label_values(node_uname_info{job=~\"integrations/(node_exporter|unix)\",cluster=~\"$cluster\",job=~\"$job\"}, instance)"
+            refresh    = 2
+            sort       = 1
+            type       = "query"
           },
           {
-            hide = 2
+            hide  = 2
             label = "Loki data source"
-            name = "loki_datasource"
+            name  = "loki_datasource"
             query = "loki"
             regex = "(?!grafanacloud.+usage-insights|grafanacloud.+alert-state-history).+"
-            type = "datasource"
+            type  = "datasource"
           },
         ]
       }
       time = {
         from = "now-30m"
-        to = "now"
+        to   = "now"
       }
       timezone = "default"
-      title = "Linux node / filesystem and disks"
-      uid = "node-disk"
+      title    = "Linux node / filesystem and disks"
+      uid      = "node-disk"
     }
   )
 }
@@ -4569,8 +4569,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
             y = 0
           }
           panels = []
-          title = "Memory"
-          type  = "row"
+          title  = "Memory"
+          type   = "row"
         },
         {
           datasource = {
@@ -4713,7 +4713,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -4794,8 +4794,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
             y = 7
           }
           panels = []
-          title = "Vmstat"
-          type  = "row"
+          title  = "Vmstat"
+          type   = "row"
         },
         {
           datasource = {
@@ -4845,7 +4845,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -4924,7 +4924,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -4986,7 +4986,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5049,7 +5049,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5080,8 +5080,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
             y = 24
           }
           panels = []
-          title = "Memstat"
-          type  = "row"
+          title  = "Memstat"
+          type   = "row"
         },
         {
           datasource = {
@@ -5144,7 +5144,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5237,7 +5237,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5344,7 +5344,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5437,7 +5437,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5545,7 +5545,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5647,7 +5647,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5750,7 +5750,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5849,7 +5849,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -5910,7 +5910,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -6008,7 +6008,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -6098,7 +6098,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -6200,7 +6200,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_memory" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -6446,8 +6446,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
             y = 0
           }
           panels = []
-          title = "Network"
-          type  = "row"
+          title  = "Network"
+          type   = "row"
         },
         {
           datasource = {
@@ -6746,7 +6746,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -6894,7 +6894,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -6974,7 +6974,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7048,7 +7048,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7122,7 +7122,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7200,7 +7200,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7282,7 +7282,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7340,7 +7340,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7417,7 +7417,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7478,7 +7478,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -7535,7 +7535,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 15
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -7587,7 +7587,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 16
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -7670,7 +7670,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 17
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -7779,7 +7779,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               maxDataPoints = 100
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -7855,7 +7855,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 19
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -7959,7 +7959,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 21
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8034,7 +8034,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 22
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8093,7 +8093,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 23
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8200,7 +8200,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 24
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8275,7 +8275,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 25
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8406,7 +8406,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 26
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8481,7 +8481,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_network" {
               id = 27
               options = {
                 legend = {
-                  calcs = []
+                  calcs       = []
                   displayMode = "list"
                 }
                 tooltip = {
@@ -8733,8 +8733,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
             y = 0
           }
           panels = []
-          title = "Overview"
-          type  = "row"
+          title  = "Overview"
+          type   = "row"
         },
         {
           datasource = {
@@ -9126,8 +9126,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
             y = 5
           }
           panels = []
-          title = "CPU"
-          type  = "row"
+          title  = "CPU"
+          type   = "row"
         },
         {
           datasource = {
@@ -9225,7 +9225,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -9311,7 +9311,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -9366,8 +9366,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
             y = 12
           }
           panels = []
-          title = "Memory"
-          type  = "row"
+          title  = "Memory"
+          type   = "row"
         },
         {
           datasource = {
@@ -9510,7 +9510,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -9591,8 +9591,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
             y = 19
           }
           panels = []
-          title = "Disk"
-          type  = "row"
+          title  = "Disk"
+          type   = "row"
         },
         {
           datasource = {
@@ -9642,7 +9642,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -9835,13 +9835,13 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
                   }
                   mountpoint = {
                     aggregations = []
-                    operation = "groupby"
+                    operation    = "groupby"
                   }
                 }
               }
             },
             {
-              id = "merge"
+              id      = "merge"
               options = {}
             },
             {
@@ -9918,8 +9918,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
             y = 28
           }
           panels = []
-          title = "Network"
-          type  = "row"
+          title  = "Network"
+          type   = "row"
         },
         {
           datasource = {
@@ -9965,7 +9965,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -10069,7 +10069,7 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
           }
           options = {
             legend = {
-              calcs = []
+              calcs       = []
               displayMode = "list"
             }
             tooltip = {
@@ -10229,8 +10229,8 @@ resource "grafana_dashboard" "soc_dev_linux_node_nodes" {
 }
 
 resource "grafana_folder" "grafana_cloud_folder" {
-  provider  = grafana.soc_dev
-  title     = "GrafanaCloud"
+  provider = grafana.soc_dev
+  title    = "GrafanaCloud"
 }
 
 resource "grafana_folder_permission" "soc_dev_grafana_cloud_folder_permission" {

@@ -9,6 +9,6 @@ output "r2_bucket_name" {
 }
 
 output "cloudflare_zone_id" {
-  value = module.dns_zone.zone_id
+  value       = module.dns_zone.zone_id
   description = "The zone id for the Cloudflare account"
 }
