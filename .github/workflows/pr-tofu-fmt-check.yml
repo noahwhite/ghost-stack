@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - "feature/**"
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -24,7 +28,7 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          docker login ghcr.io -u "${{ github.actor }}" --password-stdin <<< "$GHCR_TOKEN"
+          docker login ghcr.io -u "noahwhite" --password-stdin <<< "$GHCR_TOKEN"
 
       - name: Pull OpenTofu tools image
         run: |
