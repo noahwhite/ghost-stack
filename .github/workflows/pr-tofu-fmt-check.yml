@@ -1,9 +1,6 @@
 name: Feature branch tofu checks (containerized) with tok
 
 on:
-  push:
-    branches:
-      - "feature/**"
   pull_request:
     branches:
       - develop
