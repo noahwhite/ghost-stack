@@ -10,10 +10,11 @@ RUN apt-get update && apt-get install -y \
     bash \
     git \
     gnupg \
+    xclip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OpenTofu v1.10.5 via official standalone release (manual download)
-RUN curl -L https://github.com/opentofu/opentofu/releases/download/v1.10.5/tofu_1.10.5_linux_amd64.tar.gz -o tofu.tar.gz \
+# Install OpenTofu v1.11.1 via official standalone release (manual download)
+RUN curl -L https://github.com/opentofu/opentofu/releases/download/v1.11.1/tofu_1.11.1_linux_amd64.tar.gz -o tofu.tar.gz \
     && tar -xzf tofu.tar.gz \
     && mv tofu /usr/local/bin/ \
     && chmod +x /usr/local/bin/tofu \
