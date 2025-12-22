@@ -22,7 +22,7 @@ jobs:
       # Required if the GHCR image is private
       - name: Log in to GHCR
         env:
-          GHCR_TOKEN: ${{ github.token }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
           docker login ghcr.io -u "${{ github.actor }}" --password-stdin <<< "$GHCR_TOKEN"
 
