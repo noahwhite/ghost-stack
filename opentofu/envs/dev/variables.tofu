@@ -80,9 +80,9 @@ variable "pd_subdomain" {
 }
 
 variable "pd_user_tok" {
-   description = "Pagerduty user token"
-   type        = string
-   sensitive   = true
+  description = "Pagerduty user token"
+  type        = string
+  sensitive   = true
 }
 
 variable "GC_ACCESS_TOK" {

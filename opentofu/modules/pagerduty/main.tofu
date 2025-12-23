@@ -10,14 +10,14 @@ terraform {
 
 # Create a PagerDuty user
 resource "pagerduty_user" "noahwhite" {
-  name            = "Noah White"
-  email           = "noah@noahwhite.net"
-  color           = "purple"
-  job_title       = "Other"
-  description     = "Mr. 1s and 0s"
-  role            = "owner"
-  license         = "PZDSDCM"
-  time_zone       = "America/New_York"
+  name        = "Noah White"
+  email       = "noah@noahwhite.net"
+  color       = "purple"
+  job_title   = "Other"
+  description = "Mr. 1s and 0s"
+  role        = "owner"
+  license     = "PZDSDCM"
+  time_zone   = "America/New_York"
 }
 
 resource "pagerduty_escalation_policy" "ghost-stack-dev-01-tailscale-ep" {
@@ -35,7 +35,7 @@ resource "pagerduty_escalation_policy" "ghost-stack-dev-01-tailscale-ep" {
 
     target {
       type = "user_reference"
-      id   =  pagerduty_user.noahwhite.id
+      id   = pagerduty_user.noahwhite.id
     }
   }
 
@@ -48,7 +48,7 @@ resource "pagerduty_escalation_policy" "ghost-stack-dev-01-tailscale-ep" {
 
     target {
       type = "user_reference"
-      id   =  pagerduty_user.noahwhite.id
+      id   = pagerduty_user.noahwhite.id
     }
   }
 }
@@ -73,9 +73,9 @@ resource "pagerduty_service" "ghost-stack-dev-01-tailscale" {
 }
 
 resource "pagerduty_service_integration" "ghost-stack-dev-01-tailscale_apiv2" {
-  name            = "Events API V2"
-  type            = "events_api_v2_inbound_integration"
-  service         = pagerduty_service.ghost-stack-dev-01-tailscale.id
+  name    = "Events API V2"
+  type    = "events_api_v2_inbound_integration"
+  service = pagerduty_service.ghost-stack-dev-01-tailscale.id
 }
 
 # data "pagerduty_vendor" "github" {
@@ -83,9 +83,9 @@ resource "pagerduty_service_integration" "ghost-stack-dev-01-tailscale_apiv2" {
 # }
 
 resource "pagerduty_service_integration" "github" {
- name            = "GitHub"
- service         = pagerduty_service.ghost-stack-dev-01-tailscale.id
- vendor          = "PFZ9O9D"
+  name    = "GitHub"
+  service = pagerduty_service.ghost-stack-dev-01-tailscale.id
+  vendor  = "PFZ9O9D"
 }
 
 # resource "pagerduty_slack_connection" "noahw" {
@@ -148,9 +148,9 @@ resource "pagerduty_service" "flatcar_instance" {
 }
 
 resource "pagerduty_service_integration" "flatcar_instance_apiv2" {
-  name            = "Events API V2"
-  type            = "events_api_v2_inbound_integration"
-  service         = pagerduty_service.flatcar_instance.id
+  name    = "Events API V2"
+  type    = "events_api_v2_inbound_integration"
+  service = pagerduty_service.flatcar_instance.id
 }
 
 # resource "pagerduty_alert_grouping_setting" "gsd1ts_settings" {
@@ -187,7 +187,7 @@ resource "pagerduty_service_dependency" "flatcar-gsd1ts-sd" {
       type = "service"
     }
     supporting_service {
-      id = pagerduty_service.flatcar_instance.id
+      id   = pagerduty_service.flatcar_instance.id
       type = "service"
     }
   }
@@ -199,7 +199,7 @@ resource "pagerduty_service_dependency" "gsd1ts-soc_blog-sd" {
     type = "service_dependency"
 
     dependent_service {
-      id = pagerduty_business_service.soc_blog.id
+      id   = pagerduty_business_service.soc_blog.id
       type = "business_service"
     }
     supporting_service {
@@ -210,9 +210,9 @@ resource "pagerduty_service_dependency" "gsd1ts-soc_blog-sd" {
 }
 
 resource "pagerduty_schedule" "ghost-stack_dev" {
-  name           = "ghost-stack dev"
-  time_zone      = "America/New_York"
-  description    = "On call schedule for monitoring the development Ghost stack environment"
+  name        = "ghost-stack dev"
+  time_zone   = "America/New_York"
+  description = "On call schedule for monitoring the development Ghost stack environment"
   layer {
     name                         = "Primary"
     start                        = "2025-09-30T21:10:51-04:00"
@@ -220,5 +220,5 @@ resource "pagerduty_schedule" "ghost-stack_dev" {
     rotation_turn_length_seconds = 604800
     users                        = [pagerduty_user.noahwhite.id]
   }
-  teams          = []
+  teams = []
 }

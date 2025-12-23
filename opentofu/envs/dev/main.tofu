@@ -10,8 +10,8 @@ terraform {
       version = "~> 5"
     }
     ct = {
-        source  = "poseidon/ct"
-        version = "0.13.0"
+      source  = "poseidon/ct"
+      version = "0.13.0"
     }
     tailscale = {
       source  = "tailscale/tailscale"
@@ -50,7 +50,7 @@ provider "pagerduty" {
 }
 
 provider "grafana" {
-  alias = "cloud"
+  alias                     = "cloud"
   cloud_access_policy_token = var.GC_ACCESS_TOK
 }
 
@@ -77,19 +77,19 @@ module "pagerduty" {
 }
 
 module "tailscale" {
-  source              = "../../modules/tailscale"
+  source = "../../modules/tailscale"
 }
 
 module "dns_records" {
-  source              = "../../modules/cloudflare/dns_records"
-  cloudflare_zone_id  = data.terraform_remote_state.bootstrap.outputs.cloudflare_zone_id
-  origin_ipv4         = module.vm.main_ip
+  source             = "../../modules/cloudflare/dns_records"
+  cloudflare_zone_id = data.terraform_remote_state.bootstrap.outputs.cloudflare_zone_id
+  origin_ipv4        = module.vm.main_ip
 }
 
 module "fw" {
-  source                  = "../../modules/vultr/firewall"
-  name                    = var.firewall_name
-  admin_subnets           = var.admin_subnets
+  source        = "../../modules/vultr/firewall"
+  name          = var.firewall_name
+  admin_subnets = var.admin_subnets
 }
 
 output "firewall_id" {
@@ -113,8 +113,8 @@ module "vm" {
 module "block_storage" {
   source = "../../modules/vultr/block_storage"
 
-  region             = var.instance_region
-  size_gb            = var.block_storage_size_gb
-  label              = var.block_storage_label
-  mount_instance_id  = module.vm.instance_id
+  region            = var.instance_region
+  size_gb           = var.block_storage_size_gb
+  label             = var.block_storage_label
+  mount_instance_id = module.vm.instance_id
 }

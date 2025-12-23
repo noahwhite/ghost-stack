@@ -19,7 +19,7 @@ data "vultr_os" "flatcar" {
 locals {
   ghost_service_b64 = filebase64("${path.module}/userdata/ghost-compose.service")
   # stringify bool for the template condition (templatefile only supports strings)
-  locksmith_mask     = var.locksmith_mask ? "true" : "false"
+  locksmith_mask = var.locksmith_mask ? "true" : "false"
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -34,7 +34,7 @@ data "ct_config" "ghost" {
     locksmith_mask    = local.locksmith_mask,
     tailscale_authkey = var.tailscale_authkey
   })
-  strict       = true
+  strict = true
 }
 
 resource "vultr_instance" "this" {
@@ -50,8 +50,8 @@ resource "vultr_instance" "this" {
   user_data = data.ct_config.ghost.rendered
 
   # Optional niceties
-  backups           = "disabled"
-  ddos_protection   = false
-  activation_email  = false
-  tags              = ["ghost"]
+  backups          = "disabled"
+  ddos_protection  = false
+  activation_email = false
+  tags             = ["ghost"]
 }
