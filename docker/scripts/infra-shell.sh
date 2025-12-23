@@ -167,19 +167,19 @@ fi
 
 if [[ "$USE_BWS" == "true" ]]; then
   # Retrieve into local variables (do not echo values)
-  TF_VAR_cloudflare_api_token="$(get_bws_secret "59624245-6a0c-4fde-9d6d-b39c014882a6")"
-  TF_VAR_cloudflare_account_id="$(get_bws_secret "2fea4609-0d6b-4d8d-b9b5-b39b002de85b")"
-  R2_ACCESS_KEY_ID="$(get_bws_secret "9dfdf110-5a84-48c3-ad7e-b39b002afd6b")"
-  R2_SECRET_ACCESS_KEY="$(get_bws_secret "f5d9794d-fd45-4dcb-9994-b39b002b5056")"
-  TF_VAR_vultr_api_key="$(get_bws_secret "d68b6562-0d9e-424c-b2c5-b39c013ae34d")"
-  TAILSCALE_API_KEY="$(get_bws_secret "34b620b7-edf6-4d06-9792-b39b00317467")"
-  TAILSCALE_TAILNET="$(get_bws_secret "a8f07ce5-ed4d-42bb-b012-b39b00311d41")"
-  PD_SUBDOMAIN="$(get_bws_secret "8ee84397-e563-4278-9a3f-b39c013f7575")"
-  PD_CLIENT_ID="$(get_bws_secret "7d51661b-736a-43ff-b01f-b39c013fe49b")"
-  PD_CLIENT_SECRET="$(get_bws_secret "b15575c0-0d28-459d-b92d-b39c01403a38")"
-  PD_USER_TOK="$(get_bws_secret "02805292-4311-4290-9b6e-b39c01554ae6")"
-  TF_VAR_GC_ACCESS_TOK="$(get_bws_secret "bfc8dd06-bd97-499a-98f8-b3a101570606")"
-  TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="$(get_bws_secret "3ebc4398-f4fa-448c-b2c1-b3a6006c063d")"
+  #TF_VAR_cloudflare_api_token="$(get_bws_secret "59624245-6a0c-4fde-9d6d-b39c014882a6")"
+  TF_VAR_cloudflare_account_id="::add-mask::$(get_bws_secret "2fea4609-0d6b-4d8d-b9b5-b39b002de85b")"
+  #R2_ACCESS_KEY_ID="$(get_bws_secret "9dfdf110-5a84-48c3-ad7e-b39b002afd6b")"
+  #R2_SECRET_ACCESS_KEY="$(get_bws_secret "f5d9794d-fd45-4dcb-9994-b39b002b5056")"
+  #TF_VAR_vultr_api_key="$(get_bws_secret "d68b6562-0d9e-424c-b2c5-b39c013ae34d")"
+  #TAILSCALE_API_KEY="$(get_bws_secret "34b620b7-edf6-4d06-9792-b39b00317467")"
+  #TAILSCALE_TAILNET="$(get_bws_secret "a8f07ce5-ed4d-42bb-b012-b39b00311d41")"
+  #PD_SUBDOMAIN="$(get_bws_secret "8ee84397-e563-4278-9a3f-b39c013f7575")"
+  #PD_CLIENT_ID="$(get_bws_secret "7d51661b-736a-43ff-b01f-b39c013fe49b")"
+  #PD_CLIENT_SECRET="$(get_bws_secret "b15575c0-0d28-459d-b92d-b39c01403a38")"
+  #PD_USER_TOK="$(get_bws_secret "02805292-4311-4290-9b6e-b39c01554ae6")"
+  #TF_VAR_GC_ACCESS_TOK="$(get_bws_secret "bfc8dd06-bd97-499a-98f8-b3a101570606")"
+  #TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="$(get_bws_secret "3ebc4398-f4fa-448c-b2c1-b3a6006c063d")"
 
   echo "Successfully retrieved secrets from Bitwarden Secrets Manager"
 fi

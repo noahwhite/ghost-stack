@@ -23,7 +23,7 @@ provider "grafana" {
 }
 
 resource "grafana_cloud_stack_service_account" "terraform_sa" {
-  name        = "\textsvc-grafana-terraform-app"
+  name        = "sa-1-extsvc-grafana-terraform-app"
   role        = "None"
   stack_slug  = "separationofconcerns0dev"
   is_disabled = false
@@ -39,10 +39,6 @@ resource "grafana_folder_permission" "soc_dev_tailscale_folder_permission" {
   folder_uid = grafana_folder.tailscale_folder.uid
   org_id     = "0"
 
-  permissions {
-    permission = "Admin"
-    user_id    = "15"
-  }
   permissions {
     permission = "Edit"
     role       = "Editor"
@@ -272,10 +268,6 @@ resource "grafana_folder_permission" "integration_linux_node" {
   folder_uid = grafana_folder.integration_linux_node.uid
   org_id     = "0"
 
-  permissions {
-    permission = "Admin"
-    user_id    = "15"
-  }
   permissions {
     permission = "Edit"
     role       = "Editor"
