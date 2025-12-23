@@ -58,10 +58,9 @@ jobs:
       - name: Run tofu fmt check (recursive)
         run: |
           docker run --rm \
-            -e TF_VAR_cloudflare_account_id \
             -v "${GITHUB_WORKSPACE}:/home/devops/app" \
             -w /home/devops/app \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
-            tofu fmt -check -recursive $TF_VAR_cloudflare_account_id
+            tofu fmt -check -recursive
 
 
