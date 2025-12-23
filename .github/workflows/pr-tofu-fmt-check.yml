@@ -38,12 +38,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Retrieve secrets via infra-shell.sh (CI mode)
-        env:
-          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-        run: |
-          ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
-
       # Required if the GHCR image is private
       - name: Log in to GHCR
         env:
@@ -62,3 +56,9 @@ jobs:
             -w /home/devops/app \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             tofu fmt -check -recursive
+
+#      - name: Retrieve secrets via infra-shell.sh (CI mode)
+#        env:
+#          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+#        run: |
+#          ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
