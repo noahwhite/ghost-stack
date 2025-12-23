@@ -77,6 +77,13 @@ check_bws_available() {
   command -v bws &> /dev/null
 }
 
+mask_value() {
+  local value="$1"
+  if [[ -n "${GITHUB_ACTIONS:-}" && -n "$value" ]]; then
+    echo "::add-mask::$value"
+  fi
+}
+
 # Retrieve a secret from Bitwarden Secrets Manager by secret id
 # Usage: get_bws_secret <secret_id>
 get_bws_secret() {
@@ -168,7 +175,8 @@ fi
 if [[ "$USE_BWS" == "true" ]]; then
   # Retrieve into local variables (do not echo values)
   #TF_VAR_cloudflare_api_token="$(get_bws_secret "59624245-6a0c-4fde-9d6d-b39c014882a6")"
-  TF_VAR_cloudflare_account_id="::add-mask::$(get_bws_secret "2fea4609-0d6b-4d8d-b9b5-b39b002de85b")"
+  TF_VAR_cloudflare_account_id="$(get_bws_secret "2fea4609-0d6b-4d8d-b9b5-b39b002de85b")"
+  mask_value "$TF_VAR_cloudflare_account_id"
   #R2_ACCESS_KEY_ID="$(get_bws_secret "9dfdf110-5a84-48c3-ad7e-b39b002afd6b")"
   #R2_SECRET_ACCESS_KEY="$(get_bws_secret "f5d9794d-fd45-4dcb-9994-b39b002b5056")"
   #TF_VAR_vultr_api_key="$(get_bws_secret "d68b6562-0d9e-424c-b2c5-b39c013ae34d")"
