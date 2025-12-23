@@ -185,50 +185,50 @@ if [[ "$USE_BWS" == "true" ]]; then
 fi
 
 # Prompt for any required values not set by BWS (interactive only; CI will fail)
-prompt_if_empty "TF_VAR_vultr_api_key" "Enter your Vultr API key: " true
-prompt_if_empty "R2_ACCESS_KEY_ID" "Enter your R2 ACCESS KEY ID: " true
-prompt_if_empty "R2_SECRET_ACCESS_KEY" "Enter your R2 SECRET ACCESS KEY: " true
-prompt_if_empty "TF_VAR_cloudflare_api_token" "Enter your ghost-stack-dev Cloudflare API token: " true
+#prompt_if_empty "TF_VAR_vultr_api_key" "Enter your Vultr API key: " true
+#prompt_if_empty "R2_ACCESS_KEY_ID" "Enter your R2 ACCESS KEY ID: " true
+#prompt_if_empty "R2_SECRET_ACCESS_KEY" "Enter your R2 SECRET ACCESS KEY: " true
+#prompt_if_empty "TF_VAR_cloudflare_api_token" "Enter your ghost-stack-dev Cloudflare API token: " true
 prompt_if_empty "TF_VAR_cloudflare_account_id" "Enter your Cloudflare Account ID: " false
-prompt_if_empty "TAILSCALE_API_KEY" "Enter your Tailscale API Key: " true
-prompt_if_empty "TAILSCALE_TAILNET" "Enter your Tailscale TAILNET Name: " false
-prompt_if_empty "PD_CLIENT_ID" "Enter your PagerDuty client id: " false
-prompt_if_empty "PD_CLIENT_SECRET" "Enter your PagerDuty client secret: " true
-prompt_if_empty "PD_SUBDOMAIN" "Enter your PagerDuty subdomain: " false
-prompt_if_empty "PD_USER_TOK" "Enter your PagerDuty user API token: " true
-prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
-prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
+#prompt_if_empty "TAILSCALE_API_KEY" "Enter your Tailscale API Key: " true
+#prompt_if_empty "TAILSCALE_TAILNET" "Enter your Tailscale TAILNET Name: " false
+#prompt_if_empty "PD_CLIENT_ID" "Enter your PagerDuty client id: " false
+#prompt_if_empty "PD_CLIENT_SECRET" "Enter your PagerDuty client secret: " true
+#prompt_if_empty "PD_SUBDOMAIN" "Enter your PagerDuty subdomain: " false
+#prompt_if_empty "PD_USER_TOK" "Enter your PagerDuty user API token: " true
+#prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
+#prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
 
 # Export (and optionally write to $GITHUB_ENV) without printing values
-export_var "TF_VAR_vultr_api_key" "${TF_VAR_vultr_api_key}"
-export_var "R2_ACCESS_KEY_ID" "${R2_ACCESS_KEY_ID}"
-export_var "R2_SECRET_ACCESS_KEY" "${R2_SECRET_ACCESS_KEY}"
+#export_var "TF_VAR_vultr_api_key" "${TF_VAR_vultr_api_key}"
+#export_var "R2_ACCESS_KEY_ID" "${R2_ACCESS_KEY_ID}"
+#export_var "R2_SECRET_ACCESS_KEY" "${R2_SECRET_ACCESS_KEY}"
 export_var "TF_VAR_cloudflare_account_id" "${TF_VAR_cloudflare_account_id}"
-export_var "TF_VAR_cloudflare_api_token" "${TF_VAR_cloudflare_api_token}"
-export_var "CLOUDFLARE_API_TOKEN" "${TF_VAR_cloudflare_api_token}"
-export_var "TAILSCALE_API_KEY" "${TAILSCALE_API_KEY}"
-export_var "TAILSCALE_TAILNET" "${TAILSCALE_TAILNET}"
-export_var "PD_CLIENT_ID" "${PD_CLIENT_ID}"
-export_var "PD_CLIENT_SECRET" "${PD_CLIENT_SECRET}"
-export_var "PD_SUBDOMAIN" "${PD_SUBDOMAIN}"
-export_var "PD_USER_TOK" "${PD_USER_TOK}"
-export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
-export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
+#export_var "TF_VAR_cloudflare_api_token" "${TF_VAR_cloudflare_api_token}"
+#export_var "CLOUDFLARE_API_TOKEN" "${TF_VAR_cloudflare_api_token}"
+#export_var "TAILSCALE_API_KEY" "${TAILSCALE_API_KEY}"
+#export_var "TAILSCALE_TAILNET" "${TAILSCALE_TAILNET}"
+#export_var "PD_CLIENT_ID" "${PD_CLIENT_ID}"
+#export_var "PD_CLIENT_SECRET" "${PD_CLIENT_SECRET}"
+#export_var "PD_SUBDOMAIN" "${PD_SUBDOMAIN}"
+#export_var "PD_USER_TOK" "${PD_USER_TOK}"
+#export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
+#export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
 
 # Ensure required secrets are available
-: "${TF_VAR_vultr_api_key:?Environment variable not set}"
-: "${R2_ACCESS_KEY_ID:?Environment variable not set}"
-: "${R2_SECRET_ACCESS_KEY:?Environment variable not set}"
+#: "${TF_VAR_vultr_api_key:?Environment variable not set}"
+#: "${R2_ACCESS_KEY_ID:?Environment variable not set}"
+#: "${R2_SECRET_ACCESS_KEY:?Environment variable not set}"
 : "${TF_VAR_cloudflare_account_id:?Environment variable not set}"
-: "${TF_VAR_cloudflare_api_token:?Environment variable not set}"
-: "${TAILSCALE_API_KEY:?Environment variable not set}"
-: "${TAILSCALE_TAILNET:?Environment variable not set}"
-: "${PD_CLIENT_ID:?Environment variable not set}"
-: "${PD_CLIENT_SECRET:?Environment variable not set}"
-: "${PD_SUBDOMAIN:?Environment variable not set}"
-: "${PD_USER_TOK:?Environment variable not set}"
-: "${TF_VAR_GC_ACCESS_TOK:?Environment variable not set}"
-: "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK:?Environment variable not set}"
+#: "${TF_VAR_cloudflare_api_token:?Environment variable not set}"
+#: "${TAILSCALE_API_KEY:?Environment variable not set}"
+#: "${TAILSCALE_TAILNET:?Environment variable not set}"
+#: "${PD_CLIENT_ID:?Environment variable not set}"
+#: "${PD_CLIENT_SECRET:?Environment variable not set}"
+#: "${PD_SUBDOMAIN:?Environment variable not set}"
+#: "${PD_USER_TOK:?Environment variable not set}"
+#: "${TF_VAR_GC_ACCESS_TOK:?Environment variable not set}"
+#: "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK:?Environment variable not set}"
 
 # Exit early for CI secrets-only mode (no IP discovery, no SSH key, no docker actions)
 if [[ "$SECRETS_ONLY" == "true" ]]; then
@@ -275,21 +275,7 @@ fi
 # Run container if enabled
 if [[ "$RUN_CONTAINER" == "true" ]]; then
   HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 docker run --rm -it \
-    -e TF_VAR_vultr_api_key="$TF_VAR_vultr_api_key" \
     -e TF_VAR_cloudflare_account_id="$TF_VAR_cloudflare_account_id" \
-    -e TF_VAR_cloudflare_api_token="$TF_VAR_cloudflare_api_token" \
-    -e TF_VAR_ssh_public_key="$TF_VAR_ssh_public_key" \
-    -e TF_VAR_admin_subnets="$TF_VAR_admin_subnets" \
-    -e R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" \
-    -e R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" \
-    -e TAILSCALE_API_KEY="$TAILSCALE_API_KEY" \
-    -e TAILSCALE_TAILNET="$TAILSCALE_TAILNET" \
-    -e TF_VAR_PD_CLIENT_ID="$PD_CLIENT_ID" \
-    -e TF_VAR_PD_CLIENT_SECRET="$PD_CLIENT_SECRET" \
-    -e TF_VAR_pd_subdomain="$PD_SUBDOMAIN" \
-    -e TF_VAR_pd_user_tok="$PD_USER_TOK" \
-    -e TF_VAR_GC_ACCESS_TOK="$TF_VAR_GC_ACCESS_TOK" \
-    -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="$TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" \
     -e USER_UID="$(id -u)" \
     -e USER_GID="$(id -g)" \
     -e DISPLAY=$DISPLAY \
