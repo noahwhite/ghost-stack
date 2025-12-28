@@ -188,14 +188,14 @@ if [[ "$USE_BWS" == "true" ]]; then
   mask_value "$TAILSCALE_API_KEY"
   TAILSCALE_TAILNET="$(get_bws_secret "a8f07ce5-ed4d-42bb-b012-b39b00311d41")"
   mask_value "$TAILSCALE_TAILNET"
-  PD_SUBDOMAIN="$(get_bws_secret "8ee84397-e563-4278-9a3f-b39c013f7575")"
-  mask_value "$PD_SUBDOMAIN"
-  PD_CLIENT_ID="$(get_bws_secret "7d51661b-736a-43ff-b01f-b39c013fe49b")"
-  mask_value "$PD_CLIENT_ID"
-  PD_CLIENT_SECRET="$(get_bws_secret "b15575c0-0d28-459d-b92d-b39c01403a38")"
-  mask_value "$PD_CLIENT_SECRET"
-  PD_USER_TOK="$(get_bws_secret "02805292-4311-4290-9b6e-b39c01554ae6")"
-  mask_value "$PD_USER_TOK"
+  TF_VAR_pd_subdomain="$(get_bws_secret "8ee84397-e563-4278-9a3f-b39c013f7575")"
+  mask_value "$TF_VAR_pd_subdomain"
+  TF_VAR_PD_CLIENT_ID="$(get_bws_secret "7d51661b-736a-43ff-b01f-b39c013fe49b")"
+  mask_value "$TF_VAR_PD_CLIENT_ID"
+  TF_VAR_PD_CLIENT_SECRET="$(get_bws_secret "b15575c0-0d28-459d-b92d-b39c01403a38")"
+  mask_value "$TF_VAR_PD_CLIENT_SECRET"
+  TF_VAR_pd_user_tok="$(get_bws_secret "02805292-4311-4290-9b6e-b39c01554ae6")"
+  mask_value "$TF_VAR_pd_user_tok"
   TF_VAR_GC_ACCESS_TOK="$(get_bws_secret "bfc8dd06-bd97-499a-98f8-b3a101570606")"
   mask_value "$TF_VAR_GC_ACCESS_TOK"
   TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="$(get_bws_secret "3ebc4398-f4fa-448c-b2c1-b3a6006c063d")"
@@ -212,10 +212,10 @@ prompt_if_empty "TF_VAR_cloudflare_api_token" "Enter your ghost-stack-dev Cloudf
 prompt_if_empty "TF_VAR_cloudflare_account_id" "Enter your Cloudflare Account ID: " false
 prompt_if_empty "TAILSCALE_API_KEY" "Enter your Tailscale API Key: " true
 prompt_if_empty "TAILSCALE_TAILNET" "Enter your Tailscale TAILNET Name: " false
-prompt_if_empty "PD_CLIENT_ID" "Enter your PagerDuty client id: " false
-prompt_if_empty "PD_CLIENT_SECRET" "Enter your PagerDuty client secret: " true
-prompt_if_empty "PD_SUBDOMAIN" "Enter your PagerDuty subdomain: " false
-prompt_if_empty "PD_USER_TOK" "Enter your PagerDuty user API token: " true
+prompt_if_empty "TF_VAR_PD_CLIENT_ID" "Enter your PagerDuty client id: " false
+prompt_if_empty "TF_VAR_PD_CLIENT_SECRET" "Enter your PagerDuty client secret: " true
+prompt_if_empty "TF_VAR_pd_subdomain" "Enter your PagerDuty subdomain: " false
+prompt_if_empty "TF_VAR_pd_user_tok" "Enter your PagerDuty user API token: " true
 prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
 prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
 
@@ -228,10 +228,10 @@ export_var "TF_VAR_cloudflare_api_token" "${TF_VAR_cloudflare_api_token}"
 export_var "CLOUDFLARE_API_TOKEN" "${TF_VAR_cloudflare_api_token}"
 export_var "TAILSCALE_API_KEY" "${TAILSCALE_API_KEY}"
 export_var "TAILSCALE_TAILNET" "${TAILSCALE_TAILNET}"
-export_var "PD_CLIENT_ID" "${PD_CLIENT_ID}"
-export_var "PD_CLIENT_SECRET" "${PD_CLIENT_SECRET}"
-export_var "PD_SUBDOMAIN" "${PD_SUBDOMAIN}"
-export_var "PD_USER_TOK" "${PD_USER_TOK}"
+export_var "TF_VAR_PD_CLIENT_ID" "${TF_VAR_PD_CLIENT_ID}"
+export_var "TF_VAR_PD_CLIENT_SECRET" "${TF_VAR_PD_CLIENT_SECRET}"
+export_var "TF_VAR_pd_subdomain" "${TF_VAR_pd_subdomain}"
+export_var "TF_VAR_pd_user_tok" "${TF_VAR_pd_user_tok}"
 export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
 export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
 
@@ -243,10 +243,10 @@ export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}
 : "${TF_VAR_cloudflare_api_token:?Environment variable not set}"
 : "${TAILSCALE_API_KEY:?Environment variable not set}"
 : "${TAILSCALE_TAILNET:?Environment variable not set}"
-: "${PD_CLIENT_ID:?Environment variable not set}"
-: "${PD_CLIENT_SECRET:?Environment variable not set}"
-: "${PD_SUBDOMAIN:?Environment variable not set}"
-: "${PD_USER_TOK:?Environment variable not set}"
+: "${TF_VAR_PD_CLIENT_ID:?Environment variable not set}"
+: "${TF_VAR_PD_CLIENT_SECRET:?Environment variable not set}"
+: "${TF_VAR_pd_subdomain:?Environment variable not set}"
+: "${TF_VAR_pd_user_tok:?Environment variable not set}"
 : "${TF_VAR_GC_ACCESS_TOK:?Environment variable not set}"
 : "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK:?Environment variable not set}"
 

@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     git \
     gnupg \
     xclip \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Install OpenTofu v1.11.1 via official standalone release (manual download)
