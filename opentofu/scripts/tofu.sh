@@ -94,7 +94,7 @@ EOF
   export AWS_EC2_METADATA_DISABLED=true
 
   # Always reconfigure to align backend metadata for this working dir
-  tofu -chdir="${ENV_DIR}" init -reconfigure -backend-config="${OUT}"
+  tofu -chdir="${ENV_DIR}" init -reconfigure -backend-config="${OUT}" "$@"
 }
 
   if [[ ! -d "${ENV_DIR}" ]]; then
@@ -120,11 +120,11 @@ export AWS_EC2_METADATA_DISABLED=true
 
 case "${ACTION}" in
   init)
-    ensure_backend
+    ensure_backend "${EXTRA_ARGS[@]}"
     tofu -chdir="${ENV_DIR}" init -reconfigure -backend-config="${OUT}" "${EXTRA_ARGS[@]}"
     ;;
 
-  plan|apply|destroy|taint|state|import|test|show|output)
+  plan|apply|destroy|taint|state|import|test|show|refresh|output)
     # Always ensure backend is generated and initialized (cheap & robust)
     ensure_backend
     # For provider auth (e.g., Vultr), expect env to be exported outside this script.
@@ -132,7 +132,7 @@ case "${ACTION}" in
     ;;
 
   *)
-    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|import|test|show|output> [extra args...]"
+    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|import|test|show|refresh|output> [extra args...]"
     exit 1
     ;;
 esac

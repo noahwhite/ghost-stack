@@ -15,7 +15,7 @@ resource "tailscale_tailnet_key" "this" {
   tags          = ["tag:ghost-dev"]
 }
 
-resource "tailscale_acl" "my_tailnet_acl" {
+resource "tailscale_acl" "soc_tailnet_acl" {
   acl = jsonencode({
     "grants" = [
       {
