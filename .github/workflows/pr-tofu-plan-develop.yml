@@ -56,6 +56,11 @@ jobs:
         run: |
           ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 
+      - name: Fix workspace permissions for Docker container
+        run: |
+          # Make opentofu directory writable by all users so the container's devops user can create .terraform directories
+          chmod -R a+w "${GITHUB_WORKSPACE}/opentofu"
+
       - name: Run OpenTofu init
         run: |
           docker run --rm \
