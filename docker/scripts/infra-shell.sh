@@ -131,9 +131,9 @@ prompt_if_empty() {
 
     printf "%s" "$prompt_text"
     if [[ "$is_secret" == "true" ]]; then
-      IFS= read -rs "$var_name"
+      IFS= read -rs "${var_name?}"
     else
-      IFS= read -r "$var_name"
+      IFS= read -r "${var_name?}"
     fi
     printf "\n"
   fi
@@ -219,6 +219,13 @@ prompt_if_empty "TF_VAR_pd_user_tok" "Enter your PagerDuty user API token: " tru
 prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
 prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
 
+# In CI mode, check if BOOTSTRAP_R2_BUCKET_DEV is set (passed from GitHub Actions workflow)
+# This allows CI to bypass bootstrap state lookup by providing the bucket name directly
+if [[ "$CI_MODE" == "true" && -n "${BOOTSTRAP_R2_BUCKET_DEV:-}" ]]; then
+  TF_BACKEND_BUCKET="${BOOTSTRAP_R2_BUCKET_DEV}"
+  echo "Using bootstrap R2 bucket from GitHub environment variable: ${TF_BACKEND_BUCKET}"
+fi
+
 # Export (and optionally write to $GITHUB_ENV) without printing values
 export_var "TF_VAR_vultr_api_key" "${TF_VAR_vultr_api_key}"
 export_var "R2_ACCESS_KEY_ID" "${R2_ACCESS_KEY_ID}"
@@ -234,6 +241,11 @@ export_var "TF_VAR_pd_subdomain" "${TF_VAR_pd_subdomain}"
 export_var "TF_VAR_pd_user_tok" "${TF_VAR_pd_user_tok}"
 export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
 export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
+
+# Export TF_BACKEND_BUCKET if it was set (CI mode with GitHub env var)
+if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
+  export_var "TF_BACKEND_BUCKET" "${TF_BACKEND_BUCKET}"
+fi
 
 # Ensure required secrets are available
 : "${TF_VAR_vultr_api_key:?Environment variable not set}"

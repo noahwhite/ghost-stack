@@ -1,0 +1,114 @@
+name: PR OpenTofu Plan (develop branch)
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  packages: read
+  pull-requests: write
+
+jobs:
+  tofu-plan:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Install Bitwarden Secrets Manager CLI (bws)
+        run: |
+          set -euo pipefail
+
+          curl -fsSL \
+            https://github.com/bitwarden/sdk-sm/releases/download/bws-v1.0.0/bws-x86_64-unknown-linux-gnu-1.0.0.zip \
+            -o /tmp/bws.zip
+
+          unzip -q /tmp/bws.zip -d /tmp/bws
+
+          sudo mv /tmp/bws/bws /usr/local/bin/bws
+          sudo chmod +x /usr/local/bin/bws
+
+          bws --version
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Required if the GHCR image is private
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          docker login ghcr.io -u "noahwhite" --password-stdin <<< "$GHCR_TOKEN"
+
+      - name: Pull OpenTofu tools image
+        run: |
+          docker pull ghcr.io/noahwhite/ghost-stack-shell:latest
+
+      - name: Retrieve secrets via infra-shell.sh (CI mode)
+        env:
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+          # THIS IS WHERE WE FETCH FROM GITHUB: vars.BOOTSTRAP_R2_BUCKET_DEV is a GitHub environment variable
+          BOOTSTRAP_R2_BUCKET_DEV: ${{ vars.BOOTSTRAP_R2_BUCKET_DEV }}
+        run: |
+          ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
+
+      - name: Run OpenTofu init
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TF_VAR_cloudflare_account_id="${{ env.TF_VAR_cloudflare_account_id }}" \
+            -e TF_VAR_cloudflare_api_token="${{ env.TF_VAR_cloudflare_api_token }}" \
+            -e R2_ACCESS_KEY_ID="${{ env.R2_ACCESS_KEY_ID }}" \
+            -e R2_SECRET_ACCESS_KEY="${{ env.R2_SECRET_ACCESS_KEY }}" \
+            -e TF_VAR_vultr_api_key="${{ env.TF_VAR_vultr_api_key }}" \
+            -e TAILSCALE_API_KEY="${{ env.TAILSCALE_API_KEY }}" \
+            -e TAILSCALE_TAILNET="${{ env.TAILSCALE_TAILNET }}" \
+            -e TF_VAR_PD_CLIENT_ID="${{ env.TF_VAR_PD_CLIENT_ID }}" \
+            -e TF_VAR_PD_CLIENT_SECRET="${{ env.TF_VAR_PD_CLIENT_SECRET }}" \
+            -e TF_VAR_pd_subdomain="${{ env.TF_VAR_pd_subdomain }}" \
+            -e TF_VAR_pd_user_tok="${{ env.TF_VAR_pd_user_tok }}" \
+            -e TF_VAR_GC_ACCESS_TOK="${{ env.TF_VAR_GC_ACCESS_TOK }}" \
+            -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}" \
+            -e TF_BACKEND_BUCKET="${{ env.TF_BACKEND_BUCKET }}" \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            ./opentofu/scripts/tofu.sh dev init
+
+      - name: Run OpenTofu validate
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TF_VAR_cloudflare_account_id="${{ env.TF_VAR_cloudflare_account_id }}" \
+            -e TF_VAR_cloudflare_api_token="${{ env.TF_VAR_cloudflare_api_token }}" \
+            -e R2_ACCESS_KEY_ID="${{ env.R2_ACCESS_KEY_ID }}" \
+            -e R2_SECRET_ACCESS_KEY="${{ env.R2_SECRET_ACCESS_KEY }}" \
+            -e TF_BACKEND_BUCKET="${{ env.TF_BACKEND_BUCKET }}" \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            tofu -chdir=opentofu/envs/dev validate
+
+      - name: Run OpenTofu plan
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TF_VAR_cloudflare_account_id="${{ env.TF_VAR_cloudflare_account_id }}" \
+            -e TF_VAR_cloudflare_api_token="${{ env.TF_VAR_cloudflare_api_token }}" \
+            -e R2_ACCESS_KEY_ID="${{ env.R2_ACCESS_KEY_ID }}" \
+            -e R2_SECRET_ACCESS_KEY="${{ env.R2_SECRET_ACCESS_KEY }}" \
+            -e TF_VAR_vultr_api_key="${{ env.TF_VAR_vultr_api_key }}" \
+            -e TAILSCALE_API_KEY="${{ env.TAILSCALE_API_KEY }}" \
+            -e TAILSCALE_TAILNET="${{ env.TAILSCALE_TAILNET }}" \
+            -e TF_VAR_PD_CLIENT_ID="${{ env.TF_VAR_PD_CLIENT_ID }}" \
+            -e TF_VAR_PD_CLIENT_SECRET="${{ env.TF_VAR_PD_CLIENT_SECRET }}" \
+            -e TF_VAR_pd_subdomain="${{ env.TF_VAR_pd_subdomain }}" \
+            -e TF_VAR_pd_user_tok="${{ env.TF_VAR_pd_user_tok }}" \
+            -e TF_VAR_GC_ACCESS_TOK="${{ env.TF_VAR_GC_ACCESS_TOK }}" \
+            -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}" \
+            -e TF_BACKEND_BUCKET="${{ env.TF_BACKEND_BUCKET }}" \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            ./opentofu/scripts/tofu.sh dev plan -out=opentofu/envs/dev/tfplan
