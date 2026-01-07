@@ -56,6 +56,10 @@ jobs:
         run: |
           ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 
+      - name: Configure Git safe directory
+        run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
       - name: Run OpenTofu init
         run: |
           docker run --rm \
