@@ -96,3 +96,9 @@ variable "SOC_DEV_TERRAFORM_SA_TOK" {
   type        = string
   sensitive   = true
 }
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID (optional, reads from bootstrap state if not provided)"
+  type        = string
+  default     = ""
+}

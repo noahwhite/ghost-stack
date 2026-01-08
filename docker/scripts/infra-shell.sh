@@ -131,9 +131,9 @@ prompt_if_empty() {
 
     printf "%s" "$prompt_text"
     if [[ "$is_secret" == "true" ]]; then
-      IFS= read -rs "$var_name"
+      IFS= read -rs "${var_name?}"
     else
-      IFS= read -r "$var_name"
+      IFS= read -r "${var_name?}"
     fi
     printf "\n"
   fi
@@ -219,6 +219,13 @@ prompt_if_empty "TF_VAR_pd_user_tok" "Enter your PagerDuty user API token: " tru
 prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
 prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
 
+# In CI mode, check if BOOTSTRAP_R2_BUCKET_DEV is set (passed from GitHub Actions workflow)
+# This allows CI to bypass bootstrap state lookup by providing the bucket name directly
+if [[ "$CI_MODE" == "true" && -n "${BOOTSTRAP_R2_BUCKET_DEV:-}" ]]; then
+  TF_BACKEND_BUCKET="${BOOTSTRAP_R2_BUCKET_DEV}"
+  echo "Using bootstrap R2 bucket from GitHub environment variable: ${TF_BACKEND_BUCKET}"
+fi
+
 # Export (and optionally write to $GITHUB_ENV) without printing values
 export_var "TF_VAR_vultr_api_key" "${TF_VAR_vultr_api_key}"
 export_var "R2_ACCESS_KEY_ID" "${R2_ACCESS_KEY_ID}"
@@ -234,6 +241,61 @@ export_var "TF_VAR_pd_subdomain" "${TF_VAR_pd_subdomain}"
 export_var "TF_VAR_pd_user_tok" "${TF_VAR_pd_user_tok}"
 export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
 export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
+
+# Export TF_BACKEND_BUCKET if it was set (CI mode with GitHub env var)
+if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
+  export_var "TF_BACKEND_BUCKET" "${TF_BACKEND_BUCKET}"
+fi
+
+# Set Cloudflare Zone ID in CI mode (from GitHub variable)
+if [[ "$CI_MODE" == "true" && -n "${CLOUDFLARE_ZONE_ID_DEV:-}" ]]; then
+  TF_VAR_cloudflare_zone_id="${CLOUDFLARE_ZONE_ID_DEV}"
+  export_var "TF_VAR_cloudflare_zone_id" "${TF_VAR_cloudflare_zone_id}"
+  echo "Using Cloudflare Zone ID from GitHub variable"
+fi
+
+# Set admin subnets based on mode
+if [[ "$CI_MODE" == "true" ]]; then
+  # CI mode: Use admin IP from GitHub secret (optional for backward compatibility during transition)
+  if [[ -z "${ADMIN_IP_DEV:-}" ]]; then
+    echo "⚠️  Warning: ADMIN_IP_DEV not set in CI mode" >&2
+    echo "   Using empty admin subnets (no SSH access)" >&2
+    echo "   Set ADMIN_IP_DEV secret in GitHub for proper SSH firewall configuration" >&2
+    TF_VAR_admin_subnets='[]'
+  else
+    MYIP="${ADMIN_IP_DEV}"
+    echo "Using admin IP from GitHub secret: ${MYIP}/32"
+    TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
+  fi
+  export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
+else
+  # Workstation mode: Detect public IP dynamically
+  MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
+  if [[ -z "$MYIP" ]]; then
+    echo "❌ Could not determine public IPv4 (check network/DNS/proxy)."
+    exit 1
+  fi
+  echo "Restricting SSH to your IP: ${MYIP}/32"
+  TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
+  export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
+fi
+
+# Set SSH public key from repo (same for both workstation and CI modes)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PUBKEY_PATH="${REPO_ROOT}/keys/ghost-dev.pub"
+if [[ ! -f "$PUBKEY_PATH" ]]; then
+  echo "❌ SSH public key not found at: $PUBKEY_PATH"
+  echo "   Copy your public key to the repo:"
+  echo "   cp ~/.ssh/ghost-dev.pub keys/ghost-dev.pub"
+  exit 1
+fi
+if [[ ! -s "$PUBKEY_PATH" ]]; then
+  echo "❌ SSH public key file missing or empty: $PUBKEY_PATH"
+  exit 1
+fi
+TF_VAR_ssh_public_key="$(<"$PUBKEY_PATH")"
+export_var "TF_VAR_ssh_public_key" "${TF_VAR_ssh_public_key}"
+echo "Using SSH public key: $PUBKEY_PATH"
 
 # Ensure required secrets are available
 : "${TF_VAR_vultr_api_key:?Environment variable not set}"
@@ -255,37 +317,6 @@ if [[ "$SECRETS_ONLY" == "true" ]]; then
   echo "Secrets exported successfully."
   exit 0
 fi
-
-# ============================================================================
-# Workstation-only setup (unchanged intent, but gated)
-# ============================================================================
-
-# Discover caller public IPv4 and pass it to OpenTofu as admin_subnets
-MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
-if [[ -z "$MYIP" ]]; then
-  echo "❌ Could not determine public IPv4 (check network/DNS/proxy)."
-  exit 1
-fi
-
-export TF_VAR_admin_subnets
-TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
-echo "Restricting SSH to your IP: ${MYIP}/32"
-
-# SSH public key injection (for Vultr SSH key resource)
-PUBKEY_PATH="${GHOST_SSH_PUBKEY:-$HOME/.ssh/ghost-dev.pub}"
-if [[ ! -f "$PUBKEY_PATH" ]]; then
-  echo "❌ SSH public key not found at: $PUBKEY_PATH"
-  echo "   Set GHOST_SSH_PUBKEY to the correct path or create one:"
-  echo "   ssh-keygen -t ed25519 -C \"ghost-dev\" -f ~/.ssh/ghost-dev"
-  exit 1
-fi
-if [[ ! -s "$PUBKEY_PATH" ]]; then
-  echo "❌ SSH public key file missing or empty: $PUBKEY_PATH"
-  exit 1
-fi
-TF_VAR_ssh_public_key="$(<"$PUBKEY_PATH")"
-export TF_VAR_ssh_public_key
-echo "Using SSH public key: $PUBKEY_PATH"
 
 # Build container if enabled
 if [[ "$BUILD_CONTAINER" == "true" ]]; then

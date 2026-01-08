@@ -36,24 +36,32 @@ mkdir -p "${STATE_DIR}/.terraform"
 # ---- helpers ---------------------------------------------------------------
 # Read the bootstrap output using the bootstrap env's own working dir
 # Important: do NOT reuse the non-bootstrap TF_DATA_DIR here.
+# In CI mode, TF_BACKEND_BUCKET can be set directly to bypass bootstrap state lookup.
 get_r2_bucket() {
-  mkdir -p "${BOOTSTRAP_TF_DATA_DIR}"
-  # Initialize bootstrap env using its own TF_DATA_DIR (local backend)
-  # Use a subshell to cd into the bootstrap config dir
-  (
-    cd "${BOOTSTRAP_ROOT}" || exit 1
-
-    # Init with LOCAL backend pinned to the env's state file
-    TF_DATA_DIR="${BOOTSTRAP_ENV_DIR}/.terraform" \
-      tofu init -reconfigure \
-        -backend-config="path=${BOOTSTRAP_TF_DATA_DIR}/terraform.tfstate" >&2
-  ) || {
-    echo "❌ Failed to init bootstrap (local backend pinned to ${BOOTSTRAP_STATE_PATH})" >&2
-    return 1
-  }
-
-  # Read the output from that same dir
   local bucket
+
+  # Check if TF_BACKEND_BUCKET is already set (e.g., in CI environment via infra-shell.sh)
+  if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
+    echo "Using TF_BACKEND_BUCKET from environment: ${TF_BACKEND_BUCKET}" >&2
+    bucket="${TF_BACKEND_BUCKET}"
+  else
+    # Fall back to reading from bootstrap state (workstation mode)
+    mkdir -p "${BOOTSTRAP_TF_DATA_DIR}"
+    # Initialize bootstrap env using its own TF_DATA_DIR (local backend)
+    # Use a subshell to cd into the bootstrap config dir
+    (
+      cd "${BOOTSTRAP_ROOT}" || exit 1
+
+      # Init with LOCAL backend pinned to the env's state file
+      TF_DATA_DIR="${BOOTSTRAP_ENV_DIR}/.terraform" \
+        tofu init -reconfigure \
+          -backend-config="path=${BOOTSTRAP_TF_DATA_DIR}/terraform.tfstate" >&2
+    ) || {
+      echo "❌ Failed to init bootstrap (local backend pinned to ${BOOTSTRAP_STATE_PATH})" >&2
+      return 1
+    }
+
+    # Read the output from that same dir
     bucket="$(TF_DATA_DIR="${BOOTSTRAP_ENV_DIR}/.terraform" \
         tofu -chdir="${BOOTSTRAP_ROOT}" output -state="${BOOTSTRAP_ENV_DIR}/terraform.tfstate" -raw r2_bucket_name)"
 
@@ -61,8 +69,10 @@ get_r2_bucket() {
       echo "❌ Could not read bootstrap output 'r2_bucket_name' for env '${ENV}'" >&2
       return 1
     fi
-    # Only the value goes to stdout so callers can capture it cleanly.
-    printf '%s\n' "${bucket}"
+  fi
+
+  # Only the value goes to stdout so callers can capture it cleanly.
+  printf '%s\n' "${bucket}"
 }
 
 # Generate backend.hcl from bootstrap output and (re)initialize this env.

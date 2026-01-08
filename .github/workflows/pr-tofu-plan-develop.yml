@@ -1,0 +1,165 @@
+name: PR OpenTofu Plan (develop branch)
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  packages: read
+  pull-requests: write
+
+jobs:
+  tofu-plan:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Install Bitwarden Secrets Manager CLI (bws)
+        run: |
+          set -euo pipefail
+
+          curl -fsSL \
+            https://github.com/bitwarden/sdk-sm/releases/download/bws-v1.0.0/bws-x86_64-unknown-linux-gnu-1.0.0.zip \
+            -o /tmp/bws.zip
+
+          unzip -q /tmp/bws.zip -d /tmp/bws
+
+          sudo mv /tmp/bws/bws /usr/local/bin/bws
+          sudo chmod +x /usr/local/bin/bws
+
+          bws --version
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Required if the GHCR image is private
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          docker login ghcr.io -u "noahwhite" --password-stdin <<< "$GHCR_TOKEN"
+
+      - name: Pull OpenTofu tools image
+        run: |
+          docker pull ghcr.io/noahwhite/ghost-stack-shell:latest
+
+      - name: Retrieve secrets via infra-shell.sh (CI mode)
+        env:
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+          # GitHub environment variable for R2 bucket name
+          BOOTSTRAP_R2_BUCKET_DEV: ${{ vars.BOOTSTRAP_R2_BUCKET_DEV }}
+          # GitHub secret for workstation IP (used for SSH firewall rules)
+          ADMIN_IP_DEV: ${{ secrets.ADMIN_IP_DEV }}
+          # GitHub secret for Cloudflare Zone ID (from bootstrap outputs)
+          CLOUDFLARE_ZONE_ID_DEV: ${{ secrets.CLOUDFLARE_ZONE_ID_DEV }}
+        run: |
+          ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
+
+      - name: Fix workspace permissions for Docker container
+        run: |
+          # Make opentofu directory writable by all users so the container's devops user can create .terraform directories
+          chmod -R a+w "${GITHUB_WORKSPACE}/opentofu"
+
+      - name: Run OpenTofu init
+        env:
+          TF_VAR_cloudflare_account_id: ${{ env.TF_VAR_cloudflare_account_id }}
+          TF_VAR_cloudflare_api_token: ${{ env.TF_VAR_cloudflare_api_token }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          TF_VAR_vultr_api_key: ${{ env.TF_VAR_vultr_api_key }}
+          TAILSCALE_API_KEY: ${{ env.TAILSCALE_API_KEY }}
+          TAILSCALE_TAILNET: ${{ env.TAILSCALE_TAILNET }}
+          TF_VAR_PD_CLIENT_ID: ${{ env.TF_VAR_PD_CLIENT_ID }}
+          TF_VAR_PD_CLIENT_SECRET: ${{ env.TF_VAR_PD_CLIENT_SECRET }}
+          TF_VAR_pd_subdomain: ${{ env.TF_VAR_pd_subdomain }}
+          TF_VAR_pd_user_tok: ${{ env.TF_VAR_pd_user_tok }}
+          TF_VAR_GC_ACCESS_TOK: ${{ env.TF_VAR_GC_ACCESS_TOK }}
+          TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
+          TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TF_VAR_cloudflare_account_id \
+            -e TF_VAR_cloudflare_api_token \
+            -e R2_ACCESS_KEY_ID \
+            -e R2_SECRET_ACCESS_KEY \
+            -e TF_VAR_vultr_api_key \
+            -e TAILSCALE_API_KEY \
+            -e TAILSCALE_TAILNET \
+            -e TF_VAR_PD_CLIENT_ID \
+            -e TF_VAR_PD_CLIENT_SECRET \
+            -e TF_VAR_pd_subdomain \
+            -e TF_VAR_pd_user_tok \
+            -e TF_VAR_GC_ACCESS_TOK \
+            -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+            -e TF_BACKEND_BUCKET \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev init"
+
+      - name: Run OpenTofu validate
+        env:
+          TF_VAR_cloudflare_account_id: ${{ env.TF_VAR_cloudflare_account_id }}
+          TF_VAR_cloudflare_api_token: ${{ env.TF_VAR_cloudflare_api_token }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TF_VAR_cloudflare_account_id \
+            -e TF_VAR_cloudflare_api_token \
+            -e R2_ACCESS_KEY_ID \
+            -e R2_SECRET_ACCESS_KEY \
+            -e TF_BACKEND_BUCKET \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && tofu -chdir=opentofu/envs/dev validate"
+
+      - name: Run OpenTofu plan
+        env:
+          TF_VAR_cloudflare_account_id: ${{ env.TF_VAR_cloudflare_account_id }}
+          TF_VAR_cloudflare_api_token: ${{ env.TF_VAR_cloudflare_api_token }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SECRET_ACCESS_KEY }}
+          TF_VAR_vultr_api_key: ${{ env.TF_VAR_vultr_api_key }}
+          TAILSCALE_API_KEY: ${{ env.TAILSCALE_API_KEY }}
+          TAILSCALE_TAILNET: ${{ env.TAILSCALE_TAILNET }}
+          TF_VAR_PD_CLIENT_ID: ${{ env.TF_VAR_PD_CLIENT_ID }}
+          TF_VAR_PD_CLIENT_SECRET: ${{ env.TF_VAR_PD_CLIENT_SECRET }}
+          TF_VAR_pd_subdomain: ${{ env.TF_VAR_pd_subdomain }}
+          TF_VAR_pd_user_tok: ${{ env.TF_VAR_pd_user_tok }}
+          TF_VAR_GC_ACCESS_TOK: ${{ env.TF_VAR_GC_ACCESS_TOK }}
+          TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
+          TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
+          TF_VAR_admin_subnets: ${{ env.TF_VAR_admin_subnets }}
+          TF_VAR_ssh_public_key: ${{ env.TF_VAR_ssh_public_key }}
+          TF_VAR_cloudflare_zone_id: ${{ env.TF_VAR_cloudflare_zone_id }}
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TF_VAR_cloudflare_account_id \
+            -e TF_VAR_cloudflare_api_token \
+            -e R2_ACCESS_KEY_ID \
+            -e R2_SECRET_ACCESS_KEY \
+            -e TF_VAR_vultr_api_key \
+            -e TAILSCALE_API_KEY \
+            -e TAILSCALE_TAILNET \
+            -e TF_VAR_PD_CLIENT_ID \
+            -e TF_VAR_PD_CLIENT_SECRET \
+            -e TF_VAR_pd_subdomain \
+            -e TF_VAR_pd_user_tok \
+            -e TF_VAR_GC_ACCESS_TOK \
+            -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+            -e TF_BACKEND_BUCKET \
+            -e TF_VAR_admin_subnets \
+            -e TF_VAR_ssh_public_key \
+            -e TF_VAR_cloudflare_zone_id \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev plan -out=tfplan"
