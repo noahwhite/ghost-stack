@@ -51,8 +51,10 @@ jobs:
       - name: Retrieve secrets via infra-shell.sh (CI mode)
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-          # THIS IS WHERE WE FETCH FROM GITHUB: vars.BOOTSTRAP_R2_BUCKET_DEV is a GitHub environment variable
+          # GitHub environment variable for R2 bucket name
           BOOTSTRAP_R2_BUCKET_DEV: ${{ vars.BOOTSTRAP_R2_BUCKET_DEV }}
+          # GitHub secret for workstation IP (used for SSH firewall rules)
+          ADMIN_IP_DEV: ${{ secrets.ADMIN_IP_DEV }}
         run: |
           ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 

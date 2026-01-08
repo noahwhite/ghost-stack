@@ -247,6 +247,46 @@ if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
   export_var "TF_BACKEND_BUCKET" "${TF_BACKEND_BUCKET}"
 fi
 
+# Set admin subnets based on mode
+if [[ "$CI_MODE" == "true" ]]; then
+  # CI mode: Use admin IP from GitHub secret
+  if [[ -z "${ADMIN_IP_DEV:-}" ]]; then
+    echo "❌ Missing required environment variable in CI mode: ADMIN_IP_DEV" >&2
+    echo "   This should be set from a GitHub secret containing your workstation IP" >&2
+    exit 1
+  fi
+  MYIP="${ADMIN_IP_DEV}"
+  echo "Using admin IP from GitHub secret: ${MYIP}/32"
+else
+  # Workstation mode: Detect public IP dynamically
+  MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
+  if [[ -z "$MYIP" ]]; then
+    echo "❌ Could not determine public IPv4 (check network/DNS/proxy)."
+    exit 1
+  fi
+  echo "Restricting SSH to your IP: ${MYIP}/32"
+fi
+
+TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
+export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
+
+# Set SSH public key from repo (same for both workstation and CI modes)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PUBKEY_PATH="${REPO_ROOT}/keys/ghost-dev.pub"
+if [[ ! -f "$PUBKEY_PATH" ]]; then
+  echo "❌ SSH public key not found at: $PUBKEY_PATH"
+  echo "   Copy your public key to the repo:"
+  echo "   cp ~/.ssh/ghost-dev.pub keys/ghost-dev.pub"
+  exit 1
+fi
+if [[ ! -s "$PUBKEY_PATH" ]]; then
+  echo "❌ SSH public key file missing or empty: $PUBKEY_PATH"
+  exit 1
+fi
+TF_VAR_ssh_public_key="$(<"$PUBKEY_PATH")"
+export_var "TF_VAR_ssh_public_key" "${TF_VAR_ssh_public_key}"
+echo "Using SSH public key: $PUBKEY_PATH"
+
 # Ensure required secrets are available
 : "${TF_VAR_vultr_api_key:?Environment variable not set}"
 : "${R2_ACCESS_KEY_ID:?Environment variable not set}"
@@ -267,37 +307,6 @@ if [[ "$SECRETS_ONLY" == "true" ]]; then
   echo "Secrets exported successfully."
   exit 0
 fi
-
-# ============================================================================
-# Workstation-only setup (unchanged intent, but gated)
-# ============================================================================
-
-# Discover caller public IPv4 and pass it to OpenTofu as admin_subnets
-MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
-if [[ -z "$MYIP" ]]; then
-  echo "❌ Could not determine public IPv4 (check network/DNS/proxy)."
-  exit 1
-fi
-
-export TF_VAR_admin_subnets
-TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
-echo "Restricting SSH to your IP: ${MYIP}/32"
-
-# SSH public key injection (for Vultr SSH key resource)
-PUBKEY_PATH="${GHOST_SSH_PUBKEY:-$HOME/.ssh/ghost-dev.pub}"
-if [[ ! -f "$PUBKEY_PATH" ]]; then
-  echo "❌ SSH public key not found at: $PUBKEY_PATH"
-  echo "   Set GHOST_SSH_PUBKEY to the correct path or create one:"
-  echo "   ssh-keygen -t ed25519 -C \"ghost-dev\" -f ~/.ssh/ghost-dev"
-  exit 1
-fi
-if [[ ! -s "$PUBKEY_PATH" ]]; then
-  echo "❌ SSH public key file missing or empty: $PUBKEY_PATH"
-  exit 1
-fi
-TF_VAR_ssh_public_key="$(<"$PUBKEY_PATH")"
-export TF_VAR_ssh_public_key
-echo "Using SSH public key: $PUBKEY_PATH"
 
 # Build container if enabled
 if [[ "$BUILD_CONTAINER" == "true" ]]; then
