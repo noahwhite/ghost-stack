@@ -117,5 +117,7 @@ jobs:
             -e TF_VAR_GC_ACCESS_TOK="${{ env.TF_VAR_GC_ACCESS_TOK }}" \
             -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}" \
             -e TF_BACKEND_BUCKET="${{ env.TF_BACKEND_BUCKET }}" \
+            -e TF_VAR_admin_subnets="${{ env.TF_VAR_admin_subnets }}" \
+            -e TF_VAR_ssh_public_key="${{ env.TF_VAR_ssh_public_key }}" \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev plan -out=opentofu/envs/dev/tfplan"
