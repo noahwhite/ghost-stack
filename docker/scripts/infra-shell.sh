@@ -249,14 +249,18 @@ fi
 
 # Set admin subnets based on mode
 if [[ "$CI_MODE" == "true" ]]; then
-  # CI mode: Use admin IP from GitHub secret
+  # CI mode: Use admin IP from GitHub secret (optional for backward compatibility during transition)
   if [[ -z "${ADMIN_IP_DEV:-}" ]]; then
-    echo "❌ Missing required environment variable in CI mode: ADMIN_IP_DEV" >&2
-    echo "   This should be set from a GitHub secret containing your workstation IP" >&2
-    exit 1
+    echo "⚠️  Warning: ADMIN_IP_DEV not set in CI mode" >&2
+    echo "   Using empty admin subnets (no SSH access)" >&2
+    echo "   Set ADMIN_IP_DEV secret in GitHub for proper SSH firewall configuration" >&2
+    TF_VAR_admin_subnets='[]'
+  else
+    MYIP="${ADMIN_IP_DEV}"
+    echo "Using admin IP from GitHub secret: ${MYIP}/32"
+    TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
   fi
-  MYIP="${ADMIN_IP_DEV}"
-  echo "Using admin IP from GitHub secret: ${MYIP}/32"
+  export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
 else
   # Workstation mode: Detect public IP dynamically
   MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
@@ -265,10 +269,9 @@ else
     exit 1
   fi
   echo "Restricting SSH to your IP: ${MYIP}/32"
+  TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
+  export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
 fi
-
-TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
-export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
 
 # Set SSH public key from repo (same for both workstation and CI modes)
 REPO_ROOT="$(git rev-parse --show-toplevel)"
