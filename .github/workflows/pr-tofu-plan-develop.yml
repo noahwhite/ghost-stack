@@ -55,6 +55,8 @@ jobs:
           BOOTSTRAP_R2_BUCKET_DEV: ${{ vars.BOOTSTRAP_R2_BUCKET_DEV }}
           # GitHub secret for workstation IP (used for SSH firewall rules)
           ADMIN_IP_DEV: ${{ secrets.ADMIN_IP_DEV }}
+          # GitHub secret for Cloudflare Zone ID (from bootstrap outputs)
+          CLOUDFLARE_ZONE_ID_DEV: ${{ secrets.CLOUDFLARE_ZONE_ID_DEV }}
         run: |
           ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 
@@ -137,6 +139,7 @@ jobs:
           TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
           TF_VAR_admin_subnets: ${{ env.TF_VAR_admin_subnets }}
           TF_VAR_ssh_public_key: ${{ env.TF_VAR_ssh_public_key }}
+          TF_VAR_cloudflare_zone_id: ${{ env.TF_VAR_cloudflare_zone_id }}
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/home/devops/app" \
@@ -157,5 +160,6 @@ jobs:
             -e TF_BACKEND_BUCKET \
             -e TF_VAR_admin_subnets \
             -e TF_VAR_ssh_public_key \
+            -e TF_VAR_cloudflare_zone_id \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev plan -out=opentofu/envs/dev/tfplan"

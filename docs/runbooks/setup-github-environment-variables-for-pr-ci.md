@@ -42,7 +42,13 @@ The workflow uses:
 
 **Important**: This IP address must be manually updated in GitHub if your workstation's public IP changes (e.g., if you switch networks or your ISP rotates your IP).
 
-### 3. SSH Public Key
+### 3. CLOUDFLARE_ZONE_ID_DEV
+
+**Type**: Secret
+
+**Description**: The Cloudflare Zone ID for the domain used in the `dev` environment. This is output from the bootstrap Terraform state and is used to create DNS records. While not strictly sensitive, it's stored as a secret to match the pattern of other infrastructure identifiers.
+
+### 4. SSH Public Key
 
 **Type**: Repository file (`keys/ghost-dev.pub`)
 
@@ -88,6 +94,28 @@ This will output your current public IP address, for example: `203.0.113.42`
 - You reconnect to your VPN
 
 If your IP changes, you must manually update the `ADMIN_IP_DEV` secret in GitHub for CI-managed infrastructure to remain accessible from your workstation.
+
+### Retrieve the Cloudflare Zone ID
+
+On your local workstation where you have the bootstrap Terraform state:
+
+```bash
+# Navigate to the bootstrap directory
+cd /path/to/repo/opentofu/bootstrap
+
+# Initialize the bootstrap environment (this is required before reading outputs)
+tofu init -reconfigure -backend-config="path=envs/dev/terraform.tfstate"
+
+# Read the Cloudflare Zone ID output
+tofu output -state=envs/dev/terraform.tfstate -raw cloudflare_zone_id
+```
+
+This will output the zone ID, which should look something like: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
+
+**Important Notes**:
+- If you encounter errors during `tofu init`, ensure you're in the `opentofu/bootstrap` directory and that the `envs/dev/terraform.tfstate` file exists.
+- **Do NOT include the `%` character** if you see one at the end of the output. The `%` is a shell prompt indicator (common in Zsh) showing that the output didn't end with a newline - it is NOT part of the zone ID.
+  - Example: If you see `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6%`, the actual zone ID is `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
 
 ## Steps to Configure GitHub Variables and Secrets
 
@@ -141,6 +169,30 @@ If your IP changes, you must manually update the `ADMIN_IP_DEV` secret in GitHub
    - **Secret**: Your workstation's public IP address (e.g., `203.0.113.42`)
 6. Click **Add secret**
 
+### Configure CLOUDFLARE_ZONE_ID_DEV (Secret)
+
+#### Option 1: Repository-level Secret (Recommended for single environment)
+
+1. Navigate to your GitHub repository
+2. Click on **Settings** → **Secrets and variables** → **Actions**
+3. Click on the **Secrets** tab
+4. Click **New repository secret**
+5. Set the following values:
+   - **Name**: `CLOUDFLARE_ZONE_ID_DEV`
+   - **Secret**: The Cloudflare Zone ID retrieved from the bootstrap state (e.g., `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`)
+6. Click **Add secret**
+
+#### Option 2: Environment-level Secret (Recommended for multiple environments)
+
+1. Navigate to your GitHub repository
+2. Click on **Settings** → **Environments**
+3. Click on the `dev` environment (or create it if it doesn't exist)
+4. Under **Environment secrets**, click **Add secret**
+5. Set the following values:
+   - **Name**: `CLOUDFLARE_ZONE_ID_DEV`
+   - **Secret**: The Cloudflare Zone ID retrieved from the bootstrap state (e.g., `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`)
+6. Click **Add secret**
+
 ### Configure SSH Public Key (Repository File)
 
 The SSH public key is stored in the repository itself, not as a GitHub secret:
@@ -168,6 +220,7 @@ After configuring all variables and secrets, you can verify they're set correctl
 3. Checking the GitHub Actions workflow run for these log lines:
    - `Using bootstrap R2 bucket from GitHub environment variable: <bucket-name>`
    - `Using admin IP from GitHub secret: <your-ip>/32`
+   - `Using Cloudflare Zone ID from GitHub variable`
    - `Using SSH public key: /home/devops/app/keys/ghost-dev.pub`
 4. Verifying that the `tofu init`, `tofu validate`, and `tofu plan` steps complete successfully
 
@@ -182,6 +235,7 @@ The workflow integrates these configurations as follows:
        BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
        BOOTSTRAP_R2_BUCKET_DEV: ${{ vars.BOOTSTRAP_R2_BUCKET_DEV }}
        ADMIN_IP_DEV: ${{ secrets.ADMIN_IP_DEV }}
+       CLOUDFLARE_ZONE_ID_DEV: ${{ secrets.CLOUDFLARE_ZONE_ID_DEV }}
      run: |
        ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
    ```
@@ -191,6 +245,11 @@ The workflow integrates these configurations as follows:
    # Set TF_BACKEND_BUCKET from GitHub variable
    if [[ "$CI_MODE" == "true" && -n "${BOOTSTRAP_R2_BUCKET_DEV:-}" ]]; then
      TF_BACKEND_BUCKET="${BOOTSTRAP_R2_BUCKET_DEV}"
+   fi
+
+   # Set Cloudflare Zone ID from GitHub secret (CI mode)
+   if [[ "$CI_MODE" == "true" && -n "${CLOUDFLARE_ZONE_ID_DEV:-}" ]]; then
+     TF_VAR_cloudflare_zone_id="${CLOUDFLARE_ZONE_ID_DEV}"
    fi
 
    # Set admin subnets from GitHub secret (CI) or detect IP (workstation)
@@ -293,6 +352,11 @@ The workflow integrates these configurations as follows:
 - Your ISP rotates your IP address
 - You need to grant access from a different location
 
+**CLOUDFLARE_ZONE_ID_DEV** - Update when:
+- The Cloudflare zone is changed or recreated
+- Migrating to a different domain
+- The bootstrap infrastructure is recreated with a new zone
+
 **SSH Public Key** (keys/ghost-dev.pub) - Update when:
 - Rotating SSH keys for security
 - Changing the admin workstation
@@ -309,6 +373,8 @@ When adding new environments (e.g., `staging`, `prod`), create corresponding var
 **Secrets**:
 - `ADMIN_IP_STAGING`
 - `ADMIN_IP_PROD`
+- `CLOUDFLARE_ZONE_ID_STAGING`
+- `CLOUDFLARE_ZONE_ID_PROD`
 
 **SSH Keys** (if different per environment):
 - `keys/ghost-staging.pub`

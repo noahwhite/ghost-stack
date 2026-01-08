@@ -247,6 +247,13 @@ if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
   export_var "TF_BACKEND_BUCKET" "${TF_BACKEND_BUCKET}"
 fi
 
+# Set Cloudflare Zone ID in CI mode (from GitHub variable)
+if [[ "$CI_MODE" == "true" && -n "${CLOUDFLARE_ZONE_ID_DEV:-}" ]]; then
+  TF_VAR_cloudflare_zone_id="${CLOUDFLARE_ZONE_ID_DEV}"
+  export_var "TF_VAR_cloudflare_zone_id" "${TF_VAR_cloudflare_zone_id}"
+  echo "Using Cloudflare Zone ID from GitHub variable"
+fi
+
 # Set admin subnets based on mode
 if [[ "$CI_MODE" == "true" ]]; then
   # CI mode: Use admin IP from GitHub secret (optional for backward compatibility during transition)

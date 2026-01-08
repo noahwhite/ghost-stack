@@ -55,6 +55,7 @@ provider "grafana" {
 }
 
 data "terraform_remote_state" "bootstrap" {
+  count   = var.cloudflare_zone_id == "" ? 1 : 0
   backend = "local"
 
   # TODO: Parameterize the env when we have staging and prod envs so we find the right bootstrap state for the env
@@ -62,6 +63,11 @@ data "terraform_remote_state" "bootstrap" {
   config = {
     path = "${path.module}/../../bootstrap/envs/dev/terraform.tfstate"
   }
+}
+
+locals {
+  # Use variable if provided (CI mode), otherwise read from bootstrap state (workstation mode)
+  cloudflare_zone_id = var.cloudflare_zone_id != "" ? var.cloudflare_zone_id : data.terraform_remote_state.bootstrap[0].outputs.cloudflare_zone_id
 }
 
 module "grafana-cloud" {
@@ -82,7 +88,7 @@ module "tailscale" {
 
 module "dns_records" {
   source             = "../../modules/cloudflare/dns_records"
-  cloudflare_zone_id = data.terraform_remote_state.bootstrap.outputs.cloudflare_zone_id
+  cloudflare_zone_id = local.cloudflare_zone_id
   origin_ipv4        = module.vm.main_ip
 }
 
