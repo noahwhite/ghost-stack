@@ -256,17 +256,14 @@ fi
 
 # Set admin subnets based on mode
 if [[ "$CI_MODE" == "true" ]]; then
-  # CI mode: Use admin IP from GitHub secret (optional for backward compatibility during transition)
+  # CI mode: Use admin IP from GitHub secret (required)
   if [[ -z "${ADMIN_IP_DEV:-}" ]]; then
-    echo "⚠️  Warning: ADMIN_IP_DEV not set in CI mode" >&2
-    echo "   Using empty admin subnets (no SSH access)" >&2
-    echo "   Set ADMIN_IP_DEV secret in GitHub for proper SSH firewall configuration" >&2
-    TF_VAR_admin_subnets='[]'
-  else
-    MYIP="${ADMIN_IP_DEV}"
-    echo "Using admin IP from GitHub secret: ${MYIP}/32"
-    TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
+    echo "❌ ADMIN_IP_DEV not set in CI mode. Please configure the GitHub secret." >&2
+    exit 1
   fi
+  MYIP="${ADMIN_IP_DEV}"
+  echo "Using admin IP from GitHub secret: ${MYIP}/32"
+  TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
   export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
 else
   # Workstation mode: Detect public IP dynamically
