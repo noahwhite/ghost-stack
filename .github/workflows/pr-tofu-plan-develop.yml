@@ -163,3 +163,18 @@ jobs:
             -e TF_VAR_cloudflare_zone_id \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev plan -out=tfplan"
+
+      - name: Generate human-readable plan output
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && tofu -chdir=opentofu/envs/dev show -no-color tfplan > opentofu/envs/dev/plan-output.txt"
+
+      - name: Upload plan as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tofu-plan-dev-${{ github.event.pull_request.number }}
+          path: opentofu/envs/dev/plan-output.txt
+          retention-days: 30
