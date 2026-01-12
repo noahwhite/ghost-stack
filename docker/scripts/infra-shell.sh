@@ -219,10 +219,10 @@ prompt_if_empty "TF_VAR_pd_user_tok" "Enter your PagerDuty user API token: " tru
 prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
 prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
 
-# In CI mode, check if BOOTSTRAP_R2_BUCKET_DEV is set (passed from GitHub Actions workflow)
+# In CI mode, check if BOOTSTRAP_R2_BUCKET is set (passed from GitHub Actions environment variable)
 # This allows CI to bypass bootstrap state lookup by providing the bucket name directly
-if [[ "$CI_MODE" == "true" && -n "${BOOTSTRAP_R2_BUCKET_DEV:-}" ]]; then
-  TF_BACKEND_BUCKET="${BOOTSTRAP_R2_BUCKET_DEV}"
+if [[ "$CI_MODE" == "true" && -n "${BOOTSTRAP_R2_BUCKET:-}" ]]; then
+  TF_BACKEND_BUCKET="${BOOTSTRAP_R2_BUCKET}"
   echo "Using bootstrap R2 bucket from GitHub environment variable: ${TF_BACKEND_BUCKET}"
 fi
 
@@ -247,26 +247,23 @@ if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
   export_var "TF_BACKEND_BUCKET" "${TF_BACKEND_BUCKET}"
 fi
 
-# Set Cloudflare Zone ID in CI mode (from GitHub variable)
-if [[ "$CI_MODE" == "true" && -n "${CLOUDFLARE_ZONE_ID_DEV:-}" ]]; then
-  TF_VAR_cloudflare_zone_id="${CLOUDFLARE_ZONE_ID_DEV}"
+# Set Cloudflare Zone ID in CI mode (from GitHub environment secret)
+if [[ "$CI_MODE" == "true" && -n "${CLOUDFLARE_ZONE_ID:-}" ]]; then
+  TF_VAR_cloudflare_zone_id="${CLOUDFLARE_ZONE_ID}"
   export_var "TF_VAR_cloudflare_zone_id" "${TF_VAR_cloudflare_zone_id}"
-  echo "Using Cloudflare Zone ID from GitHub variable"
+  echo "Using Cloudflare Zone ID from GitHub environment secret"
 fi
 
 # Set admin subnets based on mode
 if [[ "$CI_MODE" == "true" ]]; then
-  # CI mode: Use admin IP from GitHub secret (optional for backward compatibility during transition)
-  if [[ -z "${ADMIN_IP_DEV:-}" ]]; then
-    echo "⚠️  Warning: ADMIN_IP_DEV not set in CI mode" >&2
-    echo "   Using empty admin subnets (no SSH access)" >&2
-    echo "   Set ADMIN_IP_DEV secret in GitHub for proper SSH firewall configuration" >&2
-    TF_VAR_admin_subnets='[]'
-  else
-    MYIP="${ADMIN_IP_DEV}"
-    echo "Using admin IP from GitHub secret: ${MYIP}/32"
-    TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
+  # CI mode: Use admin IP from GitHub environment secret (required)
+  if [[ -z "${ADMIN_IP:-}" ]]; then
+    echo "❌ ADMIN_IP not set in CI mode. Please configure the GitHub environment secret." >&2
+    exit 1
   fi
+  MYIP="${ADMIN_IP}"
+  echo "Using admin IP from GitHub environment secret: ${MYIP}/32"
+  TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
   export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
 else
   # Workstation mode: Detect public IP dynamically

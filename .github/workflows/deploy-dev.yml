@@ -1,0 +1,56 @@
+name: Deploy to Dev Environment
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Required if the GHCR image is private
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          docker login ghcr.io -u "noahwhite" --password-stdin <<< "$GHCR_TOKEN"
+
+      - name: Pull deployment tools image
+        run: |
+          docker pull ghcr.io/noahwhite/ghost-stack-shell:latest
+
+      - name: Verify deployment context
+        run: |
+          echo "✅ Deployment workflow triggered for develop branch"
+          echo "   Environment: dev"
+          echo "   Working directory: ${GITHUB_WORKSPACE}"
+          echo "   Runner: $(uname -a)"
+
+      - name: Verify tooling availability
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && echo '✅ Docker tooling verified' && tofu version && docker-compose version"
+
+      - name: Deployment placeholder
+        run: |
+          echo "⏸️  Deployment orchestration established"
+          echo "   No deployment actions executed in this story"
+          echo "   Future stories will add:"
+          echo "   - Docker Compose operations"
+          echo "   - Service restarts"
+          echo "   - Ghost deployment"
