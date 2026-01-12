@@ -44,7 +44,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/home/devops/app" \
             -w /home/devops/app \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
-            bash -c "git config --global --add safe.directory /home/devops/app && echo '✅ Docker tooling verified' && tofu version && docker-compose version"
+            bash -c "git config --global --add safe.directory /home/devops/app && echo '✅ OpenTofu tooling verified' && tofu version"
 
       - name: Deployment placeholder
         run: |
