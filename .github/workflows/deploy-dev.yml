@@ -248,12 +248,48 @@ jobs:
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev apply tfplan"
 
+      - name: Verify Ghost health after deployment
+        if: env.PLANS_MATCH == 'true'
+        run: |
+          echo "🏥 Starting health checks for Ghost deployment..."
+
+          MAX_RETRIES=30
+          RETRY_INTERVAL=10
+          URL="https://separationofconcerns.dev"
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt $i of $MAX_RETRIES..."
+            HTTP_CODE=$(curl -fsSL --max-time 10 -o /dev/null -w "%{http_code}" "$URL" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Ghost is healthy - received HTTP $HTTP_CODE"
+              echo "HEALTH_CHECK_PASSED=true" >> $GITHUB_ENV
+              exit 0
+            fi
+
+            echo "   Received HTTP $HTTP_CODE, waiting ${RETRY_INTERVAL}s before retry..."
+            sleep $RETRY_INTERVAL
+          done
+
+          echo "❌ Health check failed after $MAX_RETRIES attempts ($(($MAX_RETRIES * $RETRY_INTERVAL))s timeout)"
+          echo "   Last HTTP response code: $HTTP_CODE"
+          exit 1
+
       - name: Deployment summary
         if: always()
         run: |
-          if [ "${{ env.PLANS_MATCH }}" == "true" ]; then
-            echo "✅ Deployment completed successfully"
-            echo "   PR #${{ steps.pr.outputs.number }} changes applied to dev environment"
+          echo "================================"
+          echo "Deployment Summary"
+          echo "================================"
+          if [ "${{ env.PLANS_MATCH }}" == "true" ] && [ "${{ env.HEALTH_CHECK_PASSED }}" == "true" ]; then
+            echo "✅ Infrastructure changes applied successfully"
+            echo "✅ Ghost health check passed"
+            echo "   PR #${{ steps.pr.outputs.number }} deployed to dev environment"
+            echo "   URL: https://separationofconcerns.dev"
+          elif [ "${{ env.PLANS_MATCH }}" == "true" ]; then
+            echo "✅ Infrastructure changes applied"
+            echo "❌ Ghost health check failed"
+            echo "   PR #${{ steps.pr.outputs.number }} - deployment may need investigation"
           else
             echo "❌ Deployment failed - plans did not match"
             echo "   State drift detected since PR approval"
