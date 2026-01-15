@@ -259,7 +259,7 @@ jobs:
 
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Health check attempt $i of $MAX_RETRIES..."
-            HTTP_CODE=$(curl -fsSL --max-time 10 -o /dev/null -w "%{http_code}" "$URL" 2>/dev/null || echo "000")
+            HTTP_CODE=$(curl -sSL --max-time 10 -o /dev/null -w "%{http_code}" "$URL" 2>&1 || echo "000")
 
             if [ "$HTTP_CODE" = "200" ]; then
               echo "✅ Ghost is healthy - received HTTP $HTTP_CODE"
