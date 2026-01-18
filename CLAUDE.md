@@ -18,6 +18,13 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - Follow existing test patterns (see `grafana-cloud.tofutest.hcl`, `vultr-firewall.tofutest.hcl`, `tailscale.tofutest.hcl`)
 - When staging and prod environments are added, tests will follow the same pattern under `opentofu/envs/<env>/tests/`
 
+## Linear Integration
+
+- **Always set Noah White as the project lead** when creating new projects
+- Use the `ghost-stack` team for all issues and projects
+- Include detailed acceptance criteria in issue descriptions
+- Link related issues using dependencies where applicable
+
 ## Project Overview
 
 Ghost Stack is an infrastructure-as-code project for deploying a self-hosted Ghost blog on Flatcar Container Linux. The stack runs on Vultr cloud with Cloudflare for DNS/CDN, Caddy as reverse proxy, and uses OpenTofu for infrastructure provisioning.
