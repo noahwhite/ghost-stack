@@ -25,6 +25,16 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - Include detailed acceptance criteria in issue descriptions
 - Link related issues using dependencies where applicable
 
+### Epic/Project Labeling
+
+When creating epics (Linear projects):
+- Apply the **"Epic"** label to identify it as an epic
+- Apply a **t-shirt size label** based on total story points:
+  - T-Shirt Size Small: ~5-10 story points
+  - T-Shirt Size Medium: ~15-25 story points
+  - T-Shirt Size Large: ~30+ story points
+- Reference: See `[EPIC] Secure Remote Management via Private Networking` as an example
+
 ### User Story Template
 
 All user stories must follow this standard template format (see GHO-21 for reference):
