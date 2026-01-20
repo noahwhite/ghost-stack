@@ -25,6 +25,53 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - Include detailed acceptance criteria in issue descriptions
 - Link related issues using dependencies where applicable
 
+### User Story Template
+
+All user stories must follow this standard template format (see GHO-21 for reference):
+
+```markdown
+**Story Summary**
+
+As a [role], I want [feature/capability], so that [business value].
+
+---
+
+**✅ Acceptance Criteria**
+
+- [ ] Clear, testable criteria
+- [ ] Use Given/When/Then format if applicable
+
+---
+
+**📝 Additional Context**
+
+* Design: [Design considerations or approach]
+* Docs: [Documentation to update or reference]
+* Related Issues/PRs: [Links and dependencies]
+
+---
+
+**📦 Definition of Ready**
+
+- [ ] Acceptance criteria defined
+- [ ] No unresolved external dependencies
+- [ ] Story is estimated
+- [ ] Team has necessary skills and access
+- [ ] Priority is clear
+- [ ] Business value understood
+
+---
+
+**✅ Definition of Done**
+
+- [ ] All acceptance criteria met
+- [ ] Unit/integration tests written & passing
+- [ ] Peer-reviewed
+- [ ] Docs updated (if applicable)
+- [ ] Verified in staging (if needed)
+- [ ] No critical bugs/regressions
+```
+
 ## Project Overview
 
 Ghost Stack is an infrastructure-as-code project for deploying a self-hosted Ghost blog on Flatcar Container Linux. The stack runs on Vultr cloud with Cloudflare for DNS/CDN, Caddy as reverse proxy, and uses OpenTofu for infrastructure provisioning.
