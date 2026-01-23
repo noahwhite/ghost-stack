@@ -245,8 +245,9 @@ The Grafana Alloy systemd-sysext image is built automatically by the
    ./opentofu/scripts/tofu.sh dev apply
    ```
 
-**Note:** The instance will need to be reprovisioned for the new sysext to take effect,
-as the Ignition config is only applied on first boot.
+**Note:** Changing the Butane configuration (including the Alloy version) will cause
+OpenTofu to destroy and recreate the instance, as the Ignition config is immutable
+and only applied on first boot. This is the expected idempotent behavior.
 
 ### Debugging deployment failures
 1. Check GitHub Actions logs
