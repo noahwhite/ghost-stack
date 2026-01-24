@@ -53,7 +53,6 @@ GitHub secrets are scoped at two levels:
 |-------|--------|--------------|---------------|-----------|------------|
 | GHCR RW Token | GitHub PAT | N/A | `GHCR_TOKEN` | Repository | Configurable |
 | BWS Access Token | Bitwarden | N/A | `BWS_ACCESS_TOKEN` | Environment (dev) | Never* |
-| BWS Access Token | Bitwarden | N/A | `BWS_ACCESS_TOKEN_DEV` | Repository | Never* |
 | Claude MCP Token | GitHub PAT | N/A | N/A (local) | N/A | Configurable |
 | Cloudflare API Token | Cloudflare | `59624245-...` | N/A | N/A | Configurable |
 | Cloudflare Token Creator | Cloudflare | N/A | N/A | N/A | 30 days recommended |
@@ -150,11 +149,9 @@ GitHub secrets are scoped at two levels:
 
 **Purpose:** Authenticate to Bitwarden Secrets Manager to retrieve runtime secrets in CI/CD.
 
-**Scope:**
-- **Environment-scoped (`BWS_ACCESS_TOKEN`):** Used by deploy workflows with `environment: dev`
-- **Repository-level (`BWS_ACCESS_TOKEN_DEV`):** Used by PR workflows (matches `ADMIN_IP_DEV` pattern)
+**Scope:** Environment-scoped (`environment: dev`)
 
-This naming convention provides clear environment isolation and aligns with other secrets like `ADMIN_IP_DEV` and `CLOUDFLARE_ZONE_ID_DEV`.
+Both PR and deploy workflows use `environment: dev`, so a single environment-scoped secret is sufficient.
 
 **Expiration:** Machine account tokens do not expire, but rotation is recommended every 6-12 months.
 
@@ -169,17 +166,10 @@ This naming convention provides clear environment isolation and aligns with othe
    - Name: Include date (e.g., `ci-2025-01`)
    - Copy the token immediately (shown only once)
 
-2. **Update GitHub Secrets:**
-
-   For **environment-scoped** (deploy workflows):
+2. **Update GitHub Secret:**
    - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → dev
    - Find `BWS_ACCESS_TOKEN`
    - Click pencil icon → Update → paste new token → Update secret
-
-   For **repository-level** (PR workflows):
-   - Go to Settings → Secrets and variables → Actions
-   - Find `BWS_ACCESS_TOKEN_DEV` under Repository secrets
-   - Click "Update" → paste new token → Update secret
 
 3. **Revoke old token:**
    - In Bitwarden, delete the old access token from the machine account

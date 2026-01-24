@@ -14,6 +14,7 @@ permissions:
 jobs:
   tofu-plan:
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - name: Install Bitwarden Secrets Manager CLI (bws)
@@ -49,7 +50,7 @@ jobs:
 
       - name: Retrieve secrets via infra-shell.sh (CI mode)
         env:
-          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN_DEV }}
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           # GitHub repository variable for R2 bucket name
           BOOTSTRAP_R2_BUCKET_DEV: ${{ vars.BOOTSTRAP_R2_BUCKET_DEV }}
           # GitHub repository secret for workstation IP (used for SSH firewall rules)
