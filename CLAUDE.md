@@ -10,6 +10,9 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - All PR comments must be formatted in markdown
 - Use todo lists to track multi-step tasks
 - **Never add "Generated with Claude Code" or similar attribution lines to PRs or commits**
+- **Never add Co-Authored-By lines to commits**
+- **Always create PRs instead of committing directly to main or protected branches**
+- **Always assign PRs to Noah White**
 
 ## Testing Requirements
 
