@@ -9,6 +9,7 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - All commit messages should be clear and descriptive
 - All PR comments must be formatted in markdown
 - Use todo lists to track multi-step tasks
+- **Never add "Generated with Claude Code" or similar attribution lines to PRs or commits**
 
 ## Testing Requirements
 
@@ -130,9 +131,10 @@ docs/                   # Documentation
 ## Important Patterns
 
 ### Secrets Management
-- **Environment-scoped secrets**: Used in deploy workflows (e.g., `ADMIN_IP`, `CLOUDFLARE_ZONE_ID`)
-- **Repository-level secrets with `_DEV` suffix**: Used in PR workflows (can't access environment secrets)
+- **Environment-scoped secrets**: Used by both PR and deploy workflows (e.g., `BWS_ACCESS_TOKEN`, `ADMIN_IP`, `CLOUDFLARE_ZONE_ID`)
+- **Repository-level secrets**: Only `GHCR_TOKEN` remains at repository level (for workflows without environment)
 - **Bitwarden Secrets Manager**: Retrieves secrets at runtime via `infra-shell.sh`
+- See `docs/token-rotation-runbook.md` for complete token inventory and rotation procedures
 
 ### OpenTofu Wrapper Script
 Use `./opentofu/scripts/tofu.sh` instead of `tofu` directly:
