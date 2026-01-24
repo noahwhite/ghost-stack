@@ -69,8 +69,8 @@ GitHub secrets are scoped at two levels:
 | Grafana Cloud Token | Grafana | `bfc8dd06-...` | N/A | N/A | Never |
 | Grafana Cloud SA Token | Grafana | `3ebc4398-...` | N/A | N/A | Never |
 | Linear API Token | Linear | N/A | N/A (local) | N/A | Never |
-| Admin IP | N/A | N/A | `ADMIN_IP` / `ADMIN_IP_DEV` | Both | N/A |
-| Cloudflare Zone ID | N/A | N/A | `CLOUDFLARE_ZONE_ID` / `CLOUDFLARE_ZONE_ID_DEV` | Both | N/A |
+| Admin IP | N/A | N/A | `ADMIN_IP` | Environment (dev) | N/A |
+| Cloudflare Zone ID | N/A | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
 | Health Check Token | N/A | N/A | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
 
 *Bitwarden machine account tokens do not expire but should be rotated periodically.
