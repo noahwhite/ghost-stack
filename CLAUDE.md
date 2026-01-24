@@ -191,10 +191,26 @@ docker restart ghost-compose-caddy-1
 cd /var/mnt/storage/ghost-compose
 ```
 
+## Branch Naming Convention
+
+**All feature branches must follow the `feature/**` pattern** (e.g., `feature/GHO-XX-description`).
+
+This naming convention is required because:
+- The `dev` GitHub environment restricts which branches can access environment-scoped secrets
+- Only `develop` and `feature/**` branches are allowed to access dev environment secrets
+- PR workflows use `environment: dev` to access secrets for `tofu plan` checks
+
+Examples of valid branch names:
+- `feature/GHO-42-add-token-rotation-runbook`
+- `feature/add-new-module`
+- `feature/fix-firewall-rules`
+
+Branches not matching this pattern will fail PR checks due to environment protection rules.
+
 ## Common Tasks
 
 ### Creating a new feature
-1. Create branch from develop: `git checkout -b feature/GHO-XX`
+1. Create branch from develop: `git checkout -b feature/GHO-XX-description`
 2. Make changes
 3. Push and create PR to develop
 4. PR checks run automatically (fmt, plan)
