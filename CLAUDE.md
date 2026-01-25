@@ -9,6 +9,10 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - All commit messages should be clear and descriptive
 - All PR comments must be formatted in markdown
 - Use todo lists to track multi-step tasks
+- **Never add "Generated with Claude Code" or similar attribution lines to PRs or commits**
+- **Never add Co-Authored-By lines to commits**
+- **Always create PRs instead of committing directly to main or protected branches**
+- **Always assign PRs to Noah White**
 
 ## Testing Requirements
 
@@ -130,9 +134,10 @@ docs/                   # Documentation
 ## Important Patterns
 
 ### Secrets Management
-- **Environment-scoped secrets**: Used in deploy workflows (e.g., `ADMIN_IP`, `CLOUDFLARE_ZONE_ID`)
-- **Repository-level secrets with `_DEV` suffix**: Used in PR workflows (can't access environment secrets)
+- **Environment-scoped secrets**: Used by both PR and deploy workflows (e.g., `BWS_ACCESS_TOKEN`, `ADMIN_IP`, `CLOUDFLARE_ZONE_ID`)
+- **Repository-level secrets**: Only `GHCR_TOKEN` remains at repository level (for workflows without environment)
 - **Bitwarden Secrets Manager**: Retrieves secrets at runtime via `infra-shell.sh`
+- See `docs/token-rotation-runbook.md` for complete token inventory and rotation procedures
 
 ### OpenTofu Wrapper Script
 Use `./opentofu/scripts/tofu.sh` instead of `tofu` directly:
@@ -186,10 +191,25 @@ docker restart ghost-compose-caddy-1
 cd /var/mnt/storage/ghost-compose
 ```
 
+## Branch Naming Convention
+
+**All feature branches must follow the `feature/**` pattern** (e.g., `feature/GHO-XX-description`).
+
+This naming convention is recommended for consistency and traceability.
+
+### GitHub Environments
+- **`dev`**: Protected environment for actual deployments. Only `develop` branch can deploy. Used by `deploy-dev.yml`.
+- **`dev-ci`**: Shadow environment for PR validation. No branch restrictions. Used by `pr-tofu-plan-develop.yml` for `tofu plan` checks. Has required reviewers for security (public repo).
+
+Examples of valid branch names:
+- `feature/GHO-42-add-token-rotation-runbook`
+- `feature/add-new-module`
+- `feature/fix-firewall-rules`
+
 ## Common Tasks
 
 ### Creating a new feature
-1. Create branch from develop: `git checkout -b feature/GHO-XX`
+1. Create branch from develop: `git checkout -b feature/GHO-XX-description`
 2. Make changes
 3. Push and create PR to develop
 4. PR checks run automatically (fmt, plan)
