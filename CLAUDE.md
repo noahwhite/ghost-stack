@@ -215,6 +215,40 @@ Examples of valid branch names:
 4. PR checks run automatically (fmt, plan)
 5. Merge triggers deployment (requires approval)
 
+### Updating Alloy Sysext Version
+
+The Grafana Alloy systemd-sysext image is built automatically by the
+[alloy-sysext-build](https://github.com/noahwhite/alloy-sysext-build) repository.
+
+**To update to a new version:**
+
+1. **Trigger a build** in alloy-sysext-build:
+   - Create a GitHub release with the version tag (e.g., `v1.11.0`)
+   - Or use workflow_dispatch with the version number
+
+2. **Wait for CI** to build and upload the image to R2
+
+3. **Get the SHA256 hash** from the build output or download the checksum file:
+   ```bash
+   curl -s https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw.sha256
+   ```
+
+4. **Update ghost.bu** (`opentofu/modules/vultr/instance/userdata/ghost.bu`):
+   - Update the file path: `/opt/extensions/alloy/alloy-{VERSION}-amd64.raw`
+   - Update the source URL: `https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw`
+   - Update the hash: `sha256-{HASH}`
+   - Update the symlink target in the `links` section
+
+5. **Apply infrastructure changes**:
+   ```bash
+   ./opentofu/scripts/tofu.sh dev plan
+   ./opentofu/scripts/tofu.sh dev apply
+   ```
+
+**Note:** Changing the Butane configuration (including the Alloy version) will cause
+OpenTofu to destroy and recreate the instance, as the Ignition config is immutable
+and only applied on first boot. This is the expected idempotent behavior.
+
 ### Debugging deployment failures
 1. Check GitHub Actions logs
 2. SSH to instance and check container logs

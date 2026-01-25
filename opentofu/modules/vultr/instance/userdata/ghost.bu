@@ -8,6 +8,22 @@ storage:
       label: ghost-storage
 
   files:
+    # ==========================================================================
+    # Grafana Alloy Sysext Image
+    # ==========================================================================
+    # This systemd-sysext image is built automatically by the alloy-sysext-build
+    # repository: https://github.com/noahwhite/alloy-sysext-build
+    #
+    # To update to a new Alloy version:
+    #   1. Trigger a build in alloy-sysext-build (release or workflow_dispatch)
+    #   2. CI builds and uploads the new image to the R2 bucket
+    #   3. Get the SHA256 hash from the .sha256 file or build output
+    #   4. Update the path, source URL, and hash below
+    #   5. Apply infrastructure changes via OpenTofu
+    #
+    # Quick hash retrieval:
+    #   curl -s https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw.sha256
+    # ==========================================================================
     - path: /opt/extensions/alloy/alloy-1.10.2-amd64.raw
       mode: 0644
       contents:
@@ -82,6 +98,7 @@ storage:
       path: /etc/extensions/docker-compose.raw
       hard: false
 
+    # Symlink must be updated when changing Alloy version (path above)
     - target: /opt/extensions/alloy/alloy-1.10.2-amd64.raw
       path: /etc/extensions/alloy.raw
       hard: false
