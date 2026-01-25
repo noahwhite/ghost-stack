@@ -459,7 +459,7 @@ GitHub secrets are scoped at two levels:
    - Go to Administration → Users and access → Cloud access policies
    - Find the access policy named `ghost-stack-dev-terraform-token`
    - Click "Add token"
-   - Name: `soc-dev-grafana-cloud-access-tok-YYYY-MM-DD` (use expiration date)
+   - Name: `soc-dev-grafana-cloud-access-tok-DD-MM-YYYY` (use expiration date)
    - Set expiry to 30 days
    - Click "Create"
    - Copy the token immediately
