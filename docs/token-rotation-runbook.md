@@ -484,9 +484,10 @@ GitHub secrets are scoped at two levels:
 
 #### Troubleshooting
 
-- **Token appears truncated:** Grafana tokens are base64-encoded and often end with `=` or `==`. Ensure the entire token was copied including any trailing characters.
-- **401 Unauthorized after rotation:** Verify the token works with the curl command above before saving to Bitwarden. If curl fails, regenerate the token.
-- **Token format:** Valid tokens are typically 50+ characters. If significantly shorter, it was likely truncated during copy.
+- **Token appears truncated:** Grafana cloud access tokens are base64-encoded and often end with `=` or `==`. Ensure the entire token was copied including any trailing characters.
+- **Token format:** Valid cloud access tokens are typically 50+ characters and follow the pattern `glc_xxxx...xxxx==`. If significantly shorter or missing the `==` suffix, it was likely truncated during copy.
+- **401 Unauthorized after rotation:** Always verify the token works with the curl command above before saving to Bitwarden. If curl fails, regenerate the token.
+- **Copy issues:** When copying tokens, use the copy button in the Grafana UI rather than manual selection to avoid truncation.
 
 ---
 
@@ -534,9 +535,11 @@ GitHub secrets are scoped at two levels:
 
 #### Troubleshooting
 
-- **Token appears truncated:** Service account tokens are base64-encoded and often end with `=` or `==`. Ensure the entire token was copied.
-- **401 Unauthorized after rotation:** Verify the token works with the curl command above before saving to Bitwarden.
+- **Token appears truncated:** Service account tokens are base64-encoded and often end with `=` or `==`. Ensure the entire token was copied including any trailing characters.
+- **Token format:** Valid service account tokens are typically 50+ characters and follow the pattern `glsa_xxxx...xxxx==`. If significantly shorter or missing the `==` suffix, it was likely truncated during copy.
+- **401 Unauthorized after rotation:** Always verify the token works with the curl command above before saving to Bitwarden. If curl fails, regenerate the token.
 - **Wrong service account:** Ensure you're creating the token under `sa-1-extsvc-grafana-terraform-app`, not a different service account.
+- **Copy issues:** When copying tokens, use the copy button in the Grafana UI rather than manual selection to avoid truncation.
 
 ---
 
