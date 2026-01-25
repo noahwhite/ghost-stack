@@ -67,8 +67,8 @@ GitHub secrets are scoped at two levels:
 | PagerDuty Client ID | PagerDuty | `7d51661b-...` | N/A | N/A | Never |
 | PagerDuty Client Secret | PagerDuty | `b15575c0-...` | N/A | N/A | Never |
 | PagerDuty User Token | PagerDuty | `02805292-...` | N/A | N/A | Never |
-| Grafana Cloud Token | Grafana | `bfc8dd06-...` | N/A | N/A | Never |
-| Grafana Cloud SA Token | Grafana | `3ebc4398-...` | N/A | N/A | Never |
+| Grafana Cloud Token | Grafana | `bfc8dd06-...` | N/A | N/A | 30 days |
+| Grafana Cloud SA Token | Grafana | `3ebc4398-...` | N/A | N/A | 30 days |
 | Linear API Token | Linear | N/A | N/A (local) | N/A | Never |
 | Admin IP | N/A | N/A | `ADMIN_IP` | Environment (dev) | N/A |
 | Cloudflare Zone ID | N/A | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
@@ -446,48 +446,70 @@ GitHub secrets are scoped at two levels:
 
 **Purpose:** Configure Grafana Cloud observability via OpenTofu.
 
+**Bitwarden Secret:** `grafana_cloud_access_token`
+
 **Bitwarden Secret ID:** `bfc8dd06-bd97-499a-98f8-b3a101570606`
 
-**Expiration:** Never (but rotation recommended)
+**Expiration:** 30 days
 
 #### Rotation Steps
 
 1. **Generate new token:**
    - Log into Grafana Cloud
-   - Go to My Account → Access Policies
-   - Create new access policy or token with required permissions
-   - Copy the token
+   - Go to Administration → Users and access → Cloud access policies
+   - Find the access policy named `ghost-stack-dev-terraform-token`
+   - Click "Add token"
+   - Name: `soc-dev-grafana-cloud-access-tok-YYYY-MM-DD` (use expiration date)
+   - Set expiry to 30 days
+   - Click "Create"
+   - Copy the token immediately
 
 2. **Update Bitwarden:**
-   - Update secret `bfc8dd06-bd97-499a-98f8-b3a101570606` with new token
+   - Update the secret `grafana_cloud_access_token` with the new token value
+   - Update the notes field with the new expiration date
 
 3. **Revoke old token:**
-   - Delete the old access policy/token in Grafana Cloud
+   - In Grafana Cloud, delete the old token from the access policy
+
+4. **Verify:**
+   - Run `./opentofu/scripts/tofu.sh dev plan`
+   - Confirm Grafana Cloud provider initializes
 
 ---
 
 ### Grafana Cloud Terraform Service Account Token
 
-**Purpose:** Service account for Grafana Cloud Terraform provider (doc project).
+**Purpose:** Service account for Grafana Cloud Terraform provider (soc-dev project).
+
+**Bitwarden Secret:** `grafana_cloud_soc_dev_terraform_sa`
 
 **Bitwarden Secret ID:** `3ebc4398-f4fa-448c-b2c1-b3a6006c063d`
 
-**Expiration:** Configurable
+**Expiration:** 30 days
 
 #### Rotation Steps
 
 1. **Generate new token:**
    - Log into Grafana Cloud
-   - Go to Administration → Service accounts
-   - Find the relevant service account
-   - Create new token
-   - Copy the token
+   - Go to Administration → Users and access → Service Accounts
+   - Find the service account named `sa-1-extsvc-grafana-terraform-app`
+   - Click "Add service account token"
+   - Keep the auto-generated name
+   - Set expiration to 30 days
+   - Click "Generate token"
+   - Copy the token immediately
 
 2. **Update Bitwarden:**
-   - Update secret `3ebc4398-f4fa-448c-b2c1-b3a6006c063d` with new token
+   - Update the secret `grafana_cloud_soc_dev_terraform_sa` with the new token value
+   - Update the comment with the new token name (auto-generated)
+   - Update the notes field with the new expiration date
 
 3. **Delete old token:**
-   - Remove the old token from the service account
+   - In Grafana Cloud, remove the old token from the service account
+
+4. **Verify:**
+   - Run `./opentofu/scripts/tofu.sh dev plan`
+   - Confirm Grafana resources are accessible
 
 ---
 
