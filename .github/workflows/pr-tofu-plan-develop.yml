@@ -14,7 +14,7 @@ permissions:
 jobs:
   tofu-plan:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: dev-ci
 
     steps:
       - name: Install Bitwarden Secrets Manager CLI (bws)

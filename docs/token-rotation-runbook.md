@@ -39,9 +39,10 @@ GitHub secrets are scoped at two levels:
 | Scope | Usage | Naming Convention |
 |-------|-------|-------------------|
 | **Repository-level** | PR workflows (cannot access environment secrets) | `SECRET_NAME_DEV` suffix |
-| **Environment-scoped** | Deploy workflows (`environment: dev`) | `SECRET_NAME` (no suffix) |
+| **Environment-scoped (dev)** | Deploy workflows (`environment: dev`) | `SECRET_NAME` (no suffix) |
+| **Environment-scoped (dev-ci)** | PR workflows (`environment: dev-ci`) | `SECRET_NAME` (no suffix) |
 
-**Important:** When a secret is environment-scoped, you must update it in the GitHub environment settings (Settings → Environments → dev), not in the repository secrets.
+**Important:** When a secret is environment-scoped, you must update it in the GitHub environment settings (Settings → Environments → dev or dev-ci), not in the repository secrets. Secrets shared between `dev` and `dev-ci` must be updated in both environments.
 
 ---
 
@@ -149,9 +150,10 @@ GitHub secrets are scoped at two levels:
 
 **Purpose:** Authenticate to Bitwarden Secrets Manager to retrieve runtime secrets in CI/CD.
 
-**Scope:** Environment-scoped (`environment: dev`)
+**Scope:** Environment-scoped (`dev` and `dev-ci` environments)
 
-Both PR and deploy workflows use `environment: dev`, so a single environment-scoped secret is sufficient.
+- `dev` environment: Used by deploy workflows
+- `dev-ci` environment: Used by PR workflows (shadow environment for validation)
 
 **Expiration:** Machine account tokens do not expire, but rotation is recommended every 6-12 months.
 
@@ -166,10 +168,10 @@ Both PR and deploy workflows use `environment: dev`, so a single environment-sco
    - Name: Include date (e.g., `ci-2025-01`)
    - Copy the token immediately (shown only once)
 
-2. **Update GitHub Secret:**
+2. **Update GitHub Secrets (both environments):**
    - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → dev
-   - Find `BWS_ACCESS_TOKEN`
-   - Click pencil icon → Update → paste new token → Update secret
+   - Find `BWS_ACCESS_TOKEN` → Update → paste new token
+   - Repeat for Environments → dev-ci
 
 3. **Revoke old token:**
    - In Bitwarden, delete the old access token from the machine account

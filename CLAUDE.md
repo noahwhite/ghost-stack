@@ -195,17 +195,16 @@ cd /var/mnt/storage/ghost-compose
 
 **All feature branches must follow the `feature/**` pattern** (e.g., `feature/GHO-XX-description`).
 
-This naming convention is required because:
-- The `dev` GitHub environment restricts which branches can access environment-scoped secrets
-- Only `develop` and `feature/**` branches are allowed to access dev environment secrets
-- PR workflows use `environment: dev` to access secrets for `tofu plan` checks
+This naming convention is recommended for consistency and traceability.
+
+### GitHub Environments
+- **`dev`**: Protected environment for actual deployments. Only `develop` branch can deploy. Used by `deploy-dev.yml`.
+- **`dev-ci`**: Shadow environment for PR validation. No branch restrictions. Used by `pr-tofu-plan-develop.yml` for `tofu plan` checks. Has required reviewers for security (public repo).
 
 Examples of valid branch names:
 - `feature/GHO-42-add-token-rotation-runbook`
 - `feature/add-new-module`
 - `feature/fix-firewall-rules`
-
-Branches not matching this pattern will fail PR checks due to environment protection rules.
 
 ## Common Tasks
 
