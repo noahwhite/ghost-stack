@@ -471,9 +471,22 @@ GitHub secrets are scoped at two levels:
 3. **Revoke old token:**
    - In Grafana Cloud, delete the old token from the access policy
 
-4. **Verify:**
+4. **Verify the token before saving:**
+   ```bash
+   curl -H "Authorization: Bearer YOUR_TOKEN" https://grafana.com/api/instances
+   ```
+   - Should return a JSON response with your stacks
+   - If you get 401 Unauthorized, the token is invalid or truncated
+
+5. **Verify after updating Bitwarden:**
    - Run `./opentofu/scripts/tofu.sh dev plan`
    - Confirm Grafana Cloud provider initializes
+
+#### Troubleshooting
+
+- **Token appears truncated:** Grafana tokens are base64-encoded and often end with `=` or `==`. Ensure the entire token was copied including any trailing characters.
+- **401 Unauthorized after rotation:** Verify the token works with the curl command above before saving to Bitwarden. If curl fails, regenerate the token.
+- **Token format:** Valid tokens are typically 50+ characters. If significantly shorter, it was likely truncated during copy.
 
 ---
 
@@ -507,9 +520,23 @@ GitHub secrets are scoped at two levels:
 3. **Delete old token:**
    - In Grafana Cloud, remove the old token from the service account
 
-4. **Verify:**
+4. **Verify the token before saving:**
+   ```bash
+   curl -H "Authorization: Bearer YOUR_SA_TOKEN" \
+     https://separationofconcerns0dev.grafana.net/api/folders
+   ```
+   - Should return a JSON response with folders
+   - If you get 401 Unauthorized, the token is invalid or truncated
+
+5. **Verify after updating Bitwarden:**
    - Run `./opentofu/scripts/tofu.sh dev plan`
    - Confirm Grafana resources are accessible
+
+#### Troubleshooting
+
+- **Token appears truncated:** Service account tokens are base64-encoded and often end with `=` or `==`. Ensure the entire token was copied.
+- **401 Unauthorized after rotation:** Verify the token works with the curl command above before saving to Bitwarden.
+- **Wrong service account:** Ensure you're creating the token under `sa-1-extsvc-grafana-terraform-app`, not a different service account.
 
 ---
 
