@@ -14,6 +14,22 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - **Always create PRs instead of committing directly to main or protected branches**
 - **Always assign PRs to Noah White**
 
+### PR Creation Checklist
+
+After creating a PR with `mcp__github__create_pull_request`, **immediately** assign it:
+
+```
+mcp__github__issue_write(
+  method: "update",
+  owner: "noahwhite",
+  repo: "<repo-name>",
+  issue_number: <PR number>,
+  assignees: ["noahwhite"]
+)
+```
+
+Do NOT proceed with other tasks until the PR is assigned.
+
 ## Testing Requirements
 
 - Infrastructure tests must be added when modifying OpenTofu/infrastructure code

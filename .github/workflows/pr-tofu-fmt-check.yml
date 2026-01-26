@@ -1,13 +1,9 @@
-name: Feature branch tofu checks (containerized) with tok
+name: Feature branch tofu fmt check
 
 on:
   push:
     branches:
       - "feature/**"
-  pull_request:
-    branches:
-      - develop
-    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
