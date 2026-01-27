@@ -265,6 +265,40 @@ The Grafana Alloy systemd-sysext image is built automatically by the
 OpenTofu to destroy and recreate the instance, as the Ignition config is immutable
 and only applied on first boot. This is the expected idempotent behavior.
 
+### Updating Tailscale Sysext Version
+
+Tailscale is installed via systemd-sysext from the [Flatcar sysext-bakery](https://flatcar.github.io/sysext-bakery/tailscale/).
+
+**Auto-updates:** Tailscale auto-updates are enabled via systemd-sysupdate. The system
+will automatically download new versions and flag for reboot when updates are available.
+
+**Note:** Tailscale's built-in auto-update (controlled via the admin console) does not
+work with sysext installations because the binaries are in a read-only image. Updates
+are handled via systemd-sysupdate instead.
+
+**To manually pin a specific version:**
+
+1. **Check available versions** at the sysext-bakery releases:
+   - https://github.com/flatcar/sysext-bakery/releases/tag/tailscale
+
+2. **Get the SHA256 hash** from the SHA256SUMS file in the release
+
+3. **Update ghost.bu** (`opentofu/modules/vultr/instance/userdata/ghost.bu`):
+   - Update the file path: `/opt/extensions/tailscale/tailscale-v{VERSION}-x86-64.raw`
+   - Update the source URL: `https://extensions.flatcar.org/extensions/tailscale-v{VERSION}-x86-64.raw`
+   - Update the hash: `sha256-{HASH}`
+   - Update the symlink target in the `links` section
+
+4. **Apply infrastructure changes**:
+   ```bash
+   ./opentofu/scripts/tofu.sh dev plan
+   ./opentofu/scripts/tofu.sh dev apply
+   ```
+
+**Note:** The Tailscale sysext includes `tailscaled.service` which auto-starts.
+A separate `tailscale-auth.service` runs on first boot to authenticate using
+the auth key and enable Tailscale SSH.
+
 ### Debugging deployment failures
 1. Check GitHub Actions logs
 2. SSH to instance and check container logs
