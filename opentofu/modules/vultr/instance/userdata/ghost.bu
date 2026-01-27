@@ -54,44 +54,31 @@ storage:
       contents:
         source: https://extensions.flatcar.org/extensions/noop.conf
 
-    - path: /opt/tailscale-install.sh
-      mode: 0777
+    # ==========================================================================
+    # Tailscale Sysext Image
+    # ==========================================================================
+    # This systemd-sysext image is provided by the Flatcar sysext-bakery:
+    # https://flatcar.github.io/sysext-bakery/tailscale/
+    #
+    # To update to a new Tailscale version:
+    #   1. Check available versions at the sysext-bakery releases
+    #   2. Get the SHA256 hash from the SHA256SUMS file in the release
+    #   3. Update the path, source URL, and hash below
+    #   4. Update the symlink target in the links section
+    #   5. Apply infrastructure changes via OpenTofu
+    #
+    # Note: Auto-updates are enabled via systemd-sysupdate (see dropin below)
+    # ==========================================================================
+    - path: /opt/extensions/tailscale/tailscale-v1.88.3-x86-64.raw
+      mode: 0644
       contents:
-        inline: |
-          #!/usr/bin/env bash
-          set -e
-        
-          # Only re-download if not already existing
-          if ! test -e /opt/tailscale; then
-            echo "Downloading tailscale"
-            wget https://pkgs.tailscale.com/stable/tailscale_1.88.3_amd64.tgz -O tailscale_1.88.3.tgz
-        
-            echo "Unpacking tailscale"
-            tar xvf tailscale_1.88.3.tgz -C /tmp
-        
-            echo "Removing tgz"
-            rm tailscale_1.88.3.tgz
-        
-            echo "Moving binaries (if not exist)"
-            sudo mkdir -p /opt/tailscale
-            sudo cp -n /tmp/tailscale_1.88.3_amd64/tailscale /opt/tailscale/tailscale
-            sudo cp -n /tmp/tailscale_1.88.3_amd64/tailscaled /opt/tailscale/tailscaled
-        
-            echo "Enabling service"
-            sudo systemctl enable tailscaled.service
-        
-            echo "Reloading systemd"
-            systemctl daemon-reload
-        
-            echo "Cleaning up tmp folder"
-            rm -r /tmp/tailscale_1.88.3_amd64
-          fi
-        
-          echo "Starting service"
-          sudo systemctl restart tailscaled.service
-          
-          echo "Bringing up Tailscale interface"
-          sudo /opt/tailscale/tailscale up --authkey=${tailscale_authkey} --ssh
+        source: https://extensions.flatcar.org/extensions/tailscale-v1.88.3-x86-64.raw
+        verification:
+          hash: sha256-27caa1ce3012a1a7721157550247dc0828669638a06ac44d62baee0b1b4d6541
+
+    - path: /etc/sysupdate.tailscale.d/tailscale.conf
+      contents:
+        source: https://extensions.flatcar.org/extensions/tailscale.conf
 
   links:
     - target: /opt/extensions/docker-compose/docker-compose-2.34.0-x86-64.raw
@@ -101,6 +88,11 @@ storage:
     # Symlink must be updated when changing Alloy version (path above)
     - target: /opt/extensions/alloy/alloy-1.10.2-amd64.raw
       path: /etc/extensions/alloy.raw
+      hard: false
+
+    # Symlink must be updated when changing Tailscale version (path above)
+    - target: /opt/extensions/tailscale/tailscale-v1.88.3-x86-64.raw
+      path: /etc/extensions/tailscale.raw
       hard: false
 
 systemd:
@@ -138,50 +130,25 @@ systemd:
         [Install]
         WantedBy=multi-user.target
 
-    - name: tailscale-install.service
+    # Tailscale Authentication Service
+    # Runs once on first boot to authenticate with Tailscale using the auth key
+    # The sysext provides tailscaled.service which auto-starts with default options
+    - name: tailscale-auth.service
       enabled: true
       contents: |
         [Unit]
-        Description=Run Tailscale installation script
-        Wants=network-online.target
-        After=network.target network-online.target
-        ConditionPathExists=/opt/tailscale-install.sh
-        ConditionPathExists=!/opt/tailscale/tailscaled
+        Description=Authenticate Tailscale on first boot
+        After=tailscaled.service
+        Wants=tailscaled.service
+        # Only run if Tailscale state doesn't exist (first boot)
+        ConditionPathExists=!/var/lib/tailscale/tailscaled.state
 
         [Service]
-        Type=forking
-        TimeoutStartSec=180
+        Type=oneshot
+        # Wait for tailscaled to be ready
+        ExecStartPre=/usr/bin/sleep 5
+        ExecStart=/usr/bin/tailscale up --authkey=${tailscale_authkey} --ssh
         RemainAfterExit=yes
-        KillMode=process
-        ExecStartPre=/bin/sleep 30
-        ExecStart=/usr/bin/sh -c "/opt/tailscale-install.sh"
-
-        [Install]
-        WantedBy=multi-user.target
-
-    - name: tailscaled.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Tailscale node agent
-        Documentation=https://tailscale.com/kb/
-        Wants=network-pre.target tailscale-install.service
-        After=network-pre.target NetworkManager.service systemd-resolved.service
-
-        [Service]
-        Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/bin:/opt/tailscale"
-        ExecStart=/opt/tailscale/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641
-        ExecStopPost=/opt/tailscale/tailscaled --cleanup
-  
-        Restart=on-failure
-  
-        RuntimeDirectory=tailscale
-        RuntimeDirectoryMode=0755
-        StateDirectory=tailscale
-        StateDirectoryMode=0700
-        CacheDirectory=tailscale
-        CacheDirectoryMode=0750
-        Type=notify
 
         [Install]
         WantedBy=multi-user.target
@@ -254,3 +221,10 @@ systemd:
             ExecStartPre=/usr/lib/systemd/systemd-sysupdate -C docker-compose update
             ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/docker-compose.raw > /tmp/docker-compose-new.txt"
             ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/docker-compose.txt /tmp/docker-compose-new.txt; then touch /run/reboot-required; fi"
+        - name: tailscale.conf
+          contents: |
+            [Service]
+            ExecStartPre=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/tailscale.raw > /tmp/tailscale.txt"
+            ExecStartPre=/usr/lib/systemd/systemd-sysupdate -C tailscale update
+            ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/tailscale.raw > /tmp/tailscale-new.txt"
+            ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/tailscale.txt /tmp/tailscale-new.txt; then touch /run/reboot-required; fi"
