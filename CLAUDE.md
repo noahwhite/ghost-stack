@@ -45,6 +45,17 @@ Do NOT proceed with other tasks until the PR is assigned.
 - Include detailed acceptance criteria in issue descriptions
 - Link related issues using dependencies where applicable
 
+### User Story Creation Checklist
+
+When creating a user story in Linear with `mcp__linear__create_issue`:
+
+1. **Title must be prefixed with `[User Story]`** (e.g., `[User Story] Configure Tailscale to use one-time auth keys`)
+2. Use `team: "ghost-stack"`
+3. Apply the `User Story` label: `labels: ["User Story"]`
+4. Follow the User Story Template format below for the description
+
+Do NOT proceed until the title prefix is verified.
+
 ### Epic/Project Labeling
 
 When creating epics (Linear projects):
