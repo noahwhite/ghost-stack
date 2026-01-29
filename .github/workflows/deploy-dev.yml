@@ -194,7 +194,17 @@ jobs:
       - name: Compare PR plan with current plan
         run: |
           echo "Comparing PR plan with current state..."
-          if diff -u ./pr-plan/plan-output.txt ./opentofu/envs/dev/current-plan.txt; then
+
+          # Filter out ephemeral values that change between plan runs
+          # - kvm: Vultr KVM console URL contains session tokens that regenerate on every API call
+          filter_ephemeral() {
+            grep -v '~ kvm'
+          }
+
+          filter_ephemeral < ./pr-plan/plan-output.txt > /tmp/pr-plan-filtered.txt
+          filter_ephemeral < ./opentofu/envs/dev/current-plan.txt > /tmp/current-plan-filtered.txt
+
+          if diff -u /tmp/pr-plan-filtered.txt /tmp/current-plan-filtered.txt; then
             echo "✅ Plans match - no drift detected"
             echo "PLANS_MATCH=true" >> $GITHUB_ENV
           else
