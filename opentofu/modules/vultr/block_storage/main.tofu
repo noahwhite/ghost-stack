@@ -18,7 +18,12 @@ resource "vultr_block_storage" "this" {
   size_gb = var.size_gb
   label   = var.label
   live    = true
-  # NOTE: attached_to_instance removed - managed by null_resource below
+
+  # Ignore attachment changes - managed by null_resource below to work around
+  # provider bug. This prevents Terraform from trying to detach/reattach.
+  lifecycle {
+    ignore_changes = [attached_to_instance]
+  }
 }
 
 # Workaround for Vultr provider bug #660
