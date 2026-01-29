@@ -30,7 +30,7 @@ resource "vultr_block_storage" "this" {
 # The provider fails to attach block storage to recreated instances with:
 # Error: error getting block storage: {"error":"Nothing to change","status":400}
 #
-# This null_resource uses the Vultr API directly to handle attachment.
+# This null_resource uses the Vultr CLI to handle attachment.
 # It inherits VULTR_API_KEY from the environment (set via TF_VAR_vultr_api_key in CI).
 resource "null_resource" "attach_block_storage" {
   count = var.mount_instance_id != null ? 1 : 0
@@ -45,8 +45,8 @@ resource "null_resource" "attach_block_storage" {
       set -e
 
       # API key is inherited from environment (VULTR_API_KEY or TF_VAR_vultr_api_key)
-      API_KEY="$${VULTR_API_KEY:-$TF_VAR_vultr_api_key}"
-      if [ -z "$API_KEY" ]; then
+      export VULTR_API_KEY="$${VULTR_API_KEY:-$TF_VAR_vultr_api_key}"
+      if [ -z "$VULTR_API_KEY" ]; then
         echo "ERROR: VULTR_API_KEY or TF_VAR_vultr_api_key must be set"
         exit 1
       fi
@@ -58,19 +58,13 @@ resource "null_resource" "attach_block_storage" {
       sleep 30
 
       echo "Checking current block storage state..."
-      CURRENT_STATE=$(curl -s -H "Authorization: Bearer $API_KEY" \
-        "https://api.vultr.com/v2/blocks/$BLOCK_STORAGE_ID")
-
-      CURRENT_ATTACHED=$(echo "$CURRENT_STATE" | jq -r '.block.attached_to_instance // empty')
+      CURRENT_ATTACHED=$(vultr-cli block-storage get "$BLOCK_STORAGE_ID" | grep "ATTACHED TO INSTANCE" | awk '{print $4}')
       echo "Currently attached to: $${CURRENT_ATTACHED:-none}"
 
       # If attached to something (possibly stale/deleted instance), detach first
       if [ -n "$CURRENT_ATTACHED" ] && [ "$CURRENT_ATTACHED" != "$INSTANCE_ID" ]; then
         echo "Detaching from previous instance..."
-        curl -s -X POST -H "Authorization: Bearer $API_KEY" \
-          -H "Content-Type: application/json" \
-          -d '{"live": true}' \
-          "https://api.vultr.com/v2/blocks/$BLOCK_STORAGE_ID/detach" || true
+        vultr-cli block-storage detach "$BLOCK_STORAGE_ID" --live || true
 
         echo "Waiting for detach to complete..."
         sleep 15
@@ -78,31 +72,12 @@ resource "null_resource" "attach_block_storage" {
 
       # Attach to the new instance
       echo "Attaching block storage to instance $INSTANCE_ID..."
-      ATTACH_RESULT=$(curl -s -w "\n%%{http_code}" -X POST \
-        -H "Authorization: Bearer $API_KEY" \
-        -H "Content-Type: application/json" \
-        -d "{\"instance_id\": \"$INSTANCE_ID\", \"live\": true}" \
-        "https://api.vultr.com/v2/blocks/$BLOCK_STORAGE_ID/attach")
-
-      HTTP_CODE=$(echo "$ATTACH_RESULT" | tail -n1)
-      RESPONSE_BODY=$(echo "$ATTACH_RESULT" | sed '$d')
-
-      if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
-        echo "Block storage attached successfully"
-      elif echo "$RESPONSE_BODY" | grep -q "Nothing to change"; then
-        echo "API reports no change needed, verifying attachment..."
-      else
-        echo "Attachment request returned HTTP $HTTP_CODE"
-        echo "Response: $RESPONSE_BODY"
-      fi
+      vultr-cli block-storage attach "$BLOCK_STORAGE_ID" --instance-id="$INSTANCE_ID" --live || true
 
       # Verify attachment
       echo "Verifying block storage attachment..."
       sleep 5
-      VERIFY_STATE=$(curl -s -H "Authorization: Bearer $API_KEY" \
-        "https://api.vultr.com/v2/blocks/$BLOCK_STORAGE_ID")
-
-      VERIFIED_ATTACHED=$(echo "$VERIFY_STATE" | jq -r '.block.attached_to_instance // empty')
+      VERIFIED_ATTACHED=$(vultr-cli block-storage get "$BLOCK_STORAGE_ID" | grep "ATTACHED TO INSTANCE" | awk '{print $4}')
 
       if [ "$VERIFIED_ATTACHED" = "$INSTANCE_ID" ]; then
         echo "Verification successful: block storage is attached to $INSTANCE_ID"

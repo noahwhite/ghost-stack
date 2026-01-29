@@ -21,6 +21,14 @@ RUN curl -L https://github.com/opentofu/opentofu/releases/download/v1.11.1/tofu_
     && chmod +x /usr/local/bin/tofu \
     && rm tofu.tar.gz
 
+# Install Vultr CLI v3.4.0 for block storage attachment workaround
+# See: https://github.com/vultr/vultr-cli/releases
+RUN curl -L https://github.com/vultr/vultr-cli/releases/download/v3.4.0/vultr-cli_v3.4.0_linux_amd64.tar.gz -o vultr-cli.tar.gz \
+    && tar -xzf vultr-cli.tar.gz \
+    && mv vultr-cli /usr/local/bin/ \
+    && chmod +x /usr/local/bin/vultr-cli \
+    && rm vultr-cli.tar.gz
+
 
 
 # Add user
