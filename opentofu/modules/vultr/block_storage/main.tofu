@@ -33,7 +33,8 @@ resource "vultr_block_storage" "this" {
 # This null_resource uses the Vultr CLI to handle attachment.
 # It inherits VULTR_API_KEY from the environment (set via TF_VAR_vultr_api_key in CI).
 resource "null_resource" "attach_block_storage" {
-  count = var.mount_instance_id != null ? 1 : 0
+  # Note: count removed because it cannot depend on values unknown at plan time
+  # (instance_id is unknown when instance is being recreated)
 
   triggers = {
     instance_id      = var.mount_instance_id
