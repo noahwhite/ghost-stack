@@ -276,6 +276,17 @@ The Grafana Alloy systemd-sysext image is built automatically by the
 OpenTofu to destroy and recreate the instance, as the Ignition config is immutable
 and only applied on first boot. This is the expected idempotent behavior.
 
+**Important:** Before recreating an instance, remove the old device from Tailscale admin
+to prevent naming conflicts. See `docs/runbooks/tailscale-device-cleanup.md` for details.
+
+**Known issue:** After instance recreation, `alloy.service` may not start automatically
+despite being configured as `enabled: true` in ghost.bu. This appears to be a timing issue
+where Ignition tries to enable the service before systemd-sysext merges the extension.
+If Alloy is not running after recreation, manually enable it:
+```bash
+sudo systemctl enable --now alloy.service
+```
+
 ### Updating Tailscale Sysext Version
 
 Tailscale is installed via systemd-sysext from the [Flatcar sysext-bakery](https://flatcar.github.io/sysext-bakery/tailscale/).
@@ -309,6 +320,10 @@ are handled via systemd-sysupdate instead.
 **Note:** The Tailscale sysext includes `tailscaled.service` which auto-starts.
 A separate `tailscale-auth.service` runs on first boot to authenticate using
 the auth key and enable Tailscale SSH.
+
+**Important:** Changing the Tailscale version will recreate the instance. Before applying,
+remove the old device from Tailscale admin to prevent naming conflicts (e.g., the new
+instance being named `ghost-dev-01-1`). See `docs/runbooks/tailscale-device-cleanup.md`.
 
 ### Debugging deployment failures
 1. Check GitHub Actions logs
