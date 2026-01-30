@@ -58,7 +58,7 @@ resource "null_resource" "attach_block_storage" {
       sleep 30
 
       echo "Checking current block storage state..."
-      CURRENT_ATTACHED=$(vultr-cli block-storage get "$BLOCK_STORAGE_ID" | grep "ATTACHED TO INSTANCE" | awk '{print $4}')
+      CURRENT_ATTACHED=$(vultr-cli block-storage get "$BLOCK_STORAGE_ID" | tail -n1 | awk '{print $3}')
       echo "Currently attached to: $${CURRENT_ATTACHED:-none}"
 
       # If attached to something (possibly stale/deleted instance), detach first
@@ -77,7 +77,7 @@ resource "null_resource" "attach_block_storage" {
       # Verify attachment
       echo "Verifying block storage attachment..."
       sleep 5
-      VERIFIED_ATTACHED=$(vultr-cli block-storage get "$BLOCK_STORAGE_ID" | grep "ATTACHED TO INSTANCE" | awk '{print $4}')
+      VERIFIED_ATTACHED=$(vultr-cli block-storage get "$BLOCK_STORAGE_ID" | tail -n1 | awk '{print $3}')
 
       if [ "$VERIFIED_ATTACHED" = "$INSTANCE_ID" ]; then
         echo "Verification successful: block storage is attached to $INSTANCE_ID"
