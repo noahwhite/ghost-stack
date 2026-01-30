@@ -75,7 +75,12 @@ tailscale status
 
 For future automation, devices can be removed via API:
 
-```bash
+```zsh
+# Securely read the API key (zsh) - input will be hidden
+read -s "TAILSCALE_API_KEY?Enter Tailscale API key: "
+echo  # newline after hidden input
+export TAILSCALE_API_KEY
+
 # Get the device ID first
 DEVICE_ID=$(curl -s -H "Authorization: Bearer $TAILSCALE_API_KEY" \
   "https://api.tailscale.com/api/v2/tailnet/-/devices" | \
@@ -84,6 +89,9 @@ DEVICE_ID=$(curl -s -H "Authorization: Bearer $TAILSCALE_API_KEY" \
 # Delete the device
 curl -X DELETE -H "Authorization: Bearer $TAILSCALE_API_KEY" \
   "https://api.tailscale.com/api/v2/device/$DEVICE_ID"
+
+# Clear the variable when done
+unset TAILSCALE_API_KEY
 ```
 
 **Note:** This requires an API key with device write permissions. The current deployment uses auth keys for device registration, which is a different permission scope.
