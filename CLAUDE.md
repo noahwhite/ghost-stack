@@ -279,6 +279,14 @@ and only applied on first boot. This is the expected idempotent behavior.
 **Important:** Before recreating an instance, remove the old device from Tailscale admin
 to prevent naming conflicts. See `docs/runbooks/tailscale-device-cleanup.md` for details.
 
+**Known issue:** After instance recreation, `alloy.service` may not start automatically
+despite being configured as `enabled: true` in ghost.bu. This appears to be a timing issue
+where Ignition tries to enable the service before systemd-sysext merges the extension.
+If Alloy is not running after recreation, manually enable it:
+```bash
+sudo systemctl enable --now alloy.service
+```
+
 ### Updating Tailscale Sysext Version
 
 Tailscale is installed via systemd-sysext from the [Flatcar sysext-bakery](https://flatcar.github.io/sysext-bakery/tailscale/).
