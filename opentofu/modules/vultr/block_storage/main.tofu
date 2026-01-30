@@ -72,7 +72,7 @@ resource "null_resource" "attach_block_storage" {
 
       # Attach to the new instance
       echo "Attaching block storage to instance $INSTANCE_ID..."
-      vultr-cli block-storage attach "$BLOCK_STORAGE_ID" --instance-id="$INSTANCE_ID" --live || true
+      vultr-cli block-storage attach "$BLOCK_STORAGE_ID" --instance="$INSTANCE_ID" --live || true
 
       # Verify attachment
       echo "Verifying block storage attachment..."
