@@ -1,4 +1,4 @@
-# GHO-26: Testing health checks after deployment
+# GHO-26: Health checks after deployment
 name: Deploy to Dev Environment
 
 on:
