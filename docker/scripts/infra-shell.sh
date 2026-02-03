@@ -283,6 +283,8 @@ if [[ "$CI_MODE" == "true" ]]; then
   fi
   TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
   export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
+  # Also export the raw IP for Caddy access control
+  export_var "TF_VAR_admin_ip" "${MYIP}"
 else
   # Workstation mode: Detect public IP dynamically
   MYIP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\r\n')"
@@ -293,6 +295,8 @@ else
   echo "Restricting SSH to your IP: ${MYIP}/32"
   TF_VAR_admin_subnets="$(printf '[{"subnet":"%s","subnet_size":32}]' "$MYIP")"
   export_var "TF_VAR_admin_subnets" "${TF_VAR_admin_subnets}"
+  # Also export the raw IP for Caddy access control
+  export_var "TF_VAR_admin_ip" "${MYIP}"
 fi
 
 # Set SSH public key from repo (same for both workstation and CI modes)

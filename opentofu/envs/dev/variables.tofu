@@ -102,3 +102,30 @@ variable "cloudflare_zone_id" {
   type        = string
   default     = ""
 }
+
+# ==========================================================================
+# Ghost Compose Configuration
+# ==========================================================================
+
+variable "ghost_domain" {
+  description = "Ghost site domain"
+  type        = string
+  default     = "separationofconcerns.dev"
+}
+
+variable "ghost_admin_domain" {
+  description = "Ghost admin panel domain"
+  type        = string
+  default     = "admin.separationofconcerns.dev"
+}
+
+variable "admin_ip" {
+  description = "Admin workstation IP for Caddy access control (from Bitwarden)"
+  type        = string
+}
+
+variable "mail_smtp_user" {
+  description = "SMTP username for transactional email"
+  type        = string
+  default     = "postmaster@mg.separationofconcerns.dev"
+}

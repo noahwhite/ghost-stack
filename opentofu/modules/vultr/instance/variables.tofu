@@ -51,3 +51,42 @@ variable "tailscale_authkey" {
   type      = string
   sensitive = true
 }
+
+# ==========================================================================
+# Ghost Compose Configuration (Non-Secret)
+# ==========================================================================
+# These variables are used to generate the ephemeral .env.config file
+# that is deployed via Ignition. Secrets are managed separately in
+# /var/mnt/storage/ghost-compose/.env.secrets on block storage.
+
+variable "ghost_domain" {
+  description = "Ghost site domain (e.g., separationofconcerns.dev)"
+  type        = string
+}
+
+variable "ghost_admin_domain" {
+  description = "Ghost admin panel domain (e.g., admin.separationofconcerns.dev)"
+  type        = string
+}
+
+variable "ghost_version" {
+  description = "Ghost Docker image tag"
+  type        = string
+  default     = "6-alpine"
+}
+
+variable "admin_ip" {
+  description = "Admin workstation IP for Caddy access control"
+  type        = string
+}
+
+variable "mail_smtp_host" {
+  description = "SMTP host for transactional email"
+  type        = string
+  default     = "smtp.mailgun.org"
+}
+
+variable "mail_smtp_user" {
+  description = "SMTP username for transactional email"
+  type        = string
+}

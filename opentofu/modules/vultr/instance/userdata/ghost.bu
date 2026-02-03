@@ -36,6 +36,58 @@ storage:
       contents:
         source: "data:text/plain;charset=utf-8;base64,${ghost_service}"
 
+    # ==========================================================================
+    # Ghost Compose Configuration (Ephemeral - No Secrets)
+    # ==========================================================================
+    # These files are deployed via Ignition and contain no secrets.
+    # Secrets are stored in /var/mnt/storage/ghost-compose/.env.secrets
+    # which is created manually on the block storage.
+    #
+    # Configuration split:
+    #   - /etc/ghost-compose/ (ephemeral): compose.yml, .env.config, caddy/, mysql-init/
+    #   - /var/mnt/storage/ghost-compose/ (persistent): .env.secrets only
+    # ==========================================================================
+
+    - path: /etc/ghost-compose/compose.yml
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_compose_yml}"
+
+    - path: /etc/ghost-compose/.env.config
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_env_config}"
+
+    - path: /etc/ghost-compose/caddy/Caddyfile
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_caddyfile}"
+
+    - path: /etc/ghost-compose/caddy/snippets/ActivityPub
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_caddy_activitypub}"
+
+    - path: /etc/ghost-compose/caddy/snippets/Logging
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_caddy_logging}"
+
+    - path: /etc/ghost-compose/caddy/snippets/SecurityHeaders
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_caddy_security_headers}"
+
+    - path: /etc/ghost-compose/caddy/snippets/TrafficAnalytics
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_caddy_traffic_analytics}"
+
+    - path: /etc/ghost-compose/mysql-init/create-multiple-databases.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_mysql_init}"
+
     - path: /etc/locksmith/locksmith.conf
       mode: 0644
       contents:
@@ -120,11 +172,13 @@ systemd:
         Type=oneshot
         ExecStart=/usr/bin/bash -c '\
         mkdir -p /var/mnt/storage/ghost/content && chmod 0755 /var/mnt/storage/ghost/content && \
-        mkdir -p /var/mnt/storage/ghost/upload/data && chmod 0755 /var/mnt/storage/ghost/upload/data && \
+        mkdir -p /var/mnt/storage/ghost/upload-data && chmod 0755 /var/mnt/storage/ghost/upload-data && \
         mkdir -p /var/mnt/storage/caddy/data && chmod 0755 /var/mnt/storage/caddy/data && \
         mkdir -p /var/mnt/storage/caddy/config && chmod 0755 /var/mnt/storage/caddy/config && \
+        mkdir -p /var/mnt/storage/caddy/certs && chmod 0755 /var/mnt/storage/caddy/certs && \
         mkdir -p /var/mnt/storage/alloy && chmod 0750 /var/mnt/storage/alloy && \
-        mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data\'
+        mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data && \
+        mkdir -p /var/mnt/storage/ghost-compose && chmod 0700 /var/mnt/storage/ghost-compose\'
         RemainAfterExit=true
         
         [Install]
