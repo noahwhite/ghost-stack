@@ -1,0 +1,11 @@
+# Log all requests (with sensitive headers redacted)
+log {
+        output stdout
+        format filter {
+                wrap json
+                fields {
+                        request>headers>X-Health-Check-Token replace [REDACTED]
+                }
+        }
+        level INFO
+}

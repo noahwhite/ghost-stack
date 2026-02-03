@@ -157,6 +157,7 @@ jobs:
           TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
           TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
           TF_VAR_admin_subnets: ${{ env.TF_VAR_admin_subnets }}
+          TF_VAR_admin_ip: ${{ env.TF_VAR_admin_ip }}
           TF_VAR_ssh_public_key: ${{ env.TF_VAR_ssh_public_key }}
           TF_VAR_cloudflare_zone_id: ${{ env.TF_VAR_cloudflare_zone_id }}
         run: |
@@ -178,6 +179,7 @@ jobs:
             -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
             -e TF_BACKEND_BUCKET \
             -e TF_VAR_admin_subnets \
+            -e TF_VAR_admin_ip \
             -e TF_VAR_ssh_public_key \
             -e TF_VAR_cloudflare_zone_id \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
@@ -233,6 +235,7 @@ jobs:
           TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
           TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
           TF_VAR_admin_subnets: ${{ env.TF_VAR_admin_subnets }}
+          TF_VAR_admin_ip: ${{ env.TF_VAR_admin_ip }}
           TF_VAR_ssh_public_key: ${{ env.TF_VAR_ssh_public_key }}
           TF_VAR_cloudflare_zone_id: ${{ env.TF_VAR_cloudflare_zone_id }}
         run: |
@@ -254,6 +257,7 @@ jobs:
             -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
             -e TF_BACKEND_BUCKET \
             -e TF_VAR_admin_subnets \
+            -e TF_VAR_admin_ip \
             -e TF_VAR_ssh_public_key \
             -e TF_VAR_cloudflare_zone_id \
             ghcr.io/noahwhite/ghost-stack-shell:latest \

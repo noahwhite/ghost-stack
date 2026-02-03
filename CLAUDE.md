@@ -214,9 +214,126 @@ docker logs ghost-compose-ghost-1
 docker exec ghost-compose-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 docker restart ghost-compose-caddy-1
 
-# Ghost compose directory
-cd /var/mnt/storage/ghost-compose
+# Ghost compose directory (ephemeral config)
+cd /etc/ghost-compose
+
+# Secrets directory (persistent on block storage)
+ls -la /var/mnt/storage/ghost-compose/.env.secrets
 ```
+
+## Ghost Compose Architecture
+
+The Ghost Docker Compose stack uses a **hybrid ephemeral/persistent** approach:
+
+### Ephemeral Components (Deployed via Ignition)
+
+These files are deployed to `/etc/ghost-compose/` at boot time and are versioned in the repository:
+
+| File | Purpose |
+|------|---------|
+| `compose.yml` | Docker Compose service definitions |
+| `.env.config` | Non-secret configuration (domains, paths, mail settings) |
+| `caddy/Caddyfile` | Reverse proxy configuration with `{$VAR}` placeholders |
+| `caddy/snippets/*` | Caddy configuration snippets (Logging, SecurityHeaders, etc.) |
+| `mysql-init/*.sh` | Database initialization scripts |
+
+### Persistent Components (On Block Storage)
+
+These files persist across instance recreations on `/var/mnt/storage/`:
+
+| Path | Purpose |
+|------|---------|
+| `/var/mnt/storage/ghost-compose/.env.secrets` | Secrets only (passwords, tokens) |
+| `/var/mnt/storage/ghost/upload-data/` | Ghost content uploads |
+| `/var/mnt/storage/mysql/data/` | MySQL database files |
+| `/var/mnt/storage/caddy/certs/` | Cloudflare origin certificates |
+
+### Configuration Flow
+
+```
+OpenTofu Variables → env.config.tftpl → Ignition → /etc/ghost-compose/.env.config
+                                                            ↓
+Block Storage (manual) ────────────────→ /var/mnt/storage/ghost-compose/.env.secrets
+                                                            ↓
+                                        Docker Compose sources both files
+```
+
+## Ghost Compose Secrets Management
+
+### File Split Strategy
+
+**`.env.config` (ephemeral - safe for version control):**
+- Domain names (DOMAIN, ADMIN_DOMAIN)
+- Admin IP for Caddy ACL (ADMIN_IP)
+- Mail settings (host, user - not password)
+- Data paths (UPLOAD_LOCATION, MYSQL_DATA_LOCATION)
+
+**`.env.secrets` (persistent - manual management):**
+- DATABASE_PASSWORD
+- DATABASE_ROOT_PASSWORD
+- HEALTH_CHECK_TOKEN
+- mail__options__auth__pass
+
+### Security Model
+
+| Risk | Mitigation |
+|------|------------|
+| Vultr userdata exposure | No secrets in Ignition - only `.env.config` |
+| OpenTofu state exposure | No secrets passed through OpenTofu variables |
+| Block storage access | File permissions (0600), Tailscale-only SSH |
+| Instance compromise | Secrets isolated to single file, easier to rotate |
+
+### Modifying Configuration
+
+**Non-secret changes** (domains, paths, mail settings):
+1. Update OpenTofu variables in `opentofu/envs/dev/main.tofu`
+2. Run `tofu plan` and `tofu apply`
+3. Instance will be recreated with new config
+
+**Secret changes** (passwords, tokens):
+1. SSH to instance: `tailscale ssh core@ghost-dev-01`
+2. Edit secrets file: `sudo vim /var/mnt/storage/ghost-compose/.env.secrets`
+3. Restart containers: `cd /etc/ghost-compose && sudo docker compose restart`
+
+## Updating Ghost Docker Images
+
+The Ghost Docker stack is based on [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker).
+
+### Current Image Versions
+
+Check `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl` for current versions:
+- Caddy: `caddy:2.10.2-alpine@sha256:...`
+- MySQL: `mysql:8.0.44@sha256:...`
+- Ghost: `ghost:6-alpine` (unpinned, uses latest 6.x)
+
+### Upstream Sync Workflow
+
+1. **Watch for updates**: Star/watch [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker) for Renovate PRs
+
+2. **Check for updates**:
+   ```bash
+   # Compare with upstream
+   curl -sL https://raw.githubusercontent.com/TryGhost/ghost-docker/main/compose.yml | diff - opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl
+   ```
+
+3. **Update templates**:
+   - Edit `compose.yml.tftpl` with new image tags and SHA256 digests
+   - Update Caddyfile or snippets if upstream changed them
+
+4. **Deploy**:
+   ```bash
+   ./opentofu/scripts/tofu.sh dev plan
+   ./opentofu/scripts/tofu.sh dev apply
+   ```
+
+### Files to Monitor
+
+| Upstream File | Local Template | What Changes |
+|---------------|----------------|--------------|
+| `compose.yml` | `compose.yml.tftpl` | Image tags, SHA digests, new services |
+| `caddy/Caddyfile` | `caddy/Caddyfile` | Proxy rules, new features |
+| `caddy/snippets/*` | `caddy/snippets/*` | Snippet updates |
+| `.env.example` | Reference only | New environment variables |
 
 ## Branch Naming Convention
 

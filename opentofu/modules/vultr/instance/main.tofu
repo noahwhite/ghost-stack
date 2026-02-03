@@ -20,6 +20,33 @@ locals {
   ghost_service_b64 = filebase64("${path.module}/userdata/ghost-compose.service")
   # stringify bool for the template condition (templatefile only supports strings)
   locksmith_mask = var.locksmith_mask ? "true" : "false"
+
+  # ==========================================================================
+  # Ghost Compose Configuration Files (Ephemeral via Ignition)
+  # ==========================================================================
+  # These files are deployed to /etc/ghost-compose/ at boot time.
+  # Template files (.tftpl) are processed with templatefile() for variable interpolation.
+  # Static files are read directly with file().
+
+  # Template files - processed with OpenTofu variables
+  ghost_compose_yml = base64encode(templatefile("${path.module}/userdata/ghost-compose/compose.yml.tftpl", {}))
+
+  ghost_env_config = base64encode(templatefile("${path.module}/userdata/ghost-compose/env.config.tftpl", {
+    ghost_domain       = var.ghost_domain
+    ghost_admin_domain = var.ghost_admin_domain
+    ghost_version      = var.ghost_version
+    admin_ip           = var.admin_ip
+    mail_smtp_host     = var.mail_smtp_host
+    mail_smtp_user     = var.mail_smtp_user
+  }))
+
+  # Static files - no variable interpolation needed
+  ghost_caddyfile               = filebase64("${path.module}/userdata/ghost-compose/caddy/Caddyfile")
+  ghost_caddy_activitypub       = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/ActivityPub")
+  ghost_caddy_logging           = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/Logging")
+  ghost_caddy_security_headers  = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
+  ghost_caddy_traffic_analytics = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
+  ghost_mysql_init              = filebase64("${path.module}/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -33,6 +60,16 @@ data "ct_config" "ghost" {
     ghost_service     = local.ghost_service_b64,
     locksmith_mask    = local.locksmith_mask,
     tailscale_authkey = var.tailscale_authkey
+
+    # Ghost Compose configuration files (ephemeral)
+    ghost_compose_yml             = local.ghost_compose_yml
+    ghost_env_config              = local.ghost_env_config
+    ghost_caddyfile               = local.ghost_caddyfile
+    ghost_caddy_activitypub       = local.ghost_caddy_activitypub
+    ghost_caddy_logging           = local.ghost_caddy_logging
+    ghost_caddy_security_headers  = local.ghost_caddy_security_headers
+    ghost_caddy_traffic_analytics = local.ghost_caddy_traffic_analytics
+    ghost_mysql_init              = local.ghost_mysql_init
   })
   strict = true
 }

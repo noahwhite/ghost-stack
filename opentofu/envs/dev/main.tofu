@@ -114,6 +114,12 @@ module "vm" {
   ghost_url         = var.ghost_url
   locksmith_mask    = var.locksmith_mask
   tailscale_authkey = module.tailscale.tailscale_auth_key
+
+  # Ghost Compose configuration (non-secret)
+  ghost_domain       = var.ghost_domain
+  ghost_admin_domain = var.ghost_admin_domain
+  admin_ip           = var.admin_ip
+  mail_smtp_user     = var.mail_smtp_user
 }
 
 module "block_storage" {

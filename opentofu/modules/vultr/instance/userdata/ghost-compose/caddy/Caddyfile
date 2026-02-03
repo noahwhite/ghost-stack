@@ -1,0 +1,75 @@
+{
+    auto_https disable_certs
+}
+
+{$DOMAIN} {
+
+    import snippets/Logging
+
+    tls /certs/cloudflare-origin.crt /certs/cloudflare-origin.key
+
+    # Health check authentication via token header
+    # Token is sourced from .env.secrets via Docker Compose env_file
+    @health_check {
+        header X-Health-Check-Token "{$HEALTH_CHECK_TOKEN}"
+        path /
+    }
+
+    handle @health_check {
+        reverse_proxy ghost:2368
+    }
+
+    # Allow traffic from admin workstation IP
+    # IP is sourced from .env.config via Docker Compose env_file
+    @allowed_ip {
+        header_regexp Cf-Connecting-IP ^{$ADMIN_IP}$
+    }
+
+    handle @allowed_ip {
+        reverse_proxy ghost:2368
+    }
+
+    handle {
+        respond "Access Denied" 403
+    }
+}
+
+# Separate admin domain
+# Ghost Admin on a dedicated subdomain (recommended)
+{$ADMIN_DOMAIN} {
+    import snippets/Logging
+
+    # Optional: Add security headers
+    import snippets/SecurityHeaders
+
+    tls /certs/cloudflare-origin.crt /certs/cloudflare-origin.key
+
+    # Traffic Analytics service (uncomment when enabled)
+    #import snippets/TrafficAnalytics
+
+    # ActivityPub Service (uncomment when enabled)
+    #import snippets/ActivityPub
+
+    # Allow traffic from admin workstation IP
+    @allowed_ip {
+        header_regexp Cf-Connecting-IP ^{$ADMIN_IP}$
+    }
+
+    handle @allowed_ip {
+        reverse_proxy ghost:2368
+    }
+
+    handle {
+        respond "Access Denied" 403
+    }
+
+    # Optional: Enable gzip compression
+    encode gzip
+}
+
+# Redirect www -> root domain
+# Note: You must have DNS setup correctly for both domains for this to work
+www.{$DOMAIN} {
+    import snippets/Logging
+    redir https://{$DOMAIN}{uri}
+}
