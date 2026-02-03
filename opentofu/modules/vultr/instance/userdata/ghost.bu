@@ -90,6 +90,7 @@ storage:
 
     - path: /etc/locksmith/locksmith.conf
       mode: 0644
+      overwrite: true
       contents:
         source: "data:text/plain;charset=utf-8;base64,UkVCT09UX1NUUkFURUdZPXJlYm9vdApMT0NLU01JVEhEX1JFQk9PVF9XSU5ET1dfU1RBUlQ9MDI6MDAKTE9DS1NNSVRIRF9SRUJPT1RfV0lORE9XX0xFTkdUSD0yaAo="
 
