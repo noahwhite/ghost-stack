@@ -41,12 +41,12 @@ locals {
   }))
 
   # Static files - no variable interpolation needed
-  ghost_caddyfile              = filebase64("${path.module}/userdata/ghost-compose/caddy/Caddyfile")
-  ghost_caddy_activitypub      = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/ActivityPub")
-  ghost_caddy_logging          = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/Logging")
-  ghost_caddy_security_headers = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
+  ghost_caddyfile               = filebase64("${path.module}/userdata/ghost-compose/caddy/Caddyfile")
+  ghost_caddy_activitypub       = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/ActivityPub")
+  ghost_caddy_logging           = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/Logging")
+  ghost_caddy_security_headers  = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
   ghost_caddy_traffic_analytics = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
-  ghost_mysql_init             = filebase64("${path.module}/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
+  ghost_mysql_init              = filebase64("${path.module}/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
