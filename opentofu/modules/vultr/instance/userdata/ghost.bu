@@ -214,7 +214,7 @@ systemd:
       contents: |
         [Unit]
         Description=Tailscale Connection Monitor
-        After=network-online.target var-mnt-storage.mount tailscaled.service
+        After=network-online.target var-mnt-storage.mount tailscaled.service tailscale-auth.service
         Wants=network-online.target
         Requires=var-mnt-storage.mount
 
