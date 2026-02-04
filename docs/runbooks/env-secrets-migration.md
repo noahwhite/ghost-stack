@@ -105,25 +105,18 @@ Copy this token value - it will go in `.env.secrets`.
 Create the secrets-only file on block storage:
 
 ```bash
-# Create the secrets file
+# Create the secrets file (NO COMMENTS - Docker Compose has issues parsing them)
 sudo tee /var/mnt/storage/ghost-compose/.env.secrets << 'EOF'
-# Ghost Compose Secrets
-# This file contains sensitive credentials only.
-# Non-secret configuration is deployed via Ignition to /etc/ghost-compose/.env.config
-
-# MySQL Credentials
 DATABASE_PASSWORD=REPLACE_WITH_ACTUAL_PASSWORD
 DATABASE_ROOT_PASSWORD=REPLACE_WITH_ACTUAL_ROOT_PASSWORD
-
-# Health Check Token (used by Caddy to authenticate health check requests)
 HEALTH_CHECK_TOKEN=REPLACE_WITH_ACTUAL_TOKEN
-
-# Mail Credentials (SMTP password for transactional email)
 mail__options__auth__pass=REPLACE_WITH_ACTUAL_SMTP_PASSWORD
 EOF
 ```
 
-**Important:** Now edit the file to replace placeholders with actual values:
+**Important:** Do NOT add comments to this file. Docker Compose has issues parsing env files with comments when used with the `--env-file` flag.
+
+Now edit the file to replace placeholders with actual values:
 
 ```bash
 sudo vim /var/mnt/storage/ghost-compose/.env.secrets
@@ -132,6 +125,8 @@ sudo vim /var/mnt/storage/ghost-compose/.env.secrets
 Replace each `REPLACE_WITH_...` placeholder with the corresponding value from:
 - The backup `.env` file (for database passwords and mail password)
 - The Caddyfile (for health check token)
+
+**Do not add comments** - keep only the `KEY=value` lines.
 
 ### Step 5: Set Correct File Permissions
 
