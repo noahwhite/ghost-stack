@@ -84,6 +84,10 @@ module "pagerduty" {
 
 module "tailscale" {
   source = "../../modules/tailscale"
+
+  # Trigger auth key regeneration when instance config changes
+  # This ensures a fresh one-time key is created when the instance is recreated
+  instance_config_hash = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost.bu")
 }
 
 module "dns_records" {
