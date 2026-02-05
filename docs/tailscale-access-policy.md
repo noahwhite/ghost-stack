@@ -108,7 +108,7 @@ SSH access is controlled via Tailscale SSH rules, not traditional SSH keys.
 
 | Source | Destination | Action | Allowed Users | Notes |
 |--------|-------------|--------|---------------|-------|
-| noah@noahwhite.net | tag:ghost-dev | accept | root, core, autogroup:nonroot | Direct access, no MFA |
+| noah@noahwhite.net | tag:ghost-dev | check | root, core, autogroup:nonroot | Requires re-authentication |
 | noah@noahwhite.net | tag:ghost-dev-workstation | check | noah | Requires MFA/device check |
 
 ### Action Types
@@ -118,6 +118,17 @@ SSH access is controlled via Tailscale SSH rules, not traditional SSH keys.
 | `accept` | Allow SSH access immediately |
 | `check` | Require additional verification (MFA, device posture) |
 | `deny` | Block SSH access |
+
+### Check Mode Workflow
+
+When connecting to devices with `check` action (including `tag:ghost-dev` servers):
+
+1. Run `tailscale ssh core@ghost-dev-01`
+2. Browser opens for re-authentication
+3. Confirm your identity (MFA if configured on your Tailscale account)
+4. SSH session establishes after verification
+
+**Session Caching:** Tailscale caches your verification for approximately 12 hours. Subsequent SSH connections within this window won't require re-authentication.
 
 ### Connecting via SSH
 
@@ -409,7 +420,7 @@ The complete ACL is managed in `opentofu/modules/tailscale/main.tofu`. Current c
   ],
   "ssh": [
     {
-      "action": "accept",
+      "action": "check",
       "src": ["noah@noahwhite.net"],
       "dst": ["tag:ghost-dev"],
       "users": ["root", "autogroup:nonroot", "core"]

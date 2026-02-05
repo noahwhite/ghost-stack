@@ -34,9 +34,9 @@ resource "tailscale_acl" "soc_tailnet_acl" {
       }
     ],
     "ssh" = [
-      # SSH access rules
+      # SSH access rules - check requires re-authentication for privileged access
       {
-        "action" = "accept",
+        "action" = "check",
         "src"    = ["noah@noahwhite.net"],
         "dst"    = ["tag:ghost-dev"],
         "users"  = ["root", "autogroup:nonroot", "core"],
