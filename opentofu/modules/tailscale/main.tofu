@@ -7,12 +7,19 @@ terraform {
   }
 }
 
+variable "instance_config_hash" {
+  type        = string
+  description = "Hash of instance configuration that triggers auth key regeneration when instance is recreated"
+  default     = ""
+}
+
 resource "tailscale_tailnet_key" "this" {
   reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
-  description   = "Dev Ghost pre-approved one-time auth key"
-  tags          = ["tag:ghost-dev"]
+  # Include config hash in description to force key regeneration when instance config changes
+  description = var.instance_config_hash != "" ? "ghost-dev-${substr(var.instance_config_hash, 0, 8)}" : "ghost-dev"
+  tags        = ["tag:ghost-dev"]
 }
 
 resource "tailscale_acl" "soc_tailnet_acl" {
