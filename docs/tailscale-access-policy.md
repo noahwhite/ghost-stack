@@ -109,7 +109,7 @@ SSH access is controlled via Tailscale SSH rules, not traditional SSH keys.
 | Source | Destination | Action | Allowed Users | Notes |
 |--------|-------------|--------|---------------|-------|
 | noah@noahwhite.net | tag:ghost-dev | check | root, core, autogroup:nonroot | Requires re-authentication |
-| noah@noahwhite.net | tag:ghost-dev-workstation | check | noah | Requires MFA/device check |
+| noah@noahwhite.net | tag:ghost-dev-workstation | check | noah | Requires re-authentication |
 
 ### Action Types
 
