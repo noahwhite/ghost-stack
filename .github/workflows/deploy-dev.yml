@@ -49,8 +49,10 @@ jobs:
 
       - name: Extract PR number from merge commit
         id: pr
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          PR_NUM=$(echo "${{ github.event.head_commit.message }}" | grep -oP '\(#\K\d+(?=\))')
+          PR_NUM=$(echo "$COMMIT_MSG" | grep -oP '\(#\K\d+(?=\))' | head -1)
           if [ -z "$PR_NUM" ]; then
             echo "❌ No PR number found in commit message"
             echo "   This deployment requires a PR merge commit"
