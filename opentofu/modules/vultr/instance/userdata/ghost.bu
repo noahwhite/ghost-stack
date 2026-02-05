@@ -255,8 +255,25 @@ systemd:
     - name: ghost-compose.service
       enabled: true
 
-    - name: alloy.service
+    # Alloy Enable Service
+    # The alloy.service comes from the sysext image, which isn't merged until
+    # systemd-sysext.service runs. Ignition's `enabled: true` doesn't work because
+    # it runs before sysext merge. This service enables Alloy after sysext is ready.
+    - name: alloy-enable.service
       enabled: true
+      contents: |
+        [Unit]
+        Description=Enable and start Alloy after sysext merge
+        After=systemd-sysext.service
+        Requires=systemd-sysext.service
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/systemctl enable --now alloy.service
+        RemainAfterExit=yes
+
+        [Install]
+        WantedBy=multi-user.target
 
     - name: update-engine.service
       enabled: true
