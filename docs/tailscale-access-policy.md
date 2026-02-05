@@ -270,16 +270,35 @@ If OpenTofu-managed keys aren't working:
 
 ## Troubleshooting
 
+### Not Logged In to Tailscale
+
+**Symptom:** `tailscale ssh` fails or `tailscale status` shows "Logged out"
+
+**Cause:** You must authenticate to Tailscale before accessing any devices on the Tailnet.
+
+**Resolution:**
+
+```bash
+# Login to Tailscale (opens browser for authentication)
+tailscale login
+
+# Verify you're connected
+tailscale status
+```
+
+After logging in, your device joins the Tailnet and you can access other devices based on ACL rules.
+
 ### Cannot Connect via Tailscale SSH
 
 **Symptom:** `tailscale ssh` hangs or returns permission denied
 
 **Checks:**
 
-1. **Verify Tailscale is running:**
+1. **Verify Tailscale is running and logged in:**
    ```bash
    tailscale status
    ```
+   If it shows "Logged out", run `tailscale login` first.
 
 2. **Verify device is visible:**
    ```bash
@@ -366,7 +385,7 @@ If OpenTofu-managed keys aren't working:
 
 | Date | Author | Changes |
 |------|--------|---------|
-| 2026-02-05 | Claude | Initial version |
+| 2026-02-05 | Noah White | Initial version |
 
 ---
 
