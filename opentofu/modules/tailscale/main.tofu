@@ -8,10 +8,10 @@ terraform {
 }
 
 resource "tailscale_tailnet_key" "this" {
-  reusable      = true
+  reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
-  description   = "Dev Ghost pre-approved auth key"
+  description   = "Dev Ghost pre-approved auth key (one-time)"
   tags          = ["tag:ghost-dev"]
 }
 

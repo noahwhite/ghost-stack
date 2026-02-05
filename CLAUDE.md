@@ -438,6 +438,11 @@ are handled via systemd-sysupdate instead.
 A separate `tailscale-auth.service` runs on first boot to authenticate using
 the auth key and enable Tailscale SSH.
 
+**Auth Key Security:** The project uses **one-time auth keys** (`reusable = false` in the
+`tailscale_tailnet_key` resource). The key is generated automatically by OpenTofu during
+`tofu apply` and is invalidated after first use. This prevents key reuse if exposed in
+OpenTofu state. See `docs/token-rotation-runbook.md` for details.
+
 **Important:** Changing the Tailscale version will recreate the instance. Before applying,
 remove the old device from Tailscale admin to prevent naming conflicts (e.g., the new
 instance being named `ghost-dev-01-1`). See `docs/runbooks/tailscale-device-cleanup.md`.
