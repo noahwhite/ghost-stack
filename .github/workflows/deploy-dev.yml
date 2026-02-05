@@ -199,8 +199,9 @@ jobs:
 
           # Filter out ephemeral values that change between plan runs
           # - kvm: Vultr KVM console URL contains session tokens that regenerate on every API call
+          # - allowed_bandwidth: Vultr bandwidth allocation changes over time (monthly reset/accumulation)
           filter_ephemeral() {
-            grep -v '~ kvm'
+            grep -v '~ kvm' | grep -v '~ allowed_bandwidth'
           }
 
           filter_ephemeral < ./pr-plan/plan-output.txt > /tmp/pr-plan-filtered.txt
