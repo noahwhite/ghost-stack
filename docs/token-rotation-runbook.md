@@ -54,6 +54,9 @@ GitHub secrets are scoped at two levels:
 | Token | Source | Bitwarden ID | GitHub Secret | Env Scope | Expiration |
 |-------|--------|--------------|---------------|-----------|------------|
 | GHCR RW Token | GitHub PAT | N/A | `GHCR_TOKEN` | Repository | Configurable |
+| Ghost Stack PAT | GitHub PAT | N/A | `GHOST_STACK_PAT`* | Repository | 90 days |
+
+*Stored in `alloy-sysext-build` repository, not ghost-stack.
 | BWS Access Token | Bitwarden | N/A | `BWS_ACCESS_TOKEN` | Environment (dev) | Never* |
 | Claude MCP Token | GitHub PAT | N/A | N/A (local) | N/A | Configurable |
 | Cloudflare API Token | Cloudflare | `59624245-...` | N/A | N/A | Configurable |
@@ -143,6 +146,52 @@ GitHub secrets are scoped at two levels:
 
 3. **Verify:**
    - Use Claude Code to list issues or create a test comment
+
+---
+
+### Ghost Stack PAT (`GHOST_STACK_PAT`)
+
+**Purpose:** Allow the `alloy-sysext-build` repository's CI/CD workflow to create PRs in `ghost-stack` after building new Alloy sysext images.
+
+**Repository:** `alloy-sysext-build` (not ghost-stack)
+
+**Scope:** `public_repo` (under `repo` scope - access public repositories only)
+
+**Expiration:** 90 days
+
+#### What This Token Does
+
+When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml` workflow uses this token to:
+1. Clone the ghost-stack repository
+2. Create a feature branch with updated ghost.bu (new version + SHA256 hash)
+3. Push the branch and create a PR
+4. Assign the PR to Noah White
+
+#### Rotation Steps
+
+1. **Generate new token:**
+   - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Click "Generate new token (classic)"
+   - Name: `alloy-sysext-ghost-stack-pat`
+   - Expiration: 90 days
+   - Under `repo` scope, select only `public_repo`
+   - Click "Generate token"
+   - Copy the token immediately
+
+2. **Update GitHub Secret:**
+   - Go to `github.com/noahwhite/alloy-sysext-build` → Settings → Secrets and variables → Actions
+   - Find `GHOST_STACK_PAT` under Repository secrets (or create if first time)
+   - Click "Update" (or "New repository secret")
+   - Paste the new token
+   - Click "Update secret"
+
+3. **Revoke old token:**
+   - Go to GitHub → Settings → Developer settings → Personal access tokens
+   - Find the old token and click "Delete"
+
+4. **Verify:**
+   - Trigger the `build-and-publish.yml` workflow manually with a test version
+   - Or wait for the next automated build and verify PR creation succeeds
 
 ---
 
@@ -714,6 +763,7 @@ After rotating any token, perform the following verifications:
 | Token | Recommended Rotation | Priority |
 |-------|---------------------|----------|
 | GHCR Token | Every 90 days | High |
+| Ghost Stack PAT | Every 90 days | High |
 | Cloudflare API Tokens | Every 90 days | High |
 | Tailscale API Key | Before 90-day expiry | High |
 | Tailscale Auth Key | Before each instance provisioning | High |
