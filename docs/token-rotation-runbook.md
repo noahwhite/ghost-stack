@@ -14,10 +14,11 @@ This document provides step-by-step procedures for rotating all tokens and secre
 6. [R2 Storage Credentials](#r2-storage-credentials)
 7. [Vultr API Key](#vultr-api-key)
 8. [Tailscale API Key](#tailscale-api-key)
-9. [PagerDuty Credentials](#pagerduty-credentials)
-10. [Grafana Cloud Credentials](#grafana-cloud-credentials)
-11. [Linear API Token](#linear-api-token)
-12. [Verification Procedures](#verification-procedures)
+9. [Tailscale Auth Key](#tailscale-auth-key-device-registration)
+10. [PagerDuty Credentials](#pagerduty-credentials)
+11. [Grafana Cloud Credentials](#grafana-cloud-credentials)
+12. [Linear API Token](#linear-api-token)
+13. [Verification Procedures](#verification-procedures)
 
 ---
 
@@ -64,6 +65,7 @@ GitHub secrets are scoped at two levels:
 | R2 Bootstrap Secret Key | Cloudflare R2 | N/A | N/A | N/A | Never |
 | Vultr API Key | Vultr | `d68b6562-...` | N/A | N/A | Never |
 | Tailscale API Key | Tailscale | `34b620b7-...` | N/A | N/A | 90 days default |
+| Tailscale Auth Key | Tailscale (OpenTofu) | N/A (generated) | N/A | N/A | One-time (single use) |
 | PagerDuty Client ID | PagerDuty | `7d51661b-...` | N/A | N/A | Never |
 | PagerDuty Client Secret | PagerDuty | `b15575c0-...` | N/A | N/A | Never |
 | PagerDuty User Token | PagerDuty | `02805292-...` | N/A | N/A | Never |
@@ -390,6 +392,101 @@ GitHub secrets are scoped at two levels:
 
 ---
 
+### Tailscale Auth Key (Device Registration)
+
+**Purpose:** Authenticate new Flatcar instances to join the Tailnet during first boot.
+
+**Storage:** Generated dynamically by OpenTofu via `tailscale_tailnet_key` resource
+
+**Expiration:** One-time use (key is invalidated after first use)
+
+**Important:** This project uses **one-time auth keys** for security. The key is generated automatically by OpenTofu during `tofu apply` and is configured with `reusable = false`, meaning it's invalidated after a single use. This prevents key reuse if exposed in OpenTofu state or logs.
+
+#### Why One-Time Keys?
+
+| Key Type | Risk if Exposed | Mitigation |
+|----------|-----------------|------------|
+| Reusable | Attacker can register unlimited rogue devices | Manual revocation required |
+| One-time | Key already invalidated after legitimate use | Automatic - no action needed |
+
+#### How It Works
+
+The auth key is managed entirely by OpenTofu:
+
+1. **Key Generation:** The `tailscale_tailnet_key` resource in `opentofu/modules/tailscale/main.tofu` creates a new auth key
+2. **Key Configuration:**
+   - `reusable = false` - One-time use only
+   - `ephemeral = false` - Device persists after disconnect
+   - `preauthorized = true` - No admin approval needed
+   - Tagged with `tag:ghost-dev`
+3. **Key Injection:** The key is passed to the Flatcar instance via Ignition userdata
+4. **Key Consumption:** On first boot, `tailscale-auth.service` uses the key to join the Tailnet
+5. **Key Invalidation:** Tailscale automatically invalidates the key after first use
+
+#### Pre-Provisioning Checklist
+
+Before running `tofu apply` that will create or recreate an instance:
+
+1. **Remove the old Tailscale device** from the admin console (see `docs/runbooks/tailscale-device-cleanup.md`)
+2. **Run `tofu apply`** - OpenTofu will generate a fresh one-time auth key automatically
+3. **Verify the device appears** in Tailscale admin console after instance boots
+
+#### Key Lifecycle During Provisioning
+
+```
+tofu apply
+    │
+    ├─► tailscale_tailnet_key resource creates new one-time key
+    │
+    ├─► Key embedded in Ignition userdata (stored in tofu state)
+    │
+    ├─► Vultr instance created with Ignition config
+    │
+    └─► Instance boots
+            │
+            ├─► tailscale-auth.service runs on first boot
+            │
+            ├─► tailscale up --authkey=<key> --ssh
+            │
+            └─► Key is consumed and invalidated by Tailscale
+
+Subsequent tofu apply (no instance change):
+    │
+    └─► Same key reference in state, but key is already invalidated
+        (This is fine - the device is already registered)
+```
+
+#### Verification
+
+After instance provisioning:
+
+```bash
+# SSH to the new instance
+tailscale ssh core@ghost-dev-01
+
+# Verify Tailscale is connected
+tailscale status
+```
+
+To verify the key was invalidated:
+1. Go to Tailscale admin console → Settings → Keys
+2. The auth key should show as "Used" or no longer appear in active keys
+3. The new device should appear in the Machines list
+
+#### Troubleshooting
+
+- **Instance fails to join Tailnet:** The auth key may have been consumed by a previous failed provisioning attempt. Run `tofu apply` again to generate a fresh key.
+- **Device named `ghost-dev-01-1`:** The old device wasn't removed from Tailscale before reprovisioning. Remove it and reprovision. See `docs/runbooks/tailscale-device-cleanup.md`
+- **Key in state but device not registered:** The instance may have failed to boot or the tailscale-auth.service failed. Check instance console and `journalctl -u tailscale-auth.service`
+
+#### Security Considerations
+
+- **State file exposure:** The auth key is stored in OpenTofu state. Use encrypted state backend (R2 with server-side encryption) and restrict state access.
+- **One-time mitigation:** Even if state is compromised, the key cannot be reused after the legitimate instance has consumed it.
+- **Key rotation:** Each `tofu apply` that recreates the instance generates a fresh key automatically.
+
+---
+
 ## PagerDuty Credentials
 
 ### PagerDuty OAuth Credentials
@@ -619,6 +716,7 @@ After rotating any token, perform the following verifications:
 | GHCR Token | Every 90 days | High |
 | Cloudflare API Tokens | Every 90 days | High |
 | Tailscale API Key | Before 90-day expiry | High |
+| Tailscale Auth Key | Before each instance provisioning | High |
 | BWS Access Tokens | Every 6-12 months | Medium |
 | R2 Credentials | Every 6-12 months | Medium |
 | Vultr API Key | Annually | Medium |
