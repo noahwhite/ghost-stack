@@ -11,7 +11,7 @@ resource "tailscale_tailnet_key" "this" {
   reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
-  description   = "Dev Ghost pre-approved auth key (one-time)"
+  description   = "Dev Ghost pre-approved one-time auth key"
   tags          = ["tag:ghost-dev"]
 }
 
