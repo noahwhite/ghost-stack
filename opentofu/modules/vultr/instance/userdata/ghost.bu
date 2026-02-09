@@ -24,12 +24,12 @@ storage:
     # Quick hash retrieval:
     #   curl -s https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw.sha256
     # ==========================================================================
-    - path: /opt/extensions/alloy/alloy-1.12.2-amd64.raw
+    - path: /opt/extensions/alloy/alloy-1.13.0-amd64.raw
       mode: 0644
       contents:
-        source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.12.2-amd64.raw
+        source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.13.0-amd64.raw
         verification:
-          hash: sha256-c43c25848b3ad0c970cd0ec77663b28f22dcf551d4da47da3cd82749819aefa9
+          hash: sha256-663a5cbc9f2b57a99556e2c772aafbae9341bf5cb2da47928d46ff23b3510d40
 
     - path: /etc/systemd/system/ghost-compose.service
       mode: 0644
@@ -127,7 +127,7 @@ storage:
       contents:
         source: https://extensions.flatcar.org/extensions/tailscale-v1.94.1-x86-64.raw
         verification:
-          hash: sha256-4fac074559d01328d0c59e030170821d22332a3ebd19087c135959f11feafaa1
+          hash: sha256-663a5cbc9f2b57a99556e2c772aafbae9341bf5cb2da47928d46ff23b3510d40
 
     - path: /etc/sysupdate.tailscale.d/tailscale.conf
       contents:
@@ -139,7 +139,7 @@ storage:
       hard: false
 
     # Symlink must be updated when changing Alloy version (path above)
-    - target: /opt/extensions/alloy/alloy-1.12.2-amd64.raw
+    - target: /opt/extensions/alloy/alloy-1.13.0-amd64.raw
       path: /etc/extensions/alloy.raw
       hard: false
 
