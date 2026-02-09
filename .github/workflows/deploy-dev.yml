@@ -72,17 +72,28 @@ jobs:
           path: ./pr-plan
           if_no_artifact_found: fail
 
-      - name: Verify plan artifact downloaded
+      - name: Check for skip marker
+        id: skip-check
         run: |
           if [ ! -f ./pr-plan/plan-output.txt ]; then
             echo "❌ Plan artifact missing plan-output.txt"
             exit 1
           fi
-          echo "✅ Plan artifact verified"
-          echo "Plan from PR #${{ steps.pr.outputs.number }}:"
-          head -20 ./pr-plan/plan-output.txt
+
+          # Check if this is a skip marker (no infra changes in PR)
+          if grep -q "SKIP_DEPLOYMENT=true" ./pr-plan/plan-output.txt; then
+            echo "✅ No infrastructure changes in PR #${{ steps.pr.outputs.number }}"
+            echo "   Skipping deployment."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Plan artifact verified"
+            echo "Plan from PR #${{ steps.pr.outputs.number }}:"
+            head -20 ./pr-plan/plan-output.txt
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install Bitwarden Secrets Manager CLI (bws)
+        if: steps.skip-check.outputs.skip != 'true'
         run: |
           set -euo pipefail
           curl -fsSL \
@@ -94,6 +105,7 @@ jobs:
           bws --version
 
       - name: Retrieve secrets via infra-shell.sh (CI mode)
+        if: steps.skip-check.outputs.skip != 'true'
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           BOOTSTRAP_R2_BUCKET: ${{ vars.BOOTSTRAP_R2_BUCKET }}
@@ -103,10 +115,12 @@ jobs:
           ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 
       - name: Fix workspace permissions for Docker container
+        if: steps.skip-check.outputs.skip != 'true'
         run: |
           chmod -R a+w "${GITHUB_WORKSPACE}/opentofu"
 
       - name: Run OpenTofu init
+        if: steps.skip-check.outputs.skip != 'true'
         env:
           TF_VAR_cloudflare_account_id: ${{ env.TF_VAR_cloudflare_account_id }}
           TF_VAR_cloudflare_api_token: ${{ env.TF_VAR_cloudflare_api_token }}
@@ -144,6 +158,7 @@ jobs:
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev init"
 
       - name: Generate fresh plan for comparison
+        if: steps.skip-check.outputs.skip != 'true'
         env:
           TF_VAR_cloudflare_account_id: ${{ env.TF_VAR_cloudflare_account_id }}
           TF_VAR_cloudflare_api_token: ${{ env.TF_VAR_cloudflare_api_token }}
@@ -189,6 +204,7 @@ jobs:
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev plan -out=tfplan"
 
       - name: Generate human-readable current plan
+        if: steps.skip-check.outputs.skip != 'true'
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/home/devops/app" \
@@ -197,6 +213,7 @@ jobs:
             bash -c "git config --global --add safe.directory /home/devops/app && tofu -chdir=opentofu/envs/dev show -no-color tfplan > opentofu/envs/dev/current-plan.txt"
 
       - name: Compare PR plan with current plan
+        if: steps.skip-check.outputs.skip != 'true'
         run: |
           echo "Comparing PR plan with current state..."
 
@@ -222,7 +239,7 @@ jobs:
           fi
 
       - name: Apply infrastructure changes
-        if: env.PLANS_MATCH == 'true'
+        if: steps.skip-check.outputs.skip != 'true' && env.PLANS_MATCH == 'true'
         env:
           TF_VAR_cloudflare_account_id: ${{ env.TF_VAR_cloudflare_account_id }}
           TF_VAR_cloudflare_api_token: ${{ env.TF_VAR_cloudflare_api_token }}
@@ -268,7 +285,7 @@ jobs:
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev apply tfplan"
 
       - name: Verify Ghost health after deployment
-        if: env.PLANS_MATCH == 'true'
+        if: steps.skip-check.outputs.skip != 'true' && env.PLANS_MATCH == 'true'
         env:
           HEALTH_CHECK_TOKEN: ${{ secrets.HEALTH_CHECK_TOKEN }}
         run: |
@@ -304,7 +321,10 @@ jobs:
           echo "================================"
           echo "Deployment Summary"
           echo "================================"
-          if [ "${{ env.PLANS_MATCH }}" == "true" ] && [ "${{ env.HEALTH_CHECK_PASSED }}" == "true" ]; then
+          if [ "${{ steps.skip-check.outputs.skip }}" == "true" ]; then
+            echo "⏭️ Deployment skipped - no infrastructure changes in PR"
+            echo "   PR #${{ steps.pr.outputs.number }} merged without infrastructure deployment"
+          elif [ "${{ env.PLANS_MATCH }}" == "true" ] && [ "${{ env.HEALTH_CHECK_PASSED }}" == "true" ]; then
             echo "✅ Infrastructure changes applied successfully"
             echo "✅ Ghost health check passed"
             echo "   PR #${{ steps.pr.outputs.number }} deployed to dev environment"
