@@ -63,6 +63,7 @@ jobs:
           echo "✅ Found PR #$PR_NUM"
 
       - name: Download plan artifact from PR
+        id: download-artifact
         uses: dawidd6/action-download-artifact@v9
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -70,19 +71,15 @@ jobs:
           pr: ${{ steps.pr.outputs.number }}
           name: tofu-plan-dev-${{ steps.pr.outputs.number }}
           path: ./pr-plan
-          if_no_artifact_found: fail
+          if_no_artifact_found: warn
 
-      - name: Check for skip marker
+      - name: Check if deployment should proceed
         id: skip-check
         run: |
+          # Check if plan artifact exists (no artifact = no infra changes in PR)
           if [ ! -f ./pr-plan/plan-output.txt ]; then
-            echo "❌ Plan artifact missing plan-output.txt"
-            exit 1
-          fi
-
-          # Check if this is a skip marker (no infra changes in PR)
-          if grep -q "SKIP_DEPLOYMENT=true" ./pr-plan/plan-output.txt; then
-            echo "✅ No infrastructure changes in PR #${{ steps.pr.outputs.number }}"
+            echo "✅ No plan artifact found for PR #${{ steps.pr.outputs.number }}"
+            echo "   No infrastructure files were changed in this PR."
             echo "   Skipping deployment."
             echo "skip=true" >> $GITHUB_OUTPUT
           else

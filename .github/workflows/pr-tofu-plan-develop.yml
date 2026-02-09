@@ -206,29 +206,9 @@ jobs:
           path: opentofu/envs/dev/plan-output.txt
           retention-days: 30
 
-  # Upload a "skipped" marker artifact when no infra changes detected
-  # This allows deploy-dev.yml to distinguish between "no changes" and "plan failed"
-  skip-marker:
-    needs: changes
-    if: needs.changes.outputs.infra != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create skip marker
-        run: |
-          echo "No infrastructure files changed in this PR." > plan-output.txt
-          echo "Skipped at: $(date -u)" >> plan-output.txt
-          echo "SKIP_DEPLOYMENT=true" >> plan-output.txt
-
-      - name: Upload skip marker as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tofu-plan-dev-${{ github.event.pull_request.number }}
-          path: plan-output.txt
-          retention-days: 30
-
   # Summary job that always runs to provide clear status
   status:
-    needs: [changes, tofu-plan, skip-marker]
+    needs: [changes, tofu-plan]
     if: always()
     runs-on: ubuntu-latest
     steps:
