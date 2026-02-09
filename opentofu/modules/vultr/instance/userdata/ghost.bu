@@ -127,7 +127,7 @@ storage:
       contents:
         source: https://extensions.flatcar.org/extensions/tailscale-v1.94.1-x86-64.raw
         verification:
-          hash: sha256-43425759a963728a5dcb1be4b1c87242badc334ad377c08117bf2c33b0bc14c1
+          hash: sha256-4fac074559d01328d0c59e030170821d22332a3ebd19087c135959f11feafaa1
 
     - path: /etc/sysupdate.tailscale.d/tailscale.conf
       contents:
