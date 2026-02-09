@@ -29,7 +29,7 @@ storage:
       contents:
         source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.13.0-amd64.raw
         verification:
-          hash: sha256-43425759a963728a5dcb1be4b1c87242badc334ad377c08117bf2c33b0bc14c1
+          hash: sha256-45761db339106677c3903fddb3be3ce11c90d69aceee49a8a9e94d8cdd06cc64
 
     - path: /etc/systemd/system/ghost-compose.service
       mode: 0644
