@@ -151,12 +151,15 @@ docs/                   # Documentation
 
 ## CI/CD Workflows
 
-- **pr-tofu-fmt-check.yml**: Validates OpenTofu formatting on PRs
+- **pr-tofu-fmt-check.yml**: Validates OpenTofu formatting on feature branch pushes
+  - Only runs when infrastructure files are modified (path filtering)
 - **pr-tofu-plan-develop.yml**: Runs `tofu plan` on PRs to develop, uploads plan artifact
+  - Only runs when infrastructure files are modified (path filtering)
 - **deploy-dev.yml**: Deploys to dev environment on push to develop
   - Requires manual approval via GitHub environment protection
   - Compares PR plan artifact with current state (drift detection)
   - Runs health checks after deployment
+  - Skips deployment when no plan artifact exists (no infra changes in PR)
 
 ## Important Patterns
 
