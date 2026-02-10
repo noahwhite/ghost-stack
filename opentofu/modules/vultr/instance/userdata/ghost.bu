@@ -32,7 +32,7 @@ storage:
       contents:
         source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.13.0-amd64.raw
         verification:
-          hash: sha256-45761db339106677c3903fddb3be3ce11c90d69aceee49a8a9e94d8cdd06cc64
+          hash: sha256-8f2e9da5ad9992b21b5dad4dfc90f47ea2451df223892db100ad38bfc89884f9
 
     # Alloy sysupdate configuration for automatic updates
     - path: /etc/sysupdate.alloy.d/alloy.conf
