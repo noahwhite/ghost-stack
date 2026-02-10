@@ -35,12 +35,14 @@ storage:
           hash: sha256-8f2e9da5ad9992b21b5dad4dfc90f47ea2451df223892db100ad38bfc89884f9
 
     # Alloy sysupdate configuration for automatic updates
+    # GPG signature verification is enabled - signatures are created by
+    # alloy-sysext-build CI and uploaded alongside the .raw images
     - path: /etc/sysupdate.alloy.d/alloy.conf
       mode: 0644
       contents:
         inline: |
           [Transfer]
-          Verify=false
+          Verify=true
 
           [Source]
           Type=url-file
@@ -52,6 +54,42 @@ storage:
           Type=regular-file
           Path=/opt/extensions/alloy/
           CurrentSymlink=/etc/extensions/alloy.raw
+
+    # GPG public key for verifying Alloy sysext signatures
+    # Key: Alloy Sysext Signing Key <alloy-sysext@separationofconcerns.dev>
+    - path: /etc/sysupdate.alloy.d/alloy.gpg
+      mode: 0644
+      contents:
+        inline: |
+          -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+          mQINBGmLdesBEADOZbUWcPVUrYZqSS6FapKIx0GyK4UXfaZQYREFaJ2cd6meoWet
+          kDMrd9eBsQu2knYQ6r9L43W6O3fek/c2olnXep2D2FM8TcR4KUoLZSeVoLCLia7+
+          5pVhGVPB/ZvZpytJ6t4JgnsDOO1sFO92I8hgMoQ9/4kRmVAKy0iHgDELdM+1NLuD
+          YA9WhpcYg3TAKeNsr6I8ztmYb41P4gBdqNBT96/6ww1Y6PKXeQjJ6pycDwznUguA
+          TgRyKv/80tZT4qYZFwdluCMF7F7YNs/PSl7ujrIcyRp5qi/2I4Ec4pKS1QSg3hst
+          M61Shd9dI/PqTJPsPm8okKGJpwIV/Lcqio1SSb4DIJrKu/DAjb5WcZCTLv/9B6W2
+          CK04DWW8HsyXvzrBYCR+NqtxsVnNvmCPIWIgVLibfMIvd7EhMNtMt5JOMrw3CRIT
+          f6xNFCO4fzkc1D6+L7DwP7RvS1n0ox1fs8j7wO4P4Uyra2Mi3+c4ho9KF6R2S59C
+          zHhRe8CHjQXa7S923D+e/g861r6veWrw9eYzbaZXdg5XuKrTH5ybEtMjRn3Cuc/Q
+          EhDuXnPVB0eulIdmZX5CN8+pC0Eb/Jqs3JX7HHy1LaZRdZefUdzCz8zlDWpNEREi
+          AVCeGVvEAv3jTbnywvk/0PVThuLyWVIT+sHwkfM25mB4Yhw2fW61ntoLCQARAQAB
+          tEBBbGxveSBTeXNleHQgU2lnbmluZyBLZXkgPGFsbG95LXN5c2V4dEBzZXBhcmF0
+          aW9ub2Zjb25jZXJucy5kZXY+iQJRBBMBCgA7FiEEB2j7mgyZuJX+XMxG7fcdZJ80
+          nt4FAmmLdesCGwMFCwkIBwICIgIGFQoJCAsCBBYCAwECHgcCF4AACgkQ7fcdZJ80
+          nt7Aqg//S6pHSX7YNOUNNB1OK3mzukR9w2u9wigrshY8fEZylaFr3smX+bBas6V0
+          X9tOU/rDLT7qOTVYb2YCPhlGWYHA4g4jUqxKsrKDPGGS5Wj3LwAvzddn3ni/8pTh
+          O4l8Npd0ZeX9XRi0XTjQxY3zzADf+9fjQa7hRZKij0XyLzbrfZa9VyPh/8rYuOcM
+          GQ1XPq+boVBJh7CLb9oFXVLd0Cag6cUM4c+QQ8ZB18Wm/frbPwiPgD3CzwtVzpgB
+          ZxxAV4AdaDzEpIKUbnqluh0E/aTormaNK1ZsxrzbGqu/0ely/jKll0kGSo+I3xr+
+          pzH9baVMHT5B6u9fSROKj1RAi/sQjo7tz68inlCKkuH5zT67egoHwS34lpwnw+3n
+          2d/mylO7wcck9CZ9J5CKj0rX7PklX2p+9aQGozVWod3xXqu6Tn6C8Z+iJoEYvRSj
+          jkeB5LZnJw6JdMJTADlLaCOHfS900o0hfNm9G18Us75PCbybhyrAMIFE3HcgHRnl
+          Hc2k26Fop5wVTd3HqWhR/i5B6HOLJnObVswjMMJrKp624oXCjkXma3MMp3fK/r30
+          V4X4Teq96RXR5zJS8Yuyx2wNW1d5jx9EAta9NGLGBUpc5VPP+URA75kc4HNyxb1T
+          zdGanURhUCsI4+PI6P0WkGschWUN/ujhb2cIen8uAMrjlbjLJKI=
+          =8FOV
+          -----END PGP PUBLIC KEY BLOCK-----
 
     - path: /etc/systemd/system/ghost-compose.service
       mode: 0644
