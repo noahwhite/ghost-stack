@@ -25,6 +25,8 @@ jobs:
         uses: dorny/paths-filter@v3
         id: filter
         with:
+          # For new branches, compare against develop (the branch features are created from)
+          base: develop
           filters: |
             infra:
               - 'opentofu/**/*.tofu'
