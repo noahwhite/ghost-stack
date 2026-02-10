@@ -10,7 +10,30 @@ permissions:
   packages: read
 
 jobs:
+  # Detect which files changed to determine if we need to run checks
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for infrastructure file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'opentofu/**/*.tofu'
+              - 'opentofu/**/*.bu'
+              - 'opentofu/**/*.tftpl'
+              - 'opentofu/**/*.sh'
+              - '.github/workflows/pr-tofu-*.yml'
+
   tofu-checks:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -38,4 +61,21 @@ jobs:
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             tofu fmt -check -recursive
 
-
+  # Summary job that always runs to provide clear status
+  status:
+    needs: [changes, tofu-checks]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.changes.outputs.infra }}" != "true" ]]; then
+            echo "✅ Skipped: No infrastructure files changed"
+            exit 0
+          fi
+          if [[ "${{ needs.tofu-checks.result }}" == "success" ]]; then
+            echo "✅ OpenTofu format check passed"
+            exit 0
+          fi
+          echo "❌ OpenTofu format check failed"
+          exit 1

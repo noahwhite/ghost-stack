@@ -12,7 +12,32 @@ permissions:
   pull-requests: write
 
 jobs:
+  # Detect which files changed to determine if we need to run plan
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for infrastructure file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'opentofu/**/*.tofu'
+              - 'opentofu/**/*.bu'
+              - 'opentofu/**/*.tftpl'
+              - 'opentofu/**/*.sh'
+              - 'docker/scripts/**'
+              - '.github/workflows/pr-tofu-*.yml'
+              - '.github/workflows/deploy-dev.yml'
+
   tofu-plan:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
     runs-on: ubuntu-latest
     environment: dev-ci
 
@@ -180,3 +205,23 @@ jobs:
           name: tofu-plan-dev-${{ github.event.pull_request.number }}
           path: opentofu/envs/dev/plan-output.txt
           retention-days: 30
+
+  # Summary job that always runs to provide clear status
+  status:
+    needs: [changes, tofu-plan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.changes.outputs.infra }}" != "true" ]]; then
+            echo "✅ Skipped: No infrastructure files changed"
+            echo "   Deployment will be skipped when this PR is merged."
+            exit 0
+          fi
+          if [[ "${{ needs.tofu-plan.result }}" == "success" ]]; then
+            echo "✅ OpenTofu plan completed successfully"
+            exit 0
+          fi
+          echo "❌ OpenTofu plan failed"
+          exit 1
