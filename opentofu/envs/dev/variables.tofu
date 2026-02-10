@@ -4,7 +4,10 @@ variable "vultr_api_key" {
   sensitive   = true
 }
 
-variable "firewall_name" { type = string }
+variable "firewall_name" {
+  description = "Name for the Vultr firewall group"
+  type        = string
+}
 
 variable "admin_subnets" {
   description = "List of {subnet, subnet_size} objects allowed for SSH"
