@@ -367,23 +367,50 @@ Examples of valid branch names:
 The Grafana Alloy systemd-sysext image is built automatically by the
 [alloy-sysext-build](https://github.com/noahwhite/alloy-sysext-build) repository.
 
+**Automated Pipeline:**
+When a new Alloy version is released upstream, the following happens automatically:
+1. `check-new-releases.yml` detects the new version (runs daily at midnight UTC)
+2. `build-and-publish.yml` builds, signs, and uploads the sysext image to R2
+3. A PR is automatically created in this repo with the updated version and hash
+4. After PR merge and deployment, the instance runs the new version
+
+**GPG Signature Verification:**
+All Alloy sysext images are cryptographically signed. The instance verifies signatures
+before installing updates via systemd-sysupdate.
+
+- **Signing Key:** `Alloy Sysext Signing Key <alloy-sysext@separationofconcerns.dev>`
+- **Public Key Location:** `/etc/sysupdate.alloy.d/alloy.gpg`
+- **Sysupdate Config:** `/etc/sysupdate.alloy.d/alloy.conf` with `Verify=true`
+- **Signature Files:** `.asc` files stored alongside images in R2
+
+For GPG key management and rotation, see the
+[alloy-sysext-build CLAUDE.md](https://github.com/noahwhite/alloy-sysext-build/blob/main/CLAUDE.md).
+
 **Auto-updates:** Alloy auto-updates are enabled via systemd-sysupdate. When a new
 version is published to the R2 bucket, the system will automatically download and
 stage the update, flagging for reboot when updates are available.
 
 **How auto-updates work:**
 1. A new Alloy release is detected by alloy-sysext-build's daily check workflow
-2. CI automatically builds and uploads the new sysext image to R2
+2. CI automatically builds, signs, and uploads the new sysext image to R2
 3. CI creates a PR in ghost-stack to update the pinned version in ghost.bu
 4. On the running instance, systemd-sysupdate checks R2 hourly for new versions
-5. If a newer version is found, it downloads and stages the update
+5. If a newer version is found, it verifies the GPG signature and downloads the update
 6. The system flags `/run/reboot-required` for the next reboot window
+
+**Automated PR Details:**
+- Branch naming: `feature/update-alloy-sysext-to-{VERSION}`
+- Created by: `alloy-sysext-automation` GitHub App
+- Commits are verified/signed by GitHub
+- PRs are auto-assigned to Noah White
 
 **To manually pin a specific version:**
 
 1. **Trigger a build** in alloy-sysext-build (if not already built):
-   - Create a GitHub release with the version tag (e.g., `v1.11.0`)
-   - Or use workflow_dispatch with the version number
+   ```bash
+   gh workflow run build-and-publish.yml --repo noahwhite/alloy-sysext-build \
+     -f version=1.14.0
+   ```
 
 2. **Get the SHA256 hash** from the build output or download the checksum file:
    ```bash
@@ -401,6 +428,18 @@ stage the update, flagging for reboot when updates are available.
    ./opentofu/scripts/tofu.sh dev plan
    ./opentofu/scripts/tofu.sh dev apply
    ```
+
+**Verifying Signatures on Instance:**
+```bash
+# Check sysupdate config
+cat /etc/sysupdate.alloy.d/alloy.conf
+
+# List available updates (verifies signatures)
+systemd-sysupdate -C alloy list
+
+# Check the public key
+cat /etc/sysupdate.alloy.d/alloy.gpg
+```
 
 **Note:** Changing the Butane configuration (including the Alloy version) will cause
 OpenTofu to destroy and recreate the instance, as the Ignition config is immutable
