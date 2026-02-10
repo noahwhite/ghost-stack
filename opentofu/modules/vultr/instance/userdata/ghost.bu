@@ -14,12 +14,15 @@ storage:
     # This systemd-sysext image is built automatically by the alloy-sysext-build
     # repository: https://github.com/noahwhite/alloy-sysext-build
     #
-    # To update to a new Alloy version:
+    # Auto-updates are enabled via systemd-sysupdate (see dropin below).
+    # When a new version is published to the R2 bucket, sysupdate will
+    # automatically download and stage the update, flagging for reboot.
+    #
+    # Manual version pinning (if needed):
     #   1. Trigger a build in alloy-sysext-build (release or workflow_dispatch)
-    #   2. CI builds and uploads the new image to the R2 bucket
-    #   3. Get the SHA256 hash from the .sha256 file or build output
-    #   4. Update the path, source URL, and hash below
-    #   5. Apply infrastructure changes via OpenTofu
+    #   2. Update the path, source URL, and hash below
+    #   3. Update the symlink target in the links section
+    #   4. Apply infrastructure changes via OpenTofu
     #
     # Quick hash retrieval:
     #   curl -s https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw.sha256
@@ -30,6 +33,25 @@ storage:
         source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.13.0-amd64.raw
         verification:
           hash: sha256-45761db339106677c3903fddb3be3ce11c90d69aceee49a8a9e94d8cdd06cc64
+
+    # Alloy sysupdate configuration for automatic updates
+    - path: /etc/sysupdate.alloy.d/alloy.conf
+      mode: 0644
+      contents:
+        inline: |
+          [Transfer]
+          Verify=false
+
+          [Source]
+          Type=url-file
+          Path=https://ghost-sysext-images.separationofconcerns.dev/
+          MatchPattern=alloy-@v-amd64.raw
+
+          [Target]
+          InstancesMax=3
+          Type=regular-file
+          Path=/opt/extensions/alloy/
+          CurrentSymlink=/etc/extensions/alloy.raw
 
     - path: /etc/systemd/system/ghost-compose.service
       mode: 0644
@@ -300,3 +322,10 @@ systemd:
             ExecStartPre=/usr/lib/systemd/systemd-sysupdate -C tailscale update
             ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/tailscale.raw > /tmp/tailscale-new.txt"
             ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/tailscale.txt /tmp/tailscale-new.txt; then touch /run/reboot-required; fi"
+        - name: alloy.conf
+          contents: |
+            [Service]
+            ExecStartPre=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/alloy.raw > /tmp/alloy.txt"
+            ExecStartPre=/usr/lib/systemd/systemd-sysupdate -C alloy update
+            ExecStartPost=/usr/bin/sh -c "readlink --canonicalize /etc/extensions/alloy.raw > /tmp/alloy-new.txt"
+            ExecStartPost=/usr/bin/sh -c "if ! cmp --silent /tmp/alloy.txt /tmp/alloy-new.txt; then touch /run/reboot-required; fi"

@@ -367,26 +367,36 @@ Examples of valid branch names:
 The Grafana Alloy systemd-sysext image is built automatically by the
 [alloy-sysext-build](https://github.com/noahwhite/alloy-sysext-build) repository.
 
-**To update to a new version:**
+**Auto-updates:** Alloy auto-updates are enabled via systemd-sysupdate. When a new
+version is published to the R2 bucket, the system will automatically download and
+stage the update, flagging for reboot when updates are available.
 
-1. **Trigger a build** in alloy-sysext-build:
+**How auto-updates work:**
+1. A new Alloy release is detected by alloy-sysext-build's daily check workflow
+2. CI automatically builds and uploads the new sysext image to R2
+3. CI creates a PR in ghost-stack to update the pinned version in ghost.bu
+4. On the running instance, systemd-sysupdate checks R2 hourly for new versions
+5. If a newer version is found, it downloads and stages the update
+6. The system flags `/run/reboot-required` for the next reboot window
+
+**To manually pin a specific version:**
+
+1. **Trigger a build** in alloy-sysext-build (if not already built):
    - Create a GitHub release with the version tag (e.g., `v1.11.0`)
    - Or use workflow_dispatch with the version number
 
-2. **Wait for CI** to build and upload the image to R2
-
-3. **Get the SHA256 hash** from the build output or download the checksum file:
+2. **Get the SHA256 hash** from the build output or download the checksum file:
    ```bash
    curl -s https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw.sha256
    ```
 
-4. **Update ghost.bu** (`opentofu/modules/vultr/instance/userdata/ghost.bu`):
+3. **Update ghost.bu** (`opentofu/modules/vultr/instance/userdata/ghost.bu`):
    - Update the file path: `/opt/extensions/alloy/alloy-{VERSION}-amd64.raw`
    - Update the source URL: `https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw`
    - Update the hash: `sha256-{HASH}`
    - Update the symlink target in the `links` section
 
-5. **Apply infrastructure changes**:
+4. **Apply infrastructure changes**:
    ```bash
    ./opentofu/scripts/tofu.sh dev plan
    ./opentofu/scripts/tofu.sh dev apply
