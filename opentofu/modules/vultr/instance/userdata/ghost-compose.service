@@ -1,15 +1,16 @@
 [Unit]
 Description=Docker-Compose Ghost CMS Container
-After=docker.service var-mnt-storage.mount
+After=docker.service var-mnt-storage.mount tinybird-provision.service
 Requires=docker.service var-mnt-storage.mount
+Wants=tinybird-provision.service
 RequiresMountsFor=/var/mnt/storage
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/etc/ghost-compose
-ExecStart=/usr/bin/docker compose --env-file .env.config --env-file /var/mnt/storage/ghost-compose/.env.secrets up -d
-ExecStop=/usr/bin/docker compose --env-file .env.config --env-file /var/mnt/storage/ghost-compose/.env.secrets down
+ExecStart=/usr/bin/docker compose --env-file .env.config --env-file /var/mnt/storage/ghost-compose/.env.secrets --env-file /var/mnt/storage/ghost-compose/.env.generated up -d
+ExecStop=/usr/bin/docker compose --env-file .env.config --env-file /var/mnt/storage/ghost-compose/.env.secrets --env-file /var/mnt/storage/ghost-compose/.env.generated down
 TimeoutStartSec=0
 
 [Install]

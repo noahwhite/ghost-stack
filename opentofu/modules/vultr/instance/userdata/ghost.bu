@@ -148,6 +148,35 @@ storage:
       contents:
         source: "data:text/plain;charset=utf-8;base64,${ghost_mysql_init}"
 
+    # ==========================================================================
+    # TinyBird Analytics Provisioning
+    # ==========================================================================
+    # TinyBird analytics is automatically provisioned on first boot if
+    # TINYBIRD_ADMIN_TOKEN is present in .env.secrets.
+    #
+    # Setup:
+    #   1. Create TinyBird workspace at tinybird.co
+    #   2. Copy admin token from Settings → Tokens
+    #   3. Add to .env.secrets: TINYBIRD_ADMIN_TOKEN=p.eyJ...
+    #   4. Restart instance - provisioning handles the rest
+    #
+    # The tinybird-provision.service:
+    #   - Syncs TinyBird schema from Ghost
+    #   - Deploys datasources and pipes (idempotent)
+    #   - Extracts tracker token via tb token ls
+    #   - Writes .env.generated for Ghost and traffic-analytics
+    # ==========================================================================
+
+    - path: /etc/ghost-compose/tinybird/Dockerfile
+      mode: 0644
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_tinybird_dockerfile}"
+
+    - path: /usr/local/bin/tinybird-provision.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${tinybird_provision_script}"
+
     - path: /etc/locksmith/locksmith.conf
       mode: 0644
       overwrite: true
@@ -239,7 +268,9 @@ systemd:
         mkdir -p /var/mnt/storage/caddy/certs && chmod 0755 /var/mnt/storage/caddy/certs && \
         mkdir -p /var/mnt/storage/alloy && chmod 0750 /var/mnt/storage/alloy && \
         mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data && \
-        mkdir -p /var/mnt/storage/ghost-compose && chmod 0700 /var/mnt/storage/ghost-compose\'
+        mkdir -p /var/mnt/storage/ghost-compose && chmod 0700 /var/mnt/storage/ghost-compose && \
+        mkdir -p /var/mnt/storage/traffic-analytics/data && chmod 0755 /var/mnt/storage/traffic-analytics/data && \
+        touch /var/mnt/storage/ghost-compose/.env.generated && chmod 0600 /var/mnt/storage/ghost-compose/.env.generated\'
         RemainAfterExit=true
         
         [Install]
@@ -311,6 +342,28 @@ systemd:
 
     - name: docker.service
       enabled: true
+
+    # TinyBird Analytics Provisioning
+    # Runs before ghost-compose to sync schema, deploy, and extract tokens
+    # Gracefully skips if TINYBIRD_ADMIN_TOKEN is not in .env.secrets
+    - name: tinybird-provision.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=TinyBird Analytics Provisioning
+        After=docker.service var-mnt-storage.mount create-storage-dirs.service
+        Before=ghost-compose.service
+        Requires=docker.service var-mnt-storage.mount
+        ConditionPathExists=/var/mnt/storage/ghost-compose/.env.secrets
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/local/bin/tinybird-provision.sh
+        TimeoutStartSec=300
+
+        [Install]
+        WantedBy=multi-user.target
 
     - name: ghost-compose.service
       enabled: true
