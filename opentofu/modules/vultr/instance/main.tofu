@@ -47,6 +47,10 @@ locals {
   ghost_caddy_security_headers  = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
   ghost_caddy_traffic_analytics = filebase64("${path.module}/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
   ghost_mysql_init              = filebase64("${path.module}/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
+
+  # TinyBird Analytics provisioning
+  ghost_tinybird_dockerfile = filebase64("${path.module}/userdata/ghost-compose/tinybird/Dockerfile")
+  tinybird_provision_script = filebase64("${path.module}/userdata/tinybird-provision.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -70,6 +74,10 @@ data "ct_config" "ghost" {
     ghost_caddy_security_headers  = local.ghost_caddy_security_headers
     ghost_caddy_traffic_analytics = local.ghost_caddy_traffic_analytics
     ghost_mysql_init              = local.ghost_mysql_init
+
+    # TinyBird Analytics provisioning
+    ghost_tinybird_dockerfile = local.ghost_tinybird_dockerfile
+    tinybird_provision_script = local.tinybird_provision_script
   })
   strict = true
 }

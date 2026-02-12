@@ -44,8 +44,8 @@
 
     tls /certs/cloudflare-origin.crt /certs/cloudflare-origin.key
 
-    # Traffic Analytics service (uncomment when enabled)
-    #import snippets/TrafficAnalytics
+    # Traffic Analytics service (proxies /.ghost/analytics/* to traffic-analytics container)
+    import snippets/TrafficAnalytics
 
     # ActivityPub Service (uncomment when enabled)
     #import snippets/ActivityPub
