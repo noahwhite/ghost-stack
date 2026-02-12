@@ -19,6 +19,10 @@ set -a
 source "$SECRETS_FILE"
 set +a
 
+# Export as TB_TOKEN/TB_HOST for tb CLI (avoids exposing values in process listing)
+export TB_TOKEN="${TINYBIRD_ADMIN_TOKEN}"
+export TB_HOST="${TINYBIRD_API_URL:-https://api.tinybird.co}"
+
 cd "$COMPOSE_DIR"
 
 echo "=== TinyBird Provisioning ==="
@@ -29,24 +33,18 @@ docker compose run --rm tinybird-sync
 
 # 2. Deploy datasources and pipes (idempotent)
 echo "[2/4] Deploying TinyBird datasources and pipes..."
-docker compose run --rm \
-    -e TB_TOKEN="${TINYBIRD_ADMIN_TOKEN}" \
-    -e TB_HOST="${TINYBIRD_API_URL:-https://api.tinybird.co}" \
+docker compose run --rm -e TB_TOKEN -e TB_HOST \
     tinybird-cli deploy --cloud --allow-destructive-operations
 
 # 3. Extract tracker token and workspace ID
 echo "[3/4] Extracting tokens and workspace ID..."
 
 # Get all tokens in JSON format
-JSON_TOKENS=$(docker compose run --rm \
-    -e TB_TOKEN="${TINYBIRD_ADMIN_TOKEN}" \
-    -e TB_HOST="${TINYBIRD_API_URL:-https://api.tinybird.co}" \
+JSON_TOKENS=$(docker compose run --rm -e TB_TOKEN -e TB_HOST \
     tinybird-cli token ls --format json)
 
 # Get workspace ID
-WORKSPACE_ID=$(docker compose run --rm \
-    -e TB_TOKEN="${TINYBIRD_ADMIN_TOKEN}" \
-    -e TB_HOST="${TINYBIRD_API_URL:-https://api.tinybird.co}" \
+WORKSPACE_ID=$(docker compose run --rm -e TB_TOKEN -e TB_HOST \
     tinybird-cli workspace current --format json | jq -r '.id')
 
 # Extract tracker token from JSON
