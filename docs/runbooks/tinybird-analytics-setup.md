@@ -43,12 +43,12 @@ tb info
 
 From the `tb info` output, copy the `token:` value from the **Tinybird Cloud** section (not Tinybird Local). This is your workspace admin token.
 
-You can verify the token works:
+You can verify the token works (use your region's API URL):
 ```bash
-# Test the token (replace <TOKEN> with your token)
+# Test the token
 read -s -p "Token: " TOKEN && \
   curl -s -H "Authorization: Bearer $TOKEN" \
-  https://api.us-east.tinybird.co/v0/datasources | jq . && \
+  https://<your-api-host>/v0/datasources | jq . && \
   unset TOKEN
 ```
 
@@ -68,7 +68,8 @@ TINYBIRD_ADMIN_TOKEN=p.eyJ...your-admin-token...
 TINYBIRD_API_URL=https://api.us-east.tinybird.co
 ```
 
-**Regional API URLs:**
+The API URL is determined by the region where your workspace was created. Check the `host:` value in `tb info` output, or use one of:
+
 | Region | URL |
 |--------|-----|
 | US East | `https://api.us-east.tinybird.co` |
