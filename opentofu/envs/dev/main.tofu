@@ -68,6 +68,51 @@ data "terraform_remote_state" "bootstrap" {
 locals {
   # Use variable if provided (CI mode), otherwise read from bootstrap state (workstation mode)
   cloudflare_zone_id = var.cloudflare_zone_id != "" ? var.cloudflare_zone_id : data.terraform_remote_state.bootstrap[0].outputs.cloudflare_zone_id
+
+  # ==========================================================================
+  # Instance Replacement Hash
+  # ==========================================================================
+  # This hash captures all inputs that would cause the Vultr instance to be
+  # replaced. When any of these change, the Tailscale auth key is also
+  # regenerated to ensure the new instance can authenticate.
+  #
+  # Includes:
+  # - Instance attributes (region, plan, name, firewall, ssh key)
+  # - Userdata variables (domains, IPs, config values)
+  # - Template/config files that compose the Ignition userdata
+  instance_replacement_hash = sha256(jsonencode({
+    # Instance attributes that force replacement
+    region            = var.instance_region
+    plan              = var.instance_plan
+    name              = var.instance_name
+    firewall_group_id = module.fw.id
+    ssh_key_name      = var.ssh_key_name
+    ssh_public_key    = var.ssh_public_key
+
+    # Userdata variables
+    ghost_url          = var.ghost_url
+    ghost_domain       = var.ghost_domain
+    ghost_admin_domain = var.ghost_admin_domain
+    admin_ip           = var.admin_ip
+    mail_smtp_user     = var.mail_smtp_user
+    locksmith_mask     = var.locksmith_mask
+
+    # Template and config file hashes (changes to these rebuild userdata)
+    files = {
+      ghost_bu              = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost.bu")
+      ghost_compose_service = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose.service")
+      tinybird_provision    = filesha256("${path.module}/../../modules/vultr/instance/userdata/tinybird-provision.sh")
+      compose_yml           = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl")
+      env_config            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/env.config.tftpl")
+      caddyfile             = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/Caddyfile")
+      caddy_activitypub     = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/ActivityPub")
+      caddy_logging         = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/Logging")
+      caddy_security        = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
+      caddy_analytics       = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
+      mysql_init            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
+      tinybird_dockerfile   = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
+    }
+  }))
 }
 
 module "grafana-cloud" {
@@ -85,9 +130,9 @@ module "pagerduty" {
 module "tailscale" {
   source = "../../modules/tailscale"
 
-  # Trigger auth key regeneration when instance config changes
+  # Trigger auth key regeneration when instance will be replaced
   # This ensures a fresh one-time key is created when the instance is recreated
-  instance_config_hash = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost.bu")
+  instance_replacement_hash = local.instance_replacement_hash
 }
 
 module "dns_records" {
