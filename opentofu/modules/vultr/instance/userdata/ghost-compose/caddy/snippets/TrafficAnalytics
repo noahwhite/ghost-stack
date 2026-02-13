@@ -1,7 +1,6 @@
-# Proxy analytics requests to traffic-analytics service
-# traffic-analytics expects POST /api/v1/page_hit
-@analytics_paths path /.ghost/analytics/*
+# Proxy analytics requests with any prefix (e.g. /.ghost/analytics/ or /blog/.ghost/analytics/)
+@analytics_paths path_regexp analytics_match ^(.*)/\.ghost/analytics(.*)$
 handle @analytics_paths {
-    rewrite * /api/v1/page_hit
+    rewrite * {re.analytics_match.2}
     reverse_proxy traffic-analytics:3000
 }
