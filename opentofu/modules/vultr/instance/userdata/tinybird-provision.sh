@@ -4,13 +4,16 @@ set -euo pipefail
 SECRETS_FILE="/var/mnt/storage/ghost-compose/.env.secrets"
 GENERATED_FILE="/var/mnt/storage/ghost-compose/.env.generated"
 COMPOSE_DIR="/etc/ghost-compose"
+CONFIG_FILE="${COMPOSE_DIR}/.env.config"
+
+# Ensure .env.generated exists (prevents ghost-compose.service failure if we exit early)
+touch "$GENERATED_FILE"
+chmod 0600 "$GENERATED_FILE"
 
 # Check if admin token is available
 if ! grep -q "TINYBIRD_ADMIN_TOKEN=" "$SECRETS_FILE" 2>/dev/null; then
     echo "TINYBIRD_ADMIN_TOKEN not found in .env.secrets, skipping TinyBird provisioning..."
     echo "Add TINYBIRD_ADMIN_TOKEN to .env.secrets to enable TinyBird analytics."
-    # Create empty .env.generated to prevent docker compose errors
-    touch "$GENERATED_FILE"
     exit 0
 fi
 
@@ -25,15 +28,18 @@ export TB_HOST="${TINYBIRD_API_URL:-https://api.tinybird.co}"
 
 cd "$COMPOSE_DIR"
 
+# Docker compose needs env files for variable interpolation
+COMPOSE_CMD="docker compose --env-file ${CONFIG_FILE} --env-file ${SECRETS_FILE} --env-file ${GENERATED_FILE}"
+
 echo "=== TinyBird Provisioning ==="
 
 # 1. Sync TinyBird schema files from Ghost image
 echo "[1/4] Syncing TinyBird files from Ghost..."
-docker compose run --rm tinybird-sync
+$COMPOSE_CMD run --rm tinybird-sync
 
 # 2. Deploy datasources and pipes (idempotent)
 echo "[2/4] Deploying TinyBird datasources and pipes..."
-docker compose run --rm -e TB_TOKEN -e TB_HOST \
+$COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
     tinybird-cli deploy --cloud --allow-destructive-operations
 
 # 3. Extract tracker token and workspace ID
@@ -44,11 +50,11 @@ OLD_OPTS=$(set +o)
 { set +x; } 2>/dev/null
 
 # Get all tokens in JSON format
-JSON_TOKENS=$(docker compose run --rm -e TB_TOKEN -e TB_HOST \
+JSON_TOKENS=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
     tinybird-cli token ls --format json)
 
 # Get workspace ID
-WORKSPACE_ID=$(docker compose run --rm -e TB_TOKEN -e TB_HOST \
+WORKSPACE_ID=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
     tinybird-cli workspace current --format json | jq -r '.id')
 
 # Extract tracker token from JSON
