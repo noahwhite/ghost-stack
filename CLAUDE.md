@@ -487,6 +487,18 @@ the auth key and enable Tailscale SSH.
 `tofu apply` and is invalidated after first use. This prevents key reuse if exposed in
 OpenTofu state. See `docs/token-rotation-runbook.md` for details.
 
+**Auth Key Regeneration:** The Tailscale auth key is automatically regenerated whenever
+the instance would be replaced. This is controlled by `instance_replacement_hash` in
+`opentofu/envs/dev/main.tofu`, which hashes:
+- Instance attributes (region, plan, name, firewall_group_id, ssh key)
+- Userdata variables (domains, IPs, config values)
+- All config files in `opentofu/modules/vultr/instance/userdata/`
+
+**IMPORTANT:** When adding new config files to the instance userdata, you must also add
+them to the `instance_replacement_hash` calculation in `opentofu/envs/dev/main.tofu`.
+Otherwise, changes to those files won't trigger Tailscale key regeneration, and the
+new instance will fail to authenticate with an already-used key.
+
 **Important:** Changing the Tailscale version will recreate the instance. Before applying,
 remove the old device from Tailscale admin to prevent naming conflicts (e.g., the new
 instance being named `ghost-dev-01-1`). See `docs/runbooks/tailscale-device-cleanup.md`.
