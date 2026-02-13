@@ -54,9 +54,9 @@ OLD_OPTS=$(set +o)
 TRACKER_TOKEN=$($COMPOSE_CMD run --rm --entrypoint sh -e TB_TOKEN -e TB_HOST \
     tinybird-cli -c 'curl -s -H "Authorization: Bearer $TB_TOKEN" "$TB_HOST/v0/tokens" | jq -r ".tokens[] | select(.name==\"tracker\") | .token"')
 
-# Get workspace ID from datasources endpoint (contains workspace info)
-WORKSPACE_ID=$($COMPOSE_CMD run --rm --entrypoint sh -e TB_TOKEN -e TB_HOST \
-    tinybird-cli -c 'curl -s -H "Authorization: Bearer $TB_TOKEN" "$TB_HOST/v0/datasources" | jq -r ".datasources[0].workspace"')
+# Get workspace ID from tb workspace current (key-value format: "id: <uuid>")
+WORKSPACE_ID=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
+    tinybird-cli --cloud workspace current | grep '^id:' | awk '{print $2}')
 
 EXTRACT_FAILED=""
 
