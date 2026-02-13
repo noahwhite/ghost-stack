@@ -40,7 +40,7 @@ $COMPOSE_CMD run --rm tinybird-sync
 # 2. Deploy datasources and pipes (idempotent)
 echo "[2/4] Deploying TinyBird datasources and pipes..."
 $COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
-    tinybird-cli deploy --cloud --allow-destructive-operations
+    tinybird-cli --cloud deploy --allow-destructive-operations
 
 # 3. Extract tracker token and workspace ID
 echo "[3/4] Extracting tokens and workspace ID..."
@@ -51,11 +51,11 @@ OLD_OPTS=$(set +o)
 
 # Get all tokens in JSON format
 JSON_TOKENS=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
-    tinybird-cli token ls --format json)
+    tinybird-cli --cloud token ls --format json)
 
 # Get workspace ID
 WORKSPACE_ID=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
-    tinybird-cli workspace current --format json | jq -r '.id')
+    tinybird-cli --cloud workspace current --format json | jq -r '.id')
 
 # Extract tracker token from JSON
 TRACKER_TOKEN=$(echo "$JSON_TOKENS" | jq -r '.[] | select(.name=="tracker") | .token')
