@@ -49,16 +49,14 @@ echo "[3/4] Extracting tokens and workspace ID..."
 OLD_OPTS=$(set +o)
 { set +x; } 2>/dev/null
 
-# Get all tokens in JSON format
-JSON_TOKENS=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
-    tinybird-cli --cloud token ls --format json)
+# Use TinyBird REST API directly (tb CLI doesn't support JSON output for token ls)
+# The tinybird-cli container has curl and jq installed
+TRACKER_TOKEN=$($COMPOSE_CMD run --rm --entrypoint sh -e TB_TOKEN -e TB_HOST \
+    tinybird-cli -c 'curl -s -H "Authorization: Bearer $TB_TOKEN" "$TB_HOST/v0/tokens" | jq -r ".tokens[] | select(.name==\"tracker\") | .token"')
 
-# Get workspace ID
-WORKSPACE_ID=$($COMPOSE_CMD run --rm -e TB_TOKEN -e TB_HOST \
-    tinybird-cli --cloud workspace current --format json | jq -r '.id')
-
-# Extract tracker token from JSON
-TRACKER_TOKEN=$(echo "$JSON_TOKENS" | jq -r '.[] | select(.name=="tracker") | .token')
+# Get workspace ID from datasources endpoint (contains workspace info)
+WORKSPACE_ID=$($COMPOSE_CMD run --rm --entrypoint sh -e TB_TOKEN -e TB_HOST \
+    tinybird-cli -c 'curl -s -H "Authorization: Bearer $TB_TOKEN" "$TB_HOST/v0/datasources" | jq -r ".datasources[0].workspace"')
 
 EXTRACT_FAILED=""
 
