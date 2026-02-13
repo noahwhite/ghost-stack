@@ -35,6 +35,7 @@ jobs:
               - 'opentofu/**/*.bu'
               - 'opentofu/**/*.tftpl'
               - 'opentofu/**/*.sh'
+              - 'opentofu/**/userdata/**'
               - 'docker/scripts/**'
               - '.github/workflows/pr-tofu-*.yml'
               - '.github/workflows/deploy-dev.yml'
