@@ -31,11 +31,12 @@ locals {
   # Template files - processed with OpenTofu variables
   ghost_compose_yml = base64encode(templatefile("${path.module}/userdata/ghost-compose/compose.yml.tftpl", {}))
 
+  # admin_ip: Strip CIDR notation for Caddy header matching (e.g., 1.2.3.4/32 -> 1.2.3.4)
   ghost_env_config = base64encode(templatefile("${path.module}/userdata/ghost-compose/env.config.tftpl", {
     ghost_domain       = var.ghost_domain
     ghost_admin_domain = var.ghost_admin_domain
     ghost_version      = var.ghost_version
-    admin_ip           = var.admin_ip
+    admin_ip           = split("/", var.admin_ip)[0]
     mail_smtp_host     = var.mail_smtp_host
     mail_smtp_user     = var.mail_smtp_user
   }))
