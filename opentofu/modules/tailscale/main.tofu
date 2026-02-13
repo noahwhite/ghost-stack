@@ -30,9 +30,8 @@ resource "tailscale_tailnet_key" "this" {
   reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
-  # Include config hash in description for visibility in Tailscale admin
-  description = var.instance_config_hash != "" ? "ghost-dev-${substr(var.instance_config_hash, 0, 8)}" : "ghost-dev"
-  tags        = ["tag:ghost-dev"]
+  description   = "ghost-dev"
+  tags          = ["tag:ghost-dev"]
 
   lifecycle {
     # Explicitly replace this key whenever the instance config changes
