@@ -172,7 +172,7 @@ storage:
       contents:
         source: "data:text/plain;charset=utf-8;base64,${ghost_tinybird_dockerfile}"
 
-    - path: /usr/local/bin/tinybird-provision.sh
+    - path: /etc/ghost-compose/tinybird-provision.sh
       mode: 0755
       contents:
         source: "data:text/plain;charset=utf-8;base64,${tinybird_provision_script}"
@@ -359,7 +359,7 @@ systemd:
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/local/bin/tinybird-provision.sh
+        ExecStart=/etc/ghost-compose/tinybird-provision.sh
         TimeoutStartSec=300
 
         [Install]
