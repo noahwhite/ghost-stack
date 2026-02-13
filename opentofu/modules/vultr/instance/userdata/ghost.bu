@@ -275,6 +275,7 @@ systemd:
         mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data && \
         mkdir -p /var/mnt/storage/ghost-compose && chmod 0700 /var/mnt/storage/ghost-compose && \
         mkdir -p /var/mnt/storage/traffic-analytics/data && chmod 0755 /var/mnt/storage/traffic-analytics/data && \
+        mkdir -p /var/mnt/storage/tinybird && chmod 0755 /var/mnt/storage/tinybird && \
         touch /var/mnt/storage/ghost-compose/.env.generated && chmod 0600 /var/mnt/storage/ghost-compose/.env.generated\'
         RemainAfterExit=true
         
