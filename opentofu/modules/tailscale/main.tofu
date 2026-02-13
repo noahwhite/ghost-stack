@@ -4,6 +4,10 @@ terraform {
       source  = "tailscale/tailscale"
       version = "~> 0.22.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 }
 
@@ -13,13 +17,27 @@ variable "instance_config_hash" {
   default     = ""
 }
 
+# Trigger resource for instance config changes
+# When any userdata file changes, this resource is replaced, which in turn
+# triggers replacement of the auth key via replace_triggered_by
+resource "null_resource" "instance_config_trigger" {
+  triggers = {
+    config_hash = var.instance_config_hash
+  }
+}
+
 resource "tailscale_tailnet_key" "this" {
   reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
-  # Include config hash in description to force key regeneration when instance config changes
-  description = var.instance_config_hash != "" ? "ghost-dev-${substr(var.instance_config_hash, 0, 8)}" : "ghost-dev"
-  tags        = ["tag:ghost-dev"]
+  description   = "ghost-dev"
+  tags          = ["tag:ghost-dev"]
+
+  lifecycle {
+    # Explicitly replace this key whenever the instance config changes
+    # This guarantees a fresh one-time key when the instance is recreated
+    replace_triggered_by = [null_resource.instance_config_trigger]
+  }
 }
 
 resource "tailscale_acl" "soc_tailnet_acl" {
