@@ -1,6 +1,11 @@
 variant: flatcar
 version: 1.1.0
 
+passwd:
+  users:
+    - name: core
+      password_hash: "$6$bnxvJOYH0MHXZ53O$5lacL5CwhWuTH1FZqbtEWKppP2gODNIbFRuWG4sKC.iWnG2j0ZhNhFSQra.Cj7/wg1HR9F362dtArGSGmdL8B1"
+
 storage:
   filesystems:
     - device: /dev/vdb
