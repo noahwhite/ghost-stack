@@ -1,3 +1,4 @@
+# Dev environment - Ghost blog infrastructure
 terraform {
   backend "s3" {}
   required_providers {
