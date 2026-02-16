@@ -37,7 +37,7 @@ storage:
       contents:
         source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.13.1-amd64.raw
         verification:
-          hash: sha256-b9381d66b3d863091843f1e69433e11e8f13e25d59c3e508541ab07cc4723425
+          hash: sha256-ffdc107b18618da6c17ef6ff8b1d14dcf50a402418f358e0d3215ad1da891518
 
     # Alloy sysupdate configuration for automatic updates
     # GPG signature verification is enabled - signatures are created by
