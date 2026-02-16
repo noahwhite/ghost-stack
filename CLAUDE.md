@@ -379,7 +379,7 @@ All Alloy sysext images are cryptographically signed. The instance verifies sign
 before installing updates via systemd-sysupdate.
 
 - **Signing Key:** `Alloy Sysext Signing Key <alloy-sysext@separationofconcerns.dev>`
-- **Public Key Location:** `/etc/sysupdate.alloy.d/alloy.gpg`
+- **Public Key Location:** `/etc/systemd/import-pubring.gpg`
 - **Sysupdate Config:** `/etc/sysupdate.alloy.d/alloy.conf` with `Verify=true`
 - **Signature Files:** `.asc` files stored alongside images in R2
 
@@ -438,7 +438,7 @@ cat /etc/sysupdate.alloy.d/alloy.conf
 systemd-sysupdate -C alloy list
 
 # Check the public key
-cat /etc/sysupdate.alloy.d/alloy.gpg
+cat /etc/systemd/import-pubring.gpg
 ```
 
 **Note:** Changing the Butane configuration (including the Alloy version) will cause
