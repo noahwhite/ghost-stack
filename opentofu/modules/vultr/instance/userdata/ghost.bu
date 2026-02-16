@@ -61,9 +61,11 @@ storage:
           CurrentSymlink=/etc/extensions/alloy.raw
 
     # GPG public key for verifying Alloy sysext signatures (SHA256SUMS.gpg)
-    # systemd-sysupdate requires keys at /etc/systemd/import-pubring.gpg
+    # This key is merged into /etc/systemd/import-pubring.gpg by the
+    # sysupdate-import-pubring.service at boot time. The merge preserves
+    # any existing keys from the base image (e.g., Fedora/Ubuntu legacy keys).
     # Key: Alloy Sysext Signing Key <alloy-sysext@separationofconcerns.dev>
-    - path: /etc/systemd/import-pubring.gpg
+    - path: /etc/systemd/alloy-sysext.gpg.pub
       mode: 0644
       contents:
         inline: |
@@ -96,6 +98,69 @@ storage:
           zdGanURhUCsI4+PI6P0WkGschWUN/ujhb2cIen8uAMrjlbjLJKI=
           =8FOV
           -----END PGP PUBLIC KEY BLOCK-----
+
+    # Script to merge system GPG keyring with Alloy signing key
+    # Checks for .pgp (newer systemd) first, then falls back to .gpg (legacy)
+    - path: /usr/local/bin/sysupdate-merge-keyring.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/bin/bash
+          # Merge system import-pubring with Alloy sysext signing key
+          # systemd-sysupdate checks /etc/systemd/ first, then /usr/lib/systemd/
+          # We copy the system keyring to /etc and append our key to preserve both
+          set -euo pipefail
+
+          SYS_KEYRING=""
+          ETC_KEYRING="/etc/systemd/import-pubring.gpg"
+          ALLOY_KEY="/etc/systemd/alloy-sysext.gpg.pub"
+
+          # Check for system keyring (.pgp preferred, .gpg fallback)
+          if [[ -f /usr/lib/systemd/import-pubring.pgp ]]; then
+            SYS_KEYRING="/usr/lib/systemd/import-pubring.pgp"
+            ETC_KEYRING="/etc/systemd/import-pubring.pgp"
+          elif [[ -f /usr/lib/systemd/import-pubring.gpg ]]; then
+            SYS_KEYRING="/usr/lib/systemd/import-pubring.gpg"
+            ETC_KEYRING="/etc/systemd/import-pubring.gpg"
+          fi
+
+          # Create /etc/systemd directory if needed
+          mkdir -p /etc/systemd
+
+          if [[ -n "$SYS_KEYRING" ]]; then
+            echo "Copying system keyring from $SYS_KEYRING to $ETC_KEYRING"
+            cp "$SYS_KEYRING" "$ETC_KEYRING"
+          else
+            echo "No system keyring found, creating new keyring at $ETC_KEYRING"
+            touch "$ETC_KEYRING"
+          fi
+
+          # Import Alloy signing key into the keyring
+          if [[ -f "$ALLOY_KEY" ]]; then
+            echo "Importing Alloy signing key into $ETC_KEYRING"
+            # Use gpg to import key into keyring file
+            GNUPGHOME=$(mktemp -d)
+            export GNUPGHOME
+            trap 'rm -rf "$GNUPGHOME"' EXIT
+
+            # Import existing keyring if it has content
+            if [[ -s "$ETC_KEYRING" ]]; then
+              gpg --batch --quiet --import "$ETC_KEYRING" 2>/dev/null || true
+            fi
+
+            # Import Alloy key
+            gpg --batch --quiet --import "$ALLOY_KEY"
+
+            # Export merged keyring
+            gpg --batch --quiet --export > "$ETC_KEYRING"
+
+            echo "Keyring merge complete"
+          else
+            echo "Warning: Alloy signing key not found at $ALLOY_KEY"
+          fi
+
+          chmod 0644 "$ETC_KEYRING"
+          echo "Keyring ready at $ETC_KEYRING"
 
     - path: /etc/systemd/system/ghost-compose.service
       mode: 0644
@@ -400,6 +465,25 @@ systemd:
 
     - name: locksmithd.service
       enabled: true
+
+    # Merge system GPG keyring with Alloy signing key before sysupdate runs
+    # This ensures systemd-sysupdate can verify both system packages and Alloy sysext
+    # The merge preserves existing keys from the base image while adding our key
+    - name: sysupdate-import-pubring.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Merge GPG keyring for systemd-sysupdate
+        Before=systemd-sysupdate.service
+        ConditionPathExists=/etc/systemd/alloy-sysext.gpg.pub
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/sysupdate-merge-keyring.sh
+        RemainAfterExit=yes
+
+        [Install]
+        WantedBy=multi-user.target
 
     - name: systemd-sysupdate.timer
       enabled: true
