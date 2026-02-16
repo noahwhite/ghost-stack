@@ -60,9 +60,10 @@ storage:
           Path=/opt/extensions/alloy/
           CurrentSymlink=/etc/extensions/alloy.raw
 
-    # GPG public key for verifying Alloy sysext signatures
+    # GPG public key for verifying Alloy sysext signatures (SHA256SUMS.gpg)
+    # systemd-sysupdate requires keys at /etc/systemd/import-pubring.gpg
     # Key: Alloy Sysext Signing Key <alloy-sysext@separationofconcerns.dev>
-    - path: /etc/sysupdate.alloy.d/alloy.gpg
+    - path: /etc/systemd/import-pubring.gpg
       mode: 0644
       contents:
         inline: |
