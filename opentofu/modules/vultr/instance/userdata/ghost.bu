@@ -1,5 +1,6 @@
 variant: flatcar
 version: 1.1.0
+# GHO-59: SHA256SUMS manifest support for systemd-sysupdate
 
 passwd:
   users:
