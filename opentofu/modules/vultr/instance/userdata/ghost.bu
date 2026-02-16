@@ -102,7 +102,7 @@ storage:
 
     # Script to merge system GPG keyring with Alloy signing key
     # Checks for .pgp (newer systemd) first, then falls back to .gpg (legacy)
-    - path: /usr/local/bin/sysupdate-merge-keyring.sh
+    - path: /opt/bin/sysupdate-merge-keyring.sh
       mode: 0755
       contents:
         inline: |
@@ -480,7 +480,7 @@ systemd:
 
         [Service]
         Type=oneshot
-        ExecStart=/usr/local/bin/sysupdate-merge-keyring.sh
+        ExecStart=/opt/bin/sysupdate-merge-keyring.sh
         RemainAfterExit=yes
 
         [Install]
