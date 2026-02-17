@@ -350,6 +350,7 @@ if [[ "$RUN_CONTAINER" == "true" ]]; then
     -e TF_VAR_cloudflare_api_token \
     -e TF_VAR_ssh_public_key \
     -e TF_VAR_admin_subnets \
+    -e TF_VAR_admin_ip \
     -e R2_ACCESS_KEY_ID \
     -e R2_SECRET_ACCESS_KEY \
     -e TAILSCALE_API_KEY \
