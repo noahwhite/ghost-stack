@@ -59,12 +59,50 @@ Do NOT proceed until the title prefix is verified.
 ### Epic/Project Labeling
 
 When creating epics (Linear projects):
+- **Name must be prefixed with `[EPIC]`** (e.g., `[EPIC] Ghost Stack Backup & Recovery`)
 - Apply the **"Epic"** label to identify it as an epic
 - Apply a **t-shirt size label** based on total story points:
   - T-Shirt Size Small: ~5-10 story points
   - T-Shirt Size Medium: ~15-25 story points
   - T-Shirt Size Large: ~30+ story points
-- Reference: See `[EPIC] Secure Remote Management via Private Networking` as an example
+- **Always set Noah White as the project lead**
+
+### Epic Template
+
+All epics must follow this standard template format (see `[EPIC] Secure Remote Management via Private Networking` for reference):
+
+```markdown
+### Goal / Outcome
+
+[One paragraph describing what this epic aims to achieve]
+
+**Business Value:**
+[Explain why this work matters - what problem does it solve? What risk does it mitigate? What capability does it enable? How does it benefit the user/business?]
+
+[Additional details about the approach, architecture diagrams, or bullet points expanding on the goals]
+
+---
+
+### Definition of Ready (DoR)
+
+- [ ] Epic goal is clearly articulated and aligns with team/organization objectives
+- [ ] Relevant stakeholders are identified
+- [ ] Dependencies and constraints are understood
+- [ ] Acceptance Criteria (AC) defined at a high level
+- [ ] Estimation: T-shirt size or rough timebox assigned
+
+---
+
+### Definition of Done (DoD)
+
+- [ ] All associated stories are completed and accepted
+- [ ] All functionality works as expected in the dev/staging environment
+- [ ] Documentation is written or updated as needed
+- [ ] Monitoring and health checks are validated
+- [ ] [Epic-specific completion criteria]
+```
+
+**Important:** Do NOT include "Issues / Stories" or "Related Projects or Epics" sections - these are visible via Linear's UI.
 
 ### User Story Template
 
