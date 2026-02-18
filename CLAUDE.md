@@ -61,10 +61,7 @@ Do NOT proceed until the title prefix is verified.
 When creating epics (Linear projects):
 - **Name must be prefixed with `[EPIC]`** (e.g., `[EPIC] Ghost Stack Backup & Recovery`)
 - Apply the **"Epic"** label to identify it as an epic
-- Apply a **t-shirt size label** based on total story points:
-  - T-Shirt Size Small: ~5-10 story points
-  - T-Shirt Size Medium: ~15-25 story points
-  - T-Shirt Size Large: ~30+ story points
+- Apply a **t-shirt size label** based on complexity (see sizing guide below)
 - **Always set Noah White as the project lead**
 
 ### Epic Template
@@ -103,6 +100,28 @@ All epics must follow this standard template format (see `[EPIC] Secure Remote M
 ```
 
 **Important:** Do NOT include "Issues / Stories" or "Related Projects or Epics" sections - these are visible via Linear's UI.
+
+### Epic T-Shirt Sizing
+
+Sizes represent **complexity and uncertainty**, not duration. Higher complexity tends to correlate with longer duration, but the size itself measures "how hard is this to figure out and implement" rather than "how many days/weeks."
+
+**Complexity Indicators:**
+
+| Size | Characteristics |
+|------|-----------------|
+| **Small** | Well-understood work, single focus area, minimal dependencies, few unknowns |
+| **Medium** | Some unknowns, 2-3 focus areas, moderate dependencies, may require research |
+| **Large** | Significant unknowns, multiple phases, external integrations, new vendors/technologies |
+
+**Planning Guidelines** (derived from historical velocity):
+
+| Size | Typical Cycles | Story Points (approx) | Notes |
+|------|----------------|----------------------|-------|
+| **Small** | 1 | 5-10 | Single-phase, well-defined |
+| **Medium** | 1-2 | 10-20 | May have dependencies between stories |
+| **Large** | 2-3 | 20-35 | Review if exceeding 3 cycles |
+
+**Note:** The cycle ranges are guidelines derived from team velocity, not prescriptive targets. Actual duration depends on unknowns discovered during implementation.
 
 ### User Story Template
 
