@@ -105,23 +105,17 @@ All epics must follow this standard template format (see `[EPIC] Secure Remote M
 
 Sizes represent **complexity and uncertainty**, not duration. Higher complexity tends to correlate with longer duration, but the size itself measures "how hard is this to figure out and implement" rather than "how many days/weeks."
 
-**Complexity Indicators:**
+| Size | Complexity / Effort Description | Typical Time Mapping |
+|------|--------------------------------|----------------------|
+| **Small (S)** | Well-understood, minor dependencies, low risk | 1-2 sprints (2-4 weeks) |
+| **Medium (M)** | Standard feature, some integration, moderate unknowns | 3-4 sprints (1.5-2 months) |
+| **Large (L)** | Complex logic, multiple team touchpoints, significant risk | 1 full quarter (~3 months) |
+| **Extra Large (XL)** | Cross-departmental, massive architectural shifts | Multiple quarters (needs breakdown) |
 
-| Size | Characteristics |
-|------|-----------------|
-| **Small** | Well-understood work, single focus area, minimal dependencies, few unknowns |
-| **Medium** | Some unknowns, 2-3 focus areas, moderate dependencies, may require research |
-| **Large** | Significant unknowns, multiple phases, external integrations, new vendors/technologies |
-
-**Planning Guidelines** (derived from historical velocity):
-
-| Size | Typical Cycles | Story Points (approx) | Notes |
-|------|----------------|----------------------|-------|
-| **Small** | 1 | 5-10 | Single-phase, well-defined |
-| **Medium** | 1-2 | 10-20 | May have dependencies between stories |
-| **Large** | 2-3 | 20-35 | Review if exceeding 3 cycles |
-
-**Note:** The cycle ranges are guidelines derived from team velocity, not prescriptive targets. Actual duration depends on unknowns discovered during implementation.
+**Notes:**
+- Time mappings are guidelines derived from historical velocity, not prescriptive targets
+- XL epics should be broken down into smaller epics before starting
+- Actual duration depends on unknowns discovered during implementation
 
 ### User Story Template
 
