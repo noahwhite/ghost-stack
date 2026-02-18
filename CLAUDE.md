@@ -61,10 +61,7 @@ Do NOT proceed until the title prefix is verified.
 When creating epics (Linear projects):
 - **Name must be prefixed with `[EPIC]`** (e.g., `[EPIC] Ghost Stack Backup & Recovery`)
 - Apply the **"Epic"** label to identify it as an epic
-- Apply a **t-shirt size label** based on total story points:
-  - T-Shirt Size Small: ~5-10 story points
-  - T-Shirt Size Medium: ~15-25 story points
-  - T-Shirt Size Large: ~30+ story points
+- Apply a **t-shirt size label** based on complexity (see sizing guide below)
 - **Always set Noah White as the project lead**
 
 ### Epic Template
@@ -103,6 +100,22 @@ All epics must follow this standard template format (see `[EPIC] Secure Remote M
 ```
 
 **Important:** Do NOT include "Issues / Stories" or "Related Projects or Epics" sections - these are visible via Linear's UI.
+
+### Epic T-Shirt Sizing
+
+Sizes represent **complexity and uncertainty**, not duration. Higher complexity tends to correlate with longer duration, but the size itself measures "how hard is this to figure out and implement" rather than "how many days/weeks."
+
+| Size | Complexity / Effort Description | Typical Time Mapping |
+|------|--------------------------------|----------------------|
+| **Small (S)** | Well-understood, minor dependencies, low risk | 1-2 sprints (2-4 weeks) |
+| **Medium (M)** | Standard feature, some integration, moderate unknowns | 3-4 sprints (1.5-2 months) |
+| **Large (L)** | Complex logic, multiple team touchpoints, significant risk | 1 full quarter (~3 months) |
+| **Extra Large (XL)** | Cross-departmental, massive architectural shifts | Multiple quarters (needs breakdown) |
+
+**Notes:**
+- Time mappings are guidelines derived from historical velocity, not prescriptive targets
+- XL epics should be broken down into smaller epics before starting
+- Actual duration depends on unknowns discovered during implementation
 
 ### User Story Template
 
