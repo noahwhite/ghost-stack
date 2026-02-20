@@ -20,7 +20,8 @@ resource "infisical_project" "ghost" {
 # Boot-Time Machine Identity (ghost-dev)
 #
 # Used by instances to fetch application secrets at boot.
-# Configured with single-use tokens so each token is consumed on first use.
+# Configured with Token Auth — tokens are generated per-provisioning-run
+# by OpenTofu (GHO-75), injected into Ignition, and consumed once at boot.
 # ==========================================================================
 
 resource "infisical_identity" "ghost_dev" {
@@ -29,10 +30,11 @@ resource "infisical_identity" "ghost_dev" {
   role   = "member"
 }
 
-resource "infisical_identity_universal_auth" "ghost_dev" {
+resource "infisical_identity_token_auth" "ghost_dev" {
   identity_id                 = infisical_identity.ghost_dev.id
-  access_token_num_uses_limit = 1
+  access_token_num_uses_limit = 1   # single-use — token consumed on first use
   access_token_ttl            = 300 # 5 minutes — enough to survive boot window
+  access_token_max_ttl        = 300 # cap max TTL at method level
 }
 
 # Link identity to project with no-access project role.
