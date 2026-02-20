@@ -26,7 +26,7 @@ resource "infisical_project" "ghost" {
 resource "infisical_identity" "ghost_dev" {
   name   = "ghost-dev"
   org_id = var.org_id
-  role   = "no-access"
+  role   = "member"
 }
 
 resource "infisical_identity_universal_auth" "ghost_dev" {
@@ -35,8 +35,9 @@ resource "infisical_identity_universal_auth" "ghost_dev" {
   access_token_ttl            = 300 # 5 minutes — enough to survive boot window
 }
 
-# Link identity to project with no-access base role.
-# Actual permissions are granted via specific privilege below.
+# Link identity to project with no-access project role.
+# Org-level role is member (minimum to operate within the org).
+# Actual secret access is granted via specific privilege below — scoped to dev env only.
 resource "infisical_project_identity" "ghost_dev" {
   project_id  = infisical_project.ghost.id
   identity_id = infisical_identity.ghost_dev.id

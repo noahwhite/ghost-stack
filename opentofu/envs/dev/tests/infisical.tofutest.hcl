@@ -103,8 +103,8 @@ run "infisical_identity_configuration" {
   }
 
   assert {
-    condition     = infisical_identity.ghost_dev.role == "no-access"
-    error_message = "Machine identity base role should be 'no-access'"
+    condition     = infisical_identity.ghost_dev.role == "member"
+    error_message = "Machine identity org-level role should be 'member' (minimum to operate within the org)"
   }
 
   assert {
