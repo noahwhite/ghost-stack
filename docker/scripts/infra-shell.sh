@@ -202,10 +202,11 @@ if [[ "$USE_BWS" == "true" ]]; then
   mask_value "$TF_VAR_SOC_DEV_TERRAFORM_SA_TOK"
 
   # Infisical management identity credentials (used by OpenTofu provider)
-  # TODO: Add BWS secret IDs for client_id and client_secret once created in Bitwarden
-  # TF_VAR_infisical_client_id="$(get_bws_secret "<bws-uuid>")"
-  # TF_VAR_infisical_client_secret="$(get_bws_secret "<bws-uuid>")"
-  TF_VAR_infisical_org_id="$(get_bws_secret "3c1083ce-3a3e-4e0e-8e93-b3f6003c6674")"
+  TF_VAR_infisical_client_id="$(get_bws_secret "5cbee56f-4cd9-4504-b9d7-b3f7015a2b7f")"
+  mask_value "$TF_VAR_infisical_client_id"
+  TF_VAR_infisical_client_secret="$(get_bws_secret "3379153b-6a36-4eff-99e6-b3f7015acd6e")"
+  mask_value "$TF_VAR_infisical_client_secret"
+  TF_VAR_infisical_org_id="$(get_bws_secret "27c88ca1-ab19-4c28-aeab-b3f70156c18a")"
   mask_value "$TF_VAR_infisical_org_id"
 
   echo "Successfully retrieved secrets from Bitwarden Secrets Manager"
