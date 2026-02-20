@@ -9,6 +9,6 @@ output "project_slug" {
 }
 
 output "ghost_dev_identity_id" {
-  description = "Machine identity ID for ghost-dev (used as clientId for Universal Auth token generation)"
+  description = "Machine identity ID for ghost-dev. Note: the Universal Auth client ID is a separate value found in the Universal Auth tab in the Infisical console."
   value       = infisical_identity.ghost_dev.id
 }
