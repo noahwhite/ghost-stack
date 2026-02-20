@@ -201,6 +201,12 @@ if [[ "$USE_BWS" == "true" ]]; then
   TF_VAR_SOC_DEV_TERRAFORM_SA_TOK="$(get_bws_secret "3ebc4398-f4fa-448c-b2c1-b3a6006c063d")"
   mask_value "$TF_VAR_SOC_DEV_TERRAFORM_SA_TOK"
 
+  # Infisical management identity credentials (used by OpenTofu provider)
+  # TODO: Add BWS secret IDs once created in Bitwarden Secrets Manager
+  # TF_VAR_infisical_client_id="$(get_bws_secret "<bws-uuid>")"
+  # TF_VAR_infisical_client_secret="$(get_bws_secret "<bws-uuid>")"
+  # TF_VAR_infisical_org_id="$(get_bws_secret "<bws-uuid>")"
+
   echo "Successfully retrieved secrets from Bitwarden Secrets Manager"
 fi
 
@@ -218,6 +224,9 @@ prompt_if_empty "TF_VAR_pd_subdomain" "Enter your PagerDuty subdomain: " false
 prompt_if_empty "TF_VAR_pd_user_tok" "Enter your PagerDuty user API token: " true
 prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
 prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
+prompt_if_empty "TF_VAR_infisical_client_id" "Enter your Infisical management identity client ID: " false
+prompt_if_empty "TF_VAR_infisical_client_secret" "Enter your Infisical management identity client secret: " true
+prompt_if_empty "TF_VAR_infisical_org_id" "Enter your Infisical organization ID: " false
 
 # In CI mode, check if BOOTSTRAP_R2_BUCKET is set (passed from GitHub Actions)
 # This allows CI to bypass bootstrap state lookup by providing the bucket name directly
@@ -247,6 +256,9 @@ export_var "TF_VAR_pd_subdomain" "${TF_VAR_pd_subdomain}"
 export_var "TF_VAR_pd_user_tok" "${TF_VAR_pd_user_tok}"
 export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
 export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
+export_var "TF_VAR_infisical_client_id" "${TF_VAR_infisical_client_id}"
+export_var "TF_VAR_infisical_client_secret" "${TF_VAR_infisical_client_secret}"
+export_var "TF_VAR_infisical_org_id" "${TF_VAR_infisical_org_id}"
 
 # Export TF_BACKEND_BUCKET if it was set (CI mode with GitHub env var)
 if [[ -n "${TF_BACKEND_BUCKET:-}" ]]; then
@@ -330,6 +342,9 @@ echo "Using SSH public key: $PUBKEY_PATH"
 : "${TF_VAR_pd_user_tok:?Environment variable not set}"
 : "${TF_VAR_GC_ACCESS_TOK:?Environment variable not set}"
 : "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK:?Environment variable not set}"
+: "${TF_VAR_infisical_client_id:?Environment variable not set}"
+: "${TF_VAR_infisical_client_secret:?Environment variable not set}"
+: "${TF_VAR_infisical_org_id:?Environment variable not set}"
 
 # Exit early for CI secrets-only mode (no IP discovery, no SSH key, no docker actions)
 if [[ "$SECRETS_ONLY" == "true" ]]; then
@@ -361,6 +376,9 @@ if [[ "$RUN_CONTAINER" == "true" ]]; then
     -e TF_VAR_pd_user_tok \
     -e TF_VAR_GC_ACCESS_TOK \
     -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+    -e TF_VAR_infisical_client_id \
+    -e TF_VAR_infisical_client_secret \
+    -e TF_VAR_infisical_org_id \
     -e USER_UID="$(id -u)" \
     -e USER_GID="$(id -g)" \
     -e DISPLAY=$DISPLAY \
