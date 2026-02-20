@@ -150,22 +150,20 @@ Expected output should show all five secret names. Do not verify values here —
 
 ### Step 5: Verify Secret Access via Machine Identity
 
-This step confirms the `ghost-dev` machine identity (used by instances at boot) can read secrets:
+This step confirms the `ghost-dev` machine identity's Token Auth method and privilege scoping are configured correctly.
 
-```bash
-# Get the ghost-dev identity credentials from OpenTofu output
-# The client ID is the machine identity ID — retrieve from tofu output or Infisical UI
+> **Important:** The `ghost-dev` identity uses Token Auth with single-use tokens (`number_of_uses_limit = 1`). Each token is generated per-provisioning-run by OpenTofu (GHO-75) and injected directly into the instance's Ignition config. Unlike Universal Auth, there are no client credentials to authenticate with manually — the token itself is the credential, and consuming it during verification wastes the boot token.
 
-# Test that the identity can fetch secrets (uses single-use token — don't run repeatedly)
-infisical secrets list \
-  --method=universal-auth \
-  --clientId="<ghost-dev identity client ID>" \
-  --clientSecret="<ghost-dev client secret>" \
-  --projectId ghost-stack \
-  --env dev
-```
+Verify the configuration in the Infisical UI instead:
 
-> **Important:** The `ghost-dev` identity uses single-use tokens (`access_token_num_uses_limit = 1`). Running the CLI command above consumes one token. Only use this for initial verification — routine checks should use the management identity.
+1. Log into [app.infisical.com](https://app.infisical.com)
+2. Navigate to **Organization Settings → Machine Identities → ghost-dev**
+3. Confirm **Token Auth** is configured as the authentication method
+4. Navigate to the **Ghost Stack** project → **Access Control → Machine Identities**
+5. Confirm `ghost-dev` appears with the `no-access` base role
+6. Confirm a **Specific Privilege** exists granting `read` on `secrets` scoped to the `dev` environment only
+
+The full integration test occurs on first boot after GHO-76 is deployed — the instance will use the injected token to fetch secrets and populate `.env.secrets`.
 
 ---
 
