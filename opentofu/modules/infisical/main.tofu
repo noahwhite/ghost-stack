@@ -50,6 +50,9 @@ resource "infisical_project_identity" "ghost_dev" {
 }
 
 # Scope identity to read secrets in the target environment only.
+# Two policies:
+#   1. Allow read in the target environment at root path
+#   2. Forbid all actions in any other environment (explicit deny — defence in depth)
 resource "infisical_project_identity_specific_privilege" "ghost_dev_read_env" {
   project_slug = infisical_project.ghost.slug
   identity_id  = infisical_identity.ghost_dev.id
@@ -61,6 +64,14 @@ resource "infisical_project_identity_specific_privilege" "ghost_dev_read_env" {
       conditions = jsonencode({
         "environment" = { "$eq" = var.environment }
         "secretPath"  = { "$eq" = "/" }
+      })
+    },
+    {
+      action   = ["read", "create", "edit", "delete"]
+      subject  = "secrets"
+      inverted = true
+      conditions = jsonencode({
+        "environment" = { "$ne" = var.environment }
       })
     }
   ]

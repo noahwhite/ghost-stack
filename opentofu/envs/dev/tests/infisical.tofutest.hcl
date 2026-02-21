@@ -134,18 +134,35 @@ run "infisical_privilege_scoped_to_dev" {
     environment = "dev"
   }
 
+  # Allow policy: read access scoped to target environment
   assert {
     condition     = strcontains(infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[0].conditions, "\"$eq\"")
-    error_message = "Privilege conditions must use $eq operator to scope to the target environment"
+    error_message = "Allow policy must use $eq operator to scope to the target environment"
   }
 
   assert {
     condition     = infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[0].subject == "secrets"
-    error_message = "Privilege must target 'secrets' subject"
+    error_message = "Allow policy must target 'secrets' subject"
   }
 
   assert {
     condition     = contains(infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[0].action, "read")
-    error_message = "Privilege must grant 'read' action"
+    error_message = "Allow policy must grant 'read' action"
+  }
+
+  # Forbid policy: deny all actions in any non-target environment
+  assert {
+    condition     = infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[1].inverted == true
+    error_message = "Second policy must be a forbid rule (inverted = true)"
+  }
+
+  assert {
+    condition     = strcontains(infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[1].conditions, "\"$ne\"")
+    error_message = "Forbid policy must use $ne operator to block non-target environments"
+  }
+
+  assert {
+    condition     = infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[1].subject == "secrets"
+    error_message = "Forbid policy must target 'secrets' subject"
   }
 }
