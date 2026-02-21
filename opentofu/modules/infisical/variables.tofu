@@ -8,3 +8,8 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "admin_email" {
+  description = "Email of the human admin user to add as project administrator"
+  type        = string
+}
