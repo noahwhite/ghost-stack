@@ -57,6 +57,9 @@ resource "infisical_project_identity_specific_privilege" "ghost_dev_read_env" {
   project_slug = infisical_project.ghost.slug
   identity_id  = infisical_identity.ghost_dev.id
 
+  # Must wait for project membership to be established before granting privileges
+  depends_on = [infisical_project_identity.ghost_dev]
+
   permissions_v2 = [
     {
       action  = ["read"]
