@@ -198,4 +198,5 @@ module "infisical" {
 
   org_id      = var.infisical_org_id
   environment = "dev"
+  admin_email = "noah@noahwhite.net"
 }

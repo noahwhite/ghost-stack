@@ -53,6 +53,23 @@ resource "infisical_project_identity" "ghost_dev" {
 # Two policies:
 #   1. Allow read in the target environment at root path
 #   2. Forbid all actions in any other environment (explicit deny — defence in depth)
+# ==========================================================================
+# Project Admin User
+#
+# Ensures the human admin is added as a project administrator.
+# Without this, the project is only accessible to the provisioner machine
+# identity and requires a manual "Join as Admin" step in the Infisical UI.
+# ==========================================================================
+
+resource "infisical_project_user" "admin" {
+  project_id = infisical_project.ghost.id
+  username   = var.admin_email
+
+  roles = [{
+    role_slug = "admin"
+  }]
+}
+
 resource "infisical_project_identity_specific_privilege" "ghost_dev_read_env" {
   project_slug = infisical_project.ghost.slug
   identity_id  = infisical_identity.ghost_dev.id
@@ -66,7 +83,6 @@ resource "infisical_project_identity_specific_privilege" "ghost_dev_read_env" {
       subject = "secrets"
       conditions = jsonencode({
         "environment" = { "$eq" = var.environment }
-        "secretPath"  = { "$eq" = "/" }
       })
     },
     {

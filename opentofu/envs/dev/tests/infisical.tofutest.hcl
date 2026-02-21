@@ -28,6 +28,12 @@ mock_provider "infisical" {
   mock_resource "infisical_project_identity_specific_privilege" {
     defaults = {}
   }
+
+  mock_resource "infisical_project_user" {
+    defaults = {
+      membership_id = "test-user-membership-id"
+    }
+  }
 }
 
 run "infisical_identity_is_single_use" {
@@ -42,7 +48,8 @@ run "infisical_identity_is_single_use" {
   }
 
   variables {
-    org_id = "test-org-id"
+    org_id      = "test-org-id"
+    admin_email = "noah@noahwhite.net"
   }
 
   assert {
@@ -73,7 +80,8 @@ run "infisical_project_configuration" {
   }
 
   variables {
-    org_id = "test-org-id"
+    org_id      = "test-org-id"
+    admin_email = "noah@noahwhite.net"
   }
 
   assert {
@@ -84,6 +92,11 @@ run "infisical_project_configuration" {
   assert {
     condition     = infisical_project.ghost.slug == "ghost-stack"
     error_message = "Project slug should be 'ghost-stack'"
+  }
+
+  assert {
+    condition     = infisical_project_user.admin.roles[0].role_slug == "admin"
+    error_message = "Human admin must have 'admin' project role"
   }
 }
 
@@ -99,7 +112,8 @@ run "infisical_identity_configuration" {
   }
 
   variables {
-    org_id = "test-org-id"
+    org_id      = "test-org-id"
+    admin_email = "noah@noahwhite.net"
   }
 
   assert {
@@ -132,12 +146,18 @@ run "infisical_privilege_scoped_to_dev" {
   variables {
     org_id      = "test-org-id"
     environment = "dev"
+    admin_email = "noah@noahwhite.net"
   }
 
-  # Allow policy: read access scoped to target environment
+  # Allow policy: read access scoped to target environment only
   assert {
     condition     = strcontains(infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[0].conditions, "\"$eq\"")
     error_message = "Allow policy must use $eq operator to scope to the target environment"
+  }
+
+  assert {
+    condition     = !strcontains(infisical_project_identity_specific_privilege.ghost_dev_read_env.permissions_v2[0].conditions, "secretPath")
+    error_message = "Allow policy must not restrict by secretPath (all paths in env should be readable)"
   }
 
   assert {
