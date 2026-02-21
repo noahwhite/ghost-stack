@@ -25,12 +25,15 @@ This document provides step-by-step procedures for rotating all tokens and secre
 
 ## Overview
 
+> **Application secrets (Ghost, MySQL, TinyBird)** are managed in Infisical, not Bitwarden. See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for those procedures.
+
 ### Storage Locations
 
-Secrets in this project are stored in two primary locations:
+Secrets in this project are stored in three primary locations:
 
 | Location | Purpose | Access Method |
 |----------|---------|---------------|
+| **Infisical** | Ghost application secrets fetched at boot | Infisical CLI / UI; instance uses machine identity |
 | **Bitwarden Secrets Manager** | Runtime secrets for OpenTofu and scripts | `bws` CLI via `infra-shell.sh` |
 | **GitHub Secrets** | CI/CD workflow secrets | GitHub Actions environment variables |
 
@@ -902,6 +905,17 @@ If a token is suspected to be compromised:
 3. **Update all storage locations** (Bitwarden, GitHub Secrets)
 4. **Audit logs** for unauthorized access
 5. **Document the incident** and review access patterns
+
+---
+
+## Application Secrets (Infisical)
+
+Ghost application secrets — `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD`, `HEALTH_CHECK_TOKEN`, `mail__options__auth__pass`, `TINYBIRD_ADMIN_TOKEN` — are managed in Infisical rather than Bitwarden.
+
+See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for:
+- Initial provisioning from `.env.secrets`
+- Rotating each secret and restarting affected services
+- Restart requirements (container restart vs MySQL ALTER USER)
 
 ---
 
