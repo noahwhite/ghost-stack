@@ -175,6 +175,9 @@ jobs:
           TF_VAR_admin_ip: ${{ env.TF_VAR_admin_ip }}
           TF_VAR_ssh_public_key: ${{ env.TF_VAR_ssh_public_key }}
           TF_VAR_cloudflare_zone_id: ${{ env.TF_VAR_cloudflare_zone_id }}
+          TF_VAR_infisical_client_id: ${{ env.TF_VAR_infisical_client_id }}
+          TF_VAR_infisical_client_secret: ${{ env.TF_VAR_infisical_client_secret }}
+          TF_VAR_infisical_org_id: ${{ env.TF_VAR_infisical_org_id }}
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/home/devops/app" \
@@ -197,6 +200,9 @@ jobs:
             -e TF_VAR_admin_ip \
             -e TF_VAR_ssh_public_key \
             -e TF_VAR_cloudflare_zone_id \
+            -e TF_VAR_infisical_client_id \
+            -e TF_VAR_infisical_client_secret \
+            -e TF_VAR_infisical_org_id \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev plan -out=tfplan"
 
@@ -256,6 +262,9 @@ jobs:
           TF_VAR_admin_ip: ${{ env.TF_VAR_admin_ip }}
           TF_VAR_ssh_public_key: ${{ env.TF_VAR_ssh_public_key }}
           TF_VAR_cloudflare_zone_id: ${{ env.TF_VAR_cloudflare_zone_id }}
+          TF_VAR_infisical_client_id: ${{ env.TF_VAR_infisical_client_id }}
+          TF_VAR_infisical_client_secret: ${{ env.TF_VAR_infisical_client_secret }}
+          TF_VAR_infisical_org_id: ${{ env.TF_VAR_infisical_org_id }}
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/home/devops/app" \
@@ -278,6 +287,9 @@ jobs:
             -e TF_VAR_admin_ip \
             -e TF_VAR_ssh_public_key \
             -e TF_VAR_cloudflare_zone_id \
+            -e TF_VAR_infisical_client_id \
+            -e TF_VAR_infisical_client_secret \
+            -e TF_VAR_infisical_org_id \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev apply tfplan"
 
