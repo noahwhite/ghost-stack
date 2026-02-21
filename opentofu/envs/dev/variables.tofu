@@ -132,3 +132,24 @@ variable "mail_smtp_user" {
   type        = string
   default     = "postmaster@mg.separationofconcerns.dev"
 }
+
+# ==========================================================================
+# Infisical Provider (management identity credentials)
+# ==========================================================================
+
+variable "infisical_client_id" {
+  description = "Infisical management identity client ID (used by OpenTofu to manage Infisical resources)"
+  type        = string
+  sensitive   = true
+}
+
+variable "infisical_client_secret" {
+  description = "Infisical management identity client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "infisical_org_id" {
+  description = "Infisical organization ID"
+  type        = string
+}

@@ -1,0 +1,10 @@
+variable "org_id" {
+  description = "Infisical organization ID"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment slug to scope secrets and identity privileges to"
+  type        = string
+  default     = "dev"
+}

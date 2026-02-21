@@ -25,6 +25,10 @@ terraform {
       source  = "grafana/grafana"
       version = "~> 4.21.0"
     }
+    infisical = {
+      source  = "infisical/infisical"
+      version = "~> 0.16"
+    }
   }
 }
 
@@ -52,6 +56,15 @@ provider "pagerduty" {
 provider "grafana" {
   alias                     = "cloud"
   cloud_access_policy_token = var.GC_ACCESS_TOK
+}
+
+provider "infisical" {
+  auth = {
+    universal = {
+      client_id     = var.infisical_client_id
+      client_secret = var.infisical_client_secret
+    }
+  }
 }
 
 data "terraform_remote_state" "bootstrap" {
@@ -178,4 +191,11 @@ module "block_storage" {
   size_gb           = var.block_storage_size_gb
   label             = var.block_storage_label
   mount_instance_id = module.vm.instance_id
+}
+
+module "infisical" {
+  source = "../../modules/infisical"
+
+  org_id      = var.infisical_org_id
+  environment = "dev"
 }
