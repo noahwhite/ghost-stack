@@ -124,3 +124,12 @@ Vultr does not support scoped or expiring API tokens. The account uses a single 
 ---
 
 📁 _This document lives at `docs/secrets-management.md` in the repository._
+=======
+---
+
+## Application Secrets (Infisical)
+
+Ghost application secrets (database passwords, health check token, mail password, TinyBird token) are managed in **Infisical**, not Bitwarden or 1Password. Infisical is provisioned via OpenTofu and instances fetch secrets at boot using a scoped machine identity.
+
+See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for the full provisioning and rotation procedures.
+
