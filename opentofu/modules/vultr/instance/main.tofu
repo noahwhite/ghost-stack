@@ -52,6 +52,9 @@ locals {
   # TinyBird Analytics provisioning
   ghost_tinybird_dockerfile = filebase64("${path.module}/userdata/ghost-compose/tinybird/Dockerfile")
   tinybird_provision_script = filebase64("${path.module}/userdata/tinybird-provision.sh")
+
+  # Infisical boot token (base64-encoded for Ignition data URI)
+  infisical_boot_token_b64 = base64encode(var.infisical_boot_token)
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -79,6 +82,9 @@ data "ct_config" "ghost" {
     # TinyBird Analytics provisioning
     ghost_tinybird_dockerfile = local.ghost_tinybird_dockerfile
     tinybird_provision_script = local.tinybird_provision_script
+
+    # Infisical boot token
+    infisical_boot_token_b64 = local.infisical_boot_token_b64
   })
   strict = true
 }

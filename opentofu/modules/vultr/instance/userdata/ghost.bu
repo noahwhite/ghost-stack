@@ -249,6 +249,18 @@ storage:
       contents:
         source: "data:text/plain;charset=utf-8;base64,${tinybird_provision_script}"
 
+    # ==========================================================================
+    # Infisical Boot-Time Access Token (GHO-75)
+    # ==========================================================================
+    # Single-use Token Auth credential for boot-time secret fetching (GHO-76).
+    # Generated per-instance-replacement by OpenTofu and injected via Ignition.
+    # Consumed once at first boot; token is invalid after use.
+    # ==========================================================================
+    - path: /etc/infisical/access-token
+      mode: 0600
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${infisical_boot_token_b64}"
+
     - path: /etc/locksmith/locksmith.conf
       mode: 0644
       overwrite: true
