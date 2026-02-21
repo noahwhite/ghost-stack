@@ -164,6 +164,60 @@ As a [role], I want [feature/capability], so that [business value].
 - [ ] No critical bugs/regressions
 ```
 
+### Spike (Research) Stories
+
+Spikes are time-boxed research tasks used to reduce uncertainty before committing to implementation.
+
+**Key differences from User Stories:**
+- **Timeboxed, not estimated** - Use a fixed time limit (e.g., 3 days), not story points
+- **Output is knowledge** - Deliverables are findings, recommendations, and Go/No-Go decisions
+- **May not produce code** - Success is validated learning, not working software
+
+**Title format:** `[Spike] <research question or goal>`
+
+**Template:**
+
+```markdown
+**Spike Summary**
+
+[One sentence describing what we're investigating and why]
+
+**Timebox:** [X days]
+
+---
+
+**✅ Success Criteria**
+
+- [ ] Specific, measurable outcomes
+- [ ] Questions answered or blockers identified
+
+---
+
+**📝 Research Questions**
+
+1. [Key question to answer]
+2. [Key question to answer]
+
+---
+
+**📦 Deliverables**
+
+- [ ] Proof-of-concept or documentation
+- [ ] Go/No-Go recommendation
+- [ ] If No-Go: alternative approaches identified
+
+---
+
+**📦 Definition of Done**
+
+- [ ] Success criteria validated (or blockers documented)
+- [ ] Findings documented in Linear
+- [ ] Go/No-Go decision made
+- [ ] Next steps defined
+```
+
+**Important:** Do NOT assign story point estimates to spikes. The timebox is the only measure.
+
 ## Project Overview
 
 Ghost Stack is an infrastructure-as-code project for deploying a self-hosted Ghost blog on Flatcar Container Linux. The stack runs on Vultr cloud with Cloudflare for DNS/CDN, Caddy as reverse proxy, and uses OpenTofu for infrastructure provisioning.
