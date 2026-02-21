@@ -133,6 +133,12 @@ variable "mail_smtp_user" {
   default     = "postmaster@mg.separationofconcerns.dev"
 }
 
+variable "tinybird_api_url" {
+  description = "Tinybird regional API endpoint"
+  type        = string
+  default     = "https://api.us-east.tinybird.co"
+}
+
 # ==========================================================================
 # Infisical Provider (management identity credentials)
 # ==========================================================================
