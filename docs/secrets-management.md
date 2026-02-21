@@ -1,134 +1,125 @@
-# Secrets Management MVP / Dev-Only Stage
+# Secrets Management
 
-This project currently operates in a single-environment setup: **`dev` only**. As the infrastructure evolves, we'll adopt additional environments (staging, production), but this document describes the initial development workflow for the MVP phase.
-
-## Goals of the MVP Secrets Management
-
-- Secrets stored in **1Password GUI** (or your tool of choice), injected at runtime
+This document describes how secrets are managed in Ghost Stack. Secrets are stored in three locations depending on their purpose.
 
 ---
 
-## Secrets Management
+## Architecture Overview
 
-### Vultr Secrets Management Strategy
-
-Vultr does not currently offer a fine-grained API token system like Cloudflare. Instead, they use a single API key per account, which has full access to all account resources. To maintain good security hygiene and separation of concerns, this project applies the following best practices:
-
-#### Best Practices
-
-- **Environment Isolation**: Use separate Vultr accounts for each environment — `dev`, `staging`, and `production`. This prevents access to non-dev resources when working in the dev environment.
-- **Secure Storage**: Store each environment’s API key in a password manager like 1Password and inject it into the environment only when needed via a prompting script.
-- **Manual Injection**: Do not store API keys in plaintext or in version-controlled files. Use a prompt-based script to load keys into the environment securely.
-- **Limited Exposure**: Only expose the API key to trusted processes or individuals working in that specific environment. Never use the same key across environments.
-- **Key Rotation**: Periodically rotate Vultr API keys via the Vultr console and update the password manager and environment accordingly.
-- **No Hardcoding**: Avoid embedding keys directly in Terraform or any configuration files.
-
-#### Limitations Compared to Cloudflare
-
-| Feature                          | Vultr Support                 |
-| -------------------------------- | ----------------------------- |
-| Scoped API Tokens                | ❌ No                          |
-| Expiring Credentials             | ❌ No                          |
-| Role-based Access Control (RBAC) | ❌ No                          |
-| Per-environment Isolation        | ✔️ Yes (via separate accounts) |
-
-This project uses 1 Vultr API key for the dev environment:
-
-| Token Name              | Permissions    | Purpose                                     |
-| ----------------------- | -------------- | ------------------------------------------- |
-| `Personal Access Token` | `Account:Edit` | Used to manage all resources in the account |
-
-While Vultr's lack of fine-grained token control means more reliance on strict account separation, the approach outlined above helps preserve security and maintainability within the scope of this project.
-
-### Cloudflare Secrets Management Strategy
-
-This project uses **one Cloudflare and Vultr account per environment** (dev, staging, production). This separation enforces a clear boundary between environments, helping to prevent mistakes such as:
-
-- Deploying test code to production resources
-- Limit blast radius for accidental changes
-- Leaking production secrets during development
-- Enforce strict permission boundaries via API token scoping
-- Mixing metrics, logs, or infrastructure between environments
-
-Isolating credentials and environments also enables least-privilege permissions and better auditability.
-
-### Cloudflare Token Strategy for Bootstrapping
-
-This project uses 2 separate Cloudflare API tokens for the dev bootstrap environment**:
-
-| **Token Name**      | **Purpose**                                          | **Permissions (Summary)**                               | **Created With**                |
-| ------------------- | ---------------------------------------------------- | ------------------------------------------------------- | ------------------------------- |
-| dev-token-creator   | Token used to **create other scoped tokens**         | API Tokens:Edit on dev account                          | Manually via Cloudflare UI      |
-| bootstrap-dev-token | Used to provision the R2 bucket for state & DNS zone | Zone:Edit, Zone:Read, DNS:Edit, R2 Storage Buckets:Edit | Created using dev-token-creator |
-
-#### Manual Creation Instructions
-
-***NOTE:*** The first time you log into the Cloudflare account dashboard, and until you complete the OpenTofu bootstrapping process which creates the DNS zone resource, you will be asked to enter an existing domain or register a new domain. **Do not do this** as we want to manage all infrastructure with IaC and creating it using the dashboard like this will be out-of-band of that IaC process.
-
-### How to Find Your Cloudflare Account ID
-
-Your Cloudflare Account ID is required when generating scoped API tokens. You can find it in one of the following ways:
-
-- **From the Dashboard URL**: After logging in at [dash.cloudflare.com](https://dash.cloudflare.com), your account ID appears in the URL:
-
-  ```
-  https://dash.cloudflare.com/<account-id>/home
-  ```
-  Copy the alphanumeric string where `<account-id>` appears and save it in your vault (1Password etc.)
-
-1. **Create `dev-token-creator`** in the Cloudflare dashboard (dev account):
-   - Go to **My Profile → API Tokens → Create Token**
-   - Select the template: **"Create Additional Tokens"**
-     - Permissions: Leave as "User", "API Tokens", "Edit"
-     - **Apply additional security options (recommended):**
-       - Set **Operator** to: equal
-       - Enter your IP (e.g., 203.0.113.42)
-     - **TTL (Time To Live) (recommended)**:
-       - Set for 30 days
-     - Click **Continue to Summary**, then **Create Token**
-     - Save the token securely (e.g., in **1Password**) — it **will not be shown again**
-2. Use opentofu/bootstrap/scripts/generate-bootstrap-token.sh to generate a token that will be able to create the bootstrap infra
-3. The bootstrap token will be generated and automatically copied to your clipboard on MacOS. Paste it into 1Password (or your password manager of choice).
-
-
-### Using The Secrets
-
-Rather than using 1Password CLI or storing secrets in plain `.tfvars` files, we use a **copy-paste and prompt-based workflow**:
-
-1. Secrets (like Cloudflare and Vultr credentials) are securely stored in 1Password GUI.
-
-2. At runtime, you run the secrets loader script, which prompts for secrets one-by-one:
-
-   ```bash
-   source opentofu/bootstrap/scripts/env/set-cloudflare-env.sh
-   ```
-
-3. The script exports the secrets to the environment so OpenTofu can access them.
-
-This approach:
-
-- Keeps secrets **out of version control**
-- Avoids writing unencrypted secrets to disk
-- Is easy to use and cross-platform
-- Eliminates the need for extra tooling
-
-### Required Secrets
-
-| Name                         | Description                              |
-| ---------------------------- | ---------------------------------------- |
-| `VULTR_API_KEY`              | Vultr API Key for provisioning           |
-| `CLOUDFLARE_BOOTSTRAP_TOKEN` | Scoped API token for Cloudflare R2 + DNS |
-| `TOFU_CLOUDFLARE_ACCOUNT_ID` | Cloudflare Account ID (non-sensitive)    |
+| Layer | Tool | Contents | Access Method |
+|-------|------|----------|---------------|
+| Infrastructure credentials | Bitwarden Secrets Manager | Provider API keys, tokens, account IDs | `bws` CLI via `infra-shell.sh` |
+| CI/CD-only values | GitHub Secrets | Admin IP, Zone IDs, health check token | GitHub Actions environment variables |
+| Application secrets | Infisical | DB passwords, SMTP password, analytics tokens | Single-use Token Auth at boot (GHO-75/76) |
 
 ---
 
+## Infrastructure Secrets: Bitwarden Secrets Manager
+
+All provider credentials used by OpenTofu and `infra-shell.sh` are stored in Bitwarden Secrets Manager under the `ghost-stack-dev` project. Secrets are retrieved at runtime by UUID using the `bws` CLI.
+
+### How It Works
+
+**Workstation:** `infra-shell.sh` prompts for `BWS_ACCESS_TOKEN` interactively, retrieves all secrets by UUID, and exports them as environment variables before launching the `ghost-stack-shell` container.
+
+**CI/CD:** `BWS_ACCESS_TOKEN` is stored in the `dev` and `dev-ci` GitHub environments. The `--ci --secrets-only` flags disable prompts and skip the container launch.
+
+```bash
+# Workstation
+source docker/scripts/infra-shell.sh
+
+# CI (GitHub Actions)
+./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
+```
+
+### Secrets Stored in Bitwarden
+
+| Variable | Purpose | Bitwarden UUID |
+|----------|---------|----------------|
+| `TF_VAR_cloudflare_api_token` | Cloudflare DNS/zone management | `59624245-6a0c-4fde-9d6d-b39c014882a6` |
+| `TF_VAR_cloudflare_account_id` | Cloudflare account ID | `2fea4609-0d6b-4d8d-b9b5-b39b002de85b` |
+| `R2_ACCESS_KEY_ID` | R2 state bucket + sysext image storage | `9dfdf110-5a84-48c3-ad7e-b39b002afd6b` |
+| `R2_SECRET_ACCESS_KEY` | R2 state bucket + sysext image storage | `f5d9794d-fd45-4dcb-9994-b39b002b5056` |
+| `TF_VAR_vultr_api_key` | Vultr compute management | `d68b6562-0d9e-424c-b2c5-b39c013ae34d` |
+| `TAILSCALE_API_KEY` | Tailscale device registration | `34b620b7-edf6-4d06-9792-b39b00317467` |
+| `TAILSCALE_TAILNET` | Tailscale network name | `a8f07ce5-ed4d-42bb-b012-b39b00311d41` |
+| `TF_VAR_PD_CLIENT_ID` | PagerDuty OAuth client ID | `7d51661b-736a-43ff-b01f-b39c013fe49b` |
+| `TF_VAR_PD_CLIENT_SECRET` | PagerDuty OAuth client secret | `b15575c0-0d28-459d-b92d-b39c01403a38` |
+| `TF_VAR_pd_subdomain` | PagerDuty subdomain | `8ee84397-e563-4278-9a3f-b39c013f7575` |
+| `TF_VAR_pd_user_tok` | PagerDuty user API token | `02805292-4311-4290-9b6e-b39c01554ae6` |
+| `TF_VAR_GC_ACCESS_TOK` | Grafana Cloud access token | `bfc8dd06-bd97-499a-98f8-b3a101570606` |
+| `TF_VAR_SOC_DEV_TERRAFORM_SA_TOK` | Grafana Cloud Terraform service account | `3ebc4398-f4fa-448c-b2c1-b3a6006c063d` |
+| `TF_VAR_infisical_client_id` | Infisical management identity client ID (Universal Auth) | `5cbee56f-4cd9-4504-b9d7-b3f7015a2b7f` |
+| `TF_VAR_infisical_client_secret` | Infisical management identity client secret (Universal Auth) | `3379153b-6a36-4eff-99e6-b3f7015acd6e` |
+| `TF_VAR_infisical_org_id` | Infisical organization ID | `27c88ca1-ab19-4c28-aeab-b3f70156c18a` |
+
+For rotation procedures see the [Token Rotation Runbook](./token-rotation-runbook.md).
+
 ---
 
-## Application Secrets (Infisical)
+## CI/CD Values: GitHub Secrets
 
-Ghost application secrets (database passwords, health check token, mail password, TinyBird token) are managed in **Infisical**, not Bitwarden or 1Password. Infisical is provisioned via OpenTofu and instances fetch secrets at boot using a scoped machine identity.
+Values that are only needed inside GitHub Actions workflows are stored directly as GitHub Secrets, not in Bitwarden. These are injected by the runner and do not pass through `infra-shell.sh`.
 
-See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for the full provisioning and rotation procedures.
+| Secret | Environments | Purpose |
+|--------|-------------|---------|
+| `BWS_ACCESS_TOKEN` | `dev`, `dev-ci` | Authenticate to Bitwarden Secrets Manager |
+| `ADMIN_IP` | `dev`, `dev-ci` | Admin workstation IP for firewall rules |
+| `CLOUDFLARE_ZONE_ID` | `dev`, `dev-ci` | Cloudflare zone ID for DNS |
+| `HEALTH_CHECK_TOKEN` | `dev`, `dev-ci` | Caddy health check authentication |
+| `GHCR_TOKEN` | Repository | Pull `ghost-stack-shell` image from GHCR |
+
+**Important:** Secrets shared between `dev` and `dev-ci` must be updated in both environments (Settings → Environments → dev and dev-ci).
+
+---
+
+## Application Secrets: Infisical
+
+Application secrets consumed by the Ghost containers at runtime are stored in Infisical under the **Ghost Stack** project (slug: `ghost-stack`), in the `dev` environment.
+
+### Access Model
+
+The `ghost-dev` machine identity uses Token Auth. A single-use token is generated per-provisioning-run by OpenTofu (GHO-75) and injected directly into the instance's Ignition config. The instance uses the token once at boot to fetch secrets, after which the token is consumed. No credentials persist on the instance after first use.
+
+The `ghost-dev` identity has `no-access` as its base project role, with a specific privilege granting `read` on the `dev` environment only — it cannot access staging or production environments.
+
+### Secrets in Infisical
+
+| Secret | Purpose |
+|--------|---------|
+| `DATABASE_PASSWORD` | MySQL ghost user password |
+| `DATABASE_ROOT_PASSWORD` | MySQL root password |
+| `HEALTH_CHECK_TOKEN` | Caddy health check authentication |
+| `mail__options__auth__pass` | SMTP password for transactional email |
+| `TINYBIRD_ADMIN_TOKEN` | TinyBird workspace admin token |
+
+For provisioning and rotation procedures see [Infisical Secrets Runbook](./runbooks/infisical-secrets.md).
+
+> **Status:** Infisical boot-time delivery is being deployed via GHO-74 through GHO-76. Until GHO-76 is deployed, application secrets are sourced from `/var/mnt/storage/ghost-compose/.env.secrets` on the instance.
+
+---
+
+## Vultr API Key Limitations
+
+Vultr does not support scoped or expiring API tokens. The account uses a single key with full account access. Mitigations:
+
+- **Environment isolation:** Separate Vultr accounts for `dev`, staging, and production limit the blast radius of a compromised key
+- **Stored in Bitwarden:** Never stored in plaintext or version-controlled files
+- **One key per account:** Regenerating the key in the Vultr console immediately invalidates the old one
+
+| Feature | Vultr Support |
+|---------|--------------|
+| Scoped API Tokens | ❌ No |
+| Expiring Credentials | ❌ No |
+| Role-based Access Control | ❌ No |
+| Per-environment Isolation | ✅ Yes (via separate accounts) |
+
+---
+
+## Related Documentation
+
+- [Token Rotation Runbook](./token-rotation-runbook.md) — Full inventory and rotation procedures for all tokens
+- [Infisical Secrets Runbook](./runbooks/infisical-secrets.md) — Application secret provisioning and rotation
 
 ---
 
