@@ -90,3 +90,9 @@ variable "mail_smtp_user" {
   description = "SMTP username for transactional email"
   type        = string
 }
+
+variable "infisical_boot_token" {
+  description = "Single-use Infisical access token for boot-time secret fetching via Token Auth"
+  type        = string
+  sensitive   = true
+}

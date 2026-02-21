@@ -182,6 +182,8 @@ module "vm" {
   ghost_admin_domain = var.ghost_admin_domain
   admin_ip           = var.admin_ip
   mail_smtp_user     = var.mail_smtp_user
+
+  infisical_boot_token = module.infisical.ghost_dev_boot_token
 }
 
 module "block_storage" {
@@ -196,7 +198,8 @@ module "block_storage" {
 module "infisical" {
   source = "../../modules/infisical"
 
-  org_id      = var.infisical_org_id
-  environment = "dev"
-  admin_email = "noah@noahwhite.net"
+  org_id                    = var.infisical_org_id
+  environment               = "dev"
+  admin_email               = "noah@noahwhite.net"
+  instance_replacement_hash = local.instance_replacement_hash
 }

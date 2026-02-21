@@ -1,4 +1,14 @@
+mock_provider "null" {}
+
 mock_provider "infisical" {
+  mock_resource "infisical_identity_token_auth_token" {
+    defaults = {
+      token          = "mock-boot-token"
+      is_revoked     = false
+      number_of_uses = 0
+    }
+  }
+
   mock_resource "infisical_project" {
     defaults = {
       id           = "test-project-id"
@@ -58,13 +68,18 @@ run "infisical_identity_is_single_use" {
   }
 
   assert {
-    condition     = infisical_identity_token_auth.ghost_dev.access_token_ttl == 300
-    error_message = "Boot-time identity token TTL must be 300 seconds (5 minutes)"
+    condition     = infisical_identity_token_auth.ghost_dev.access_token_ttl == 900
+    error_message = "Boot-time identity token TTL must be 900 seconds (15 minutes) to cover apply + boot window"
   }
 
   assert {
-    condition     = infisical_identity_token_auth.ghost_dev.access_token_max_ttl == 300
-    error_message = "Boot-time identity max token TTL must be capped at 300 seconds at the method level"
+    condition     = infisical_identity_token_auth.ghost_dev.access_token_max_ttl == 900
+    error_message = "Boot-time identity max token TTL must be capped at 900 seconds at the method level"
+  }
+
+  assert {
+    condition     = output.ghost_dev_boot_token != ""
+    error_message = "ghost_dev_boot_token output must be set"
   }
 }
 
