@@ -76,3 +76,4 @@ resource "infisical_project_identity_specific_privilege" "ghost_dev_read_env" {
     }
   ]
 }
+
