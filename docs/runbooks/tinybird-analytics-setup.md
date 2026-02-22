@@ -63,12 +63,13 @@ tailscale ssh core@ghost-dev-01
 # Edit secrets file
 sudo vim /var/mnt/storage/ghost-compose/.env.secrets
 
-# Add these lines:
+# Add this line:
 TINYBIRD_ADMIN_TOKEN=p.eyJ...your-admin-token...
-TINYBIRD_API_URL=https://api.us-east.tinybird.co
 ```
 
-The API URL is determined by the region where your workspace was created. Check the `host:` value in `tb info` output, or use one of:
+`TINYBIRD_API_URL` is **not** a secret — it is managed via OpenTofu and rendered into `.env.config` at deploy time. To change the regional endpoint, update `tinybird_api_url` in `opentofu/envs/dev/variables.tofu` and run `tofu apply`.
+
+The default value for dev is `https://api.us-east.tinybird.co`. Other regional endpoints:
 
 | Region | URL |
 |--------|-----|

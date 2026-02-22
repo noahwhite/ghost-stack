@@ -39,6 +39,7 @@ locals {
     admin_ip              = split("/", var.admin_ip)[0]
     mail_smtp_host        = var.mail_smtp_host
     mail_smtp_user        = var.mail_smtp_user
+    tinybird_api_url      = var.tinybird_api_url
     infisical_project_id  = var.infisical_project_id
     infisical_environment = var.infisical_environment
   }))
