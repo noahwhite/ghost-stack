@@ -7,6 +7,9 @@
 #
 # On reboot the token will be spent/expired — the service logs this and exits 0.
 # The existing .env.secrets file on block storage is used by Ghost as normal.
+#
+# The boot token is delivered via a terraform_data snapshot (GHO-85) which decouples
+# token TTL expiry from user_data, preventing spurious instance rebuilds.
 
 CONFIG_FILE="/etc/ghost-compose/.env.config"
 TOKEN_FILE="/etc/infisical/access-token"
