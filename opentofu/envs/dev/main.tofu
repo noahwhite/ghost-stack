@@ -108,14 +108,14 @@ locals {
     ssh_public_key    = var.ssh_public_key
 
     # Userdata variables
-    ghost_url         = var.ghost_url
-    ghost_domain      = var.ghost_domain
+    ghost_url          = var.ghost_url
+    ghost_domain       = var.ghost_domain
     ghost_admin_domain = var.ghost_admin_domain
-    admin_ip          = var.admin_ip
-    mail_smtp_user    = var.mail_smtp_user
-    locksmith_mask    = var.locksmith_mask
-    tinybird_api_url  = var.tinybird_api_url
-    tailscale_tailnet = var.tailscale_tailnet
+    admin_ip           = var.admin_ip
+    mail_smtp_user     = var.mail_smtp_user
+    locksmith_mask     = var.locksmith_mask
+    tinybird_api_url   = var.tinybird_api_url
+    tailscale_tailnet  = var.tailscale_tailnet
 
     # Template and config file hashes (changes to these rebuild userdata)
     files = {
