@@ -499,9 +499,9 @@ main() {
     fi
 
     # Check device status
-    local status_result device_name="unknown"
-    check_device_status_by_prefix "$devices" "$device_name_prefix"
-    status_result=$?
+    # Use || to prevent set -e from exiting on non-zero return codes (1=offline, 2=not found)
+    local status_result=0 device_name="unknown"
+    check_device_status_by_prefix "$devices" "$device_name_prefix" || status_result=$?
     
     # Extract device name for metrics if found
     if [[ $status_result != 2 ]]; then
