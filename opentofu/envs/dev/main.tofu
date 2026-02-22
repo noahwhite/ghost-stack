@@ -123,7 +123,8 @@ locals {
       caddy_security        = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
       caddy_analytics       = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
       mysql_init            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
-      tinybird_dockerfile   = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
+      tinybird_dockerfile      = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
+      infisical_secrets_fetch  = filesha256("${path.module}/../../modules/vultr/instance/userdata/infisical-secrets-fetch.sh")
     }
   }))
 }
@@ -183,7 +184,9 @@ module "vm" {
   admin_ip           = var.admin_ip
   mail_smtp_user     = var.mail_smtp_user
 
-  infisical_boot_token = module.infisical.ghost_dev_boot_token
+  infisical_boot_token  = module.infisical.ghost_dev_boot_token
+  infisical_project_id  = module.infisical.project_id
+  infisical_environment = "dev"
 }
 
 module "block_storage" {

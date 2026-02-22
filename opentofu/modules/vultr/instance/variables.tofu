@@ -96,3 +96,13 @@ variable "infisical_boot_token" {
   type        = string
   sensitive   = true
 }
+
+variable "infisical_project_id" {
+  description = "Infisical project ID for boot-time secrets fetch"
+  type        = string
+}
+
+variable "infisical_environment" {
+  description = "Infisical environment slug for boot-time secrets fetch (e.g., dev)"
+  type        = string
+}

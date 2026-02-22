@@ -250,6 +250,18 @@ storage:
         source: "data:text/plain;charset=utf-8;base64,${tinybird_provision_script}"
 
     # ==========================================================================
+    # Infisical Secrets Fetch Script (GHO-76)
+    # ==========================================================================
+    # Fetches application secrets from Infisical at boot using the single-use
+    # Token Auth token (GHO-75) and writes them to the block storage secrets file.
+    # On reboot the token is spent; the service logs this and exits 0.
+    # ==========================================================================
+    - path: /etc/ghost-compose/infisical-secrets-fetch.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${infisical_secrets_fetch_script}"
+
+    # ==========================================================================
     # Infisical Boot-Time Access Token (GHO-75)
     # ==========================================================================
     # Single-use Token Auth credential for boot-time secret fetching (GHO-76).
@@ -431,12 +443,35 @@ systemd:
     # TinyBird Analytics Provisioning
     # Runs before ghost-compose to sync schema, deploy, and extract tokens
     # Gracefully skips if TINYBIRD_ADMIN_TOKEN is not in .env.secrets
+    # Infisical Secrets Fetch Service (GHO-76)
+    # Runs before tinybird-provision and ghost-compose to ensure secrets are
+    # written to block storage before Docker starts. Always exits 0 — if the
+    # token is spent (reboot case), the existing .env.secrets file is used.
+    - name: infisical-secrets.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Fetch application secrets from Infisical at boot
+        After=network-online.target var-mnt-storage.mount
+        Wants=network-online.target
+        Requires=var-mnt-storage.mount
+        Before=tinybird-provision.service ghost-compose.service
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/etc/ghost-compose/infisical-secrets-fetch.sh
+        TimeoutStartSec=120
+
+        [Install]
+        WantedBy=multi-user.target
+
     - name: tinybird-provision.service
       enabled: true
       contents: |
         [Unit]
         Description=TinyBird Analytics Provisioning
-        After=docker.service var-mnt-storage.mount create-storage-dirs.service
+        After=docker.service var-mnt-storage.mount create-storage-dirs.service infisical-secrets.service
         Before=ghost-compose.service
         Requires=docker.service var-mnt-storage.mount
         ConditionPathExists=/var/mnt/storage/ghost-compose/.env.secrets
