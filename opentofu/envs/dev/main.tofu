@@ -42,6 +42,11 @@ provider "cloudflare" {
 
 provider "ct" {}
 
+provider "tailscale" {
+  # Credentials are read from TAILSCALE_API_KEY environment variable in CI.
+  # The empty block is required so mock_provider can intercept it during tofu test.
+}
+
 provider "pagerduty" {
   # Configure use of App Oauth scoped token
   use_app_oauth_scoped_token {
