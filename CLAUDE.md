@@ -30,6 +30,17 @@ mcp__github__issue_write(
 
 Do NOT proceed with other tasks until the PR is assigned.
 
+## OpenTofu Formatting
+
+`tofu fmt` is not available in this environment. When editing `.tofu` files, manually verify alignment before committing:
+
+- Within each contiguous group of key-value assignments (separated by blank lines or comments), all `=` signs must align to the **longest key + 1 space**.
+- When **adding** a new key, check whether it changes the longest key in its group. If not, the existing alignment is unchanged and the new key must be padded to match.
+- When **inserting** a key that is shorter than the longest, count spaces carefully — do not disturb spacing on the lines you didn't change.
+- Common mistake: replacing a block of lines changes spacing on untouched lines, causing a fmt failure on keys that were already correctly aligned.
+
+Example: if the longest key is `ghost_admin_domain` (18 chars), all `=` signs align at column 19. Adding `tailscale_tailnet` (17 chars) requires **2 spaces** before `=`, and existing keys must keep their original spacing.
+
 ## Testing Requirements
 
 - Infrastructure tests must be added when modifying OpenTofu/infrastructure code

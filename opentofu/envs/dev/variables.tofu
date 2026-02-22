@@ -159,3 +159,8 @@ variable "infisical_org_id" {
   description = "Infisical organization ID"
   type        = string
 }
+
+variable "tailscale_tailnet" {
+  description = "Tailscale tailnet name"
+  type        = string
+}

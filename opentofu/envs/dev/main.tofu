@@ -115,6 +115,7 @@ locals {
     mail_smtp_user     = var.mail_smtp_user
     locksmith_mask     = var.locksmith_mask
     tinybird_api_url   = var.tinybird_api_url
+    tailscale_tailnet  = var.tailscale_tailnet
 
     # Template and config file hashes (changes to these rebuild userdata)
     files = {
@@ -131,6 +132,7 @@ locals {
       mysql_init              = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
       tinybird_dockerfile     = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
       infisical_secrets_fetch = filesha256("${path.module}/../../modules/vultr/instance/userdata/infisical-secrets-fetch.sh")
+      monitor_tailscale       = filesha256("${path.module}/../../modules/vultr/instance/userdata/monitor_tailscale_conn.sh")
     }
   }))
 }
@@ -190,6 +192,7 @@ module "vm" {
   admin_ip           = var.admin_ip
   mail_smtp_user     = var.mail_smtp_user
   tinybird_api_url   = var.tinybird_api_url
+  tailscale_tailnet  = var.tailscale_tailnet
 
   infisical_boot_token  = terraform_data.boot_token_snapshot.output
   infisical_project_id  = module.infisical.project_id

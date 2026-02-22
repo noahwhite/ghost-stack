@@ -71,3 +71,27 @@ chmod 0600 "${TMPFILE}"
 mv "${TMPFILE}" "${SECRETS_FILE}"
 
 log "Secrets written to ${SECRETS_FILE}"
+
+# Write Tailscale monitor .env (second jq pass over same API response)
+TAILSCALE_DIR="/var/mnt/storage/sbin/tailscale_monitor"
+mkdir -p "${TAILSCALE_DIR}"
+TAILSCALE_TMPFILE=$(mktemp "${TAILSCALE_DIR}/.env.XXXXXX")
+{
+    jq -r '
+      .secrets[]
+      | select(.secretKey | IN(
+          "TAILSCALE_CLIENT_ID",
+          "TAILSCALE_CLIENT_SECRET"
+        ))
+      | "\(.secretKey)=\(.secretValue)"
+    ' <<< "${HTTP_RESPONSE}"
+    echo "TAILSCALE_TAILNET=${TAILSCALE_TAILNET}"
+} > "${TAILSCALE_TMPFILE}" || {
+    log_err "Failed to write tailscale monitor .env"
+    rm -f "${TAILSCALE_TMPFILE}"
+}
+if [ -f "${TAILSCALE_TMPFILE}" ]; then
+    chmod 0600 "${TAILSCALE_TMPFILE}"
+    mv "${TAILSCALE_TMPFILE}" "${TAILSCALE_DIR}/.env"
+    log "Tailscale monitor .env written to ${TAILSCALE_DIR}/.env"
+fi
