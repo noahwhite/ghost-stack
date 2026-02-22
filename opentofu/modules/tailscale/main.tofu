@@ -30,6 +30,7 @@ resource "tailscale_tailnet_key" "this" {
   reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
+  expiry        = 86400 # 24 hours - limits exposure window if state is compromised before first boot
   description   = "ghost-dev"
   tags          = ["tag:ghost-dev"]
 
@@ -37,6 +38,10 @@ resource "tailscale_tailnet_key" "this" {
     # Explicitly replace this key whenever the instance would be replaced
     # This guarantees a fresh one-time key when the instance is recreated
     replace_triggered_by = [null_resource.instance_replacement_trigger]
+
+    # Suppress recreation of the existing (already consumed) key when expiry is first added.
+    # The next natural key rotation (via replace_triggered_by) will create with the 24h expiry.
+    ignore_changes = [expiry]
   }
 }
 
