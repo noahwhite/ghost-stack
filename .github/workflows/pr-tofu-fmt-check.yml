@@ -33,6 +33,7 @@ jobs:
               - 'opentofu/**/*.bu'
               - 'opentofu/**/*.tftpl'
               - 'opentofu/**/*.sh'
+              - 'opentofu/**/*.tofutest.hcl'
               - '.github/workflows/pr-tofu-*.yml'
 
   tofu-checks:
@@ -65,6 +66,27 @@ jobs:
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             tofu fmt -check -recursive
 
+      - name: Fix workspace permissions for Docker container
+        run: |
+          chmod -R a+w "${GITHUB_WORKSPACE}/opentofu"
+
+      - name: Run tofu init (download providers for test runner)
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && tofu -chdir=opentofu/envs/dev init -backend=false"
+
+      - name: Run tofu test
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/home/devops/app" \
+            -w /home/devops/app \
+            -e TAILSCALE_API_KEY=dummy-for-unit-tests \
+            ghcr.io/noahwhite/ghost-stack-shell:latest \
+            bash -c "git config --global --add safe.directory /home/devops/app && tofu -chdir=opentofu/envs/dev test"
+
   # Summary job that always runs to provide clear status
   status:
     needs: [changes, tofu-checks]
@@ -78,8 +100,8 @@ jobs:
             exit 0
           fi
           if [[ "${{ needs.tofu-checks.result }}" == "success" ]]; then
-            echo "✅ OpenTofu format check passed"
+            echo "✅ OpenTofu format check and tests passed"
             exit 0
           fi
-          echo "❌ OpenTofu format check failed"
+          echo "❌ OpenTofu format check or tests failed"
           exit 1

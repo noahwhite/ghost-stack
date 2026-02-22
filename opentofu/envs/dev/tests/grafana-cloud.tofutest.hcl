@@ -210,8 +210,8 @@ run "grafana_cloud_module_tests" {
 
   # Test service account
   assert {
-    condition     = grafana_cloud_stack_service_account.terraform_sa.name == "\textsvc-grafana-terraform-app"
-    error_message = "Service account name should be \\textsvc-grafana-terraform-app"
+    condition     = grafana_cloud_stack_service_account.terraform_sa.name == "sa-1-extsvc-grafana-terraform-app"
+    error_message = "Service account name should be sa-1-extsvc-grafana-terraform-app"
   }
 
   assert {
