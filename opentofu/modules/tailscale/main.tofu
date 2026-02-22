@@ -30,6 +30,7 @@ resource "tailscale_tailnet_key" "this" {
   reusable      = false # One-time key - invalidated after first use for security
   ephemeral     = false
   preauthorized = true
+  expiry        = 86400 # 24 hours - limits exposure window if state is compromised before first boot
   description   = "ghost-dev"
   tags          = ["tag:ghost-dev"]
 
