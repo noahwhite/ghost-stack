@@ -18,6 +18,9 @@ set -euo pipefail
 #   Workstation interactive (current behavior):
 #     ./docker/scripts/infra-shell.sh
 #
+#   Workstation credential-free (tofu fmt / tofu test only):
+#     ./docker/scripts/infra-shell.sh --no-secrets
+#
 #   CI: retrieve secrets and export to GitHub Actions env:
 #     ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 #
@@ -30,6 +33,7 @@ set -euo pipefail
 # ----------------------------
 CI_MODE=false
 SECRETS_ONLY=false
+NO_SECRETS=false
 EXPORT_GITHUB_ENV=false
 RUN_CONTAINER=true
 BUILD_CONTAINER=true
@@ -41,6 +45,7 @@ Usage: infra-shell.sh [options]
 Options:
   --ci                 Non-interactive mode. Never prompts. Requires env vars / BWS_ACCESS_TOKEN.
   --secrets-only        Retrieve and export secrets, then exit. Skips IP discovery, SSH key, docker build/run.
+  --no-secrets          Skip all credential retrieval. Launches a lightweight container for tofu fmt / tofu test.
   --export-github-env   Write exported secrets to $GITHUB_ENV (GitHub Actions). Also works if $GITHUB_ENV is set.
   --no-build            Do not run docker build (workstation only).
   --no-run              Do not run docker run (workstation only).
@@ -53,6 +58,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --ci) CI_MODE=true; shift ;;
     --secrets-only) SECRETS_ONLY=true; RUN_CONTAINER=false; BUILD_CONTAINER=false; shift ;;
+    --no-secrets) NO_SECRETS=true; shift ;;
     --export-github-env) EXPORT_GITHUB_ENV=true; shift ;;
     --no-build) BUILD_CONTAINER=false; shift ;;
     --no-run) RUN_CONTAINER=false; shift ;;
@@ -141,7 +147,7 @@ prompt_if_empty() {
 
 # Decide whether to use BWS
 USE_BWS=false
-if check_bws_available; then
+if check_bws_available && [[ "$NO_SECRETS" == "false" ]]; then
   # In CI mode, never prompt; require BWS_ACCESS_TOKEN if you expect to use BWS.
   if [[ -z "${BWS_ACCESS_TOKEN:-}" ]]; then
     if [[ "$CI_MODE" == "true" ]]; then
@@ -169,8 +175,10 @@ else
 fi
 
 # ============================================================================
-# Retrieve secrets
+# Retrieve secrets (skipped in --no-secrets mode)
 # ============================================================================
+
+if [[ "$NO_SECRETS" == "false" ]]; then
 
 if [[ "$USE_BWS" == "true" ]]; then
   # Retrieve into local variables (do not echo values)
@@ -349,6 +357,8 @@ echo "Using SSH public key: $PUBKEY_PATH"
 : "${TF_VAR_infisical_client_secret:?Environment variable not set}"
 : "${TF_VAR_infisical_org_id:?Environment variable not set}"
 
+fi  # end NO_SECRETS check
+
 # Exit early for CI secrets-only mode (no IP discovery, no SSH key, no docker actions)
 if [[ "$SECRETS_ONLY" == "true" ]]; then
   echo "Secrets exported successfully."
@@ -362,34 +372,43 @@ fi
 
 # Run container if enabled
 if [[ "$RUN_CONTAINER" == "true" ]]; then
-  HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 docker run --rm -it \
-    -e TF_VAR_vultr_api_key \
-    -e TF_VAR_cloudflare_account_id \
-    -e TF_VAR_cloudflare_api_token \
-    -e TF_VAR_ssh_public_key \
-    -e TF_VAR_admin_subnets \
-    -e TF_VAR_admin_ip \
-    -e R2_ACCESS_KEY_ID \
-    -e R2_SECRET_ACCESS_KEY \
-    -e TAILSCALE_API_KEY \
-    -e TAILSCALE_TAILNET \
-    -e TF_VAR_tailscale_tailnet \
-    -e TF_VAR_PD_CLIENT_ID \
-    -e TF_VAR_PD_CLIENT_SECRET \
-    -e TF_VAR_pd_subdomain \
-    -e TF_VAR_pd_user_tok \
-    -e TF_VAR_GC_ACCESS_TOK \
-    -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
-    -e TF_VAR_infisical_client_id \
-    -e TF_VAR_infisical_client_secret \
-    -e TF_VAR_infisical_org_id \
-    -e USER_UID="$(id -u)" \
-    -e USER_GID="$(id -g)" \
-    -e DISPLAY=$DISPLAY \
-    -e XAUTHORITY=$XAUTHORITY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v "$(pwd)":/home/devops/app \
-    -v tofu_plugins:/home/devops/.tofu.d \
-    ghost-stack-shell \
-    bash --norc --noprofile -c 'unset HISTFILE; export HISTFILE=/dev/null; export HISTSIZE=0; export HISTFILESIZE=0; exec bash'
+  if [[ "$NO_SECRETS" == "true" ]]; then
+    # Credential-free container for tofu fmt and tofu test
+    docker run --rm -it \
+      -v "$(pwd)":/home/devops/app \
+      -v tofu_plugins:/home/devops/.tofu.d \
+      ghost-stack-shell \
+      bash --norc --noprofile -c 'unset HISTFILE; export HISTFILE=/dev/null; export HISTSIZE=0; export HISTFILESIZE=0; exec bash'
+  else
+    HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 docker run --rm -it \
+      -e TF_VAR_vultr_api_key \
+      -e TF_VAR_cloudflare_account_id \
+      -e TF_VAR_cloudflare_api_token \
+      -e TF_VAR_ssh_public_key \
+      -e TF_VAR_admin_subnets \
+      -e TF_VAR_admin_ip \
+      -e R2_ACCESS_KEY_ID \
+      -e R2_SECRET_ACCESS_KEY \
+      -e TAILSCALE_API_KEY \
+      -e TAILSCALE_TAILNET \
+      -e TF_VAR_tailscale_tailnet \
+      -e TF_VAR_PD_CLIENT_ID \
+      -e TF_VAR_PD_CLIENT_SECRET \
+      -e TF_VAR_pd_subdomain \
+      -e TF_VAR_pd_user_tok \
+      -e TF_VAR_GC_ACCESS_TOK \
+      -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+      -e TF_VAR_infisical_client_id \
+      -e TF_VAR_infisical_client_secret \
+      -e TF_VAR_infisical_org_id \
+      -e USER_UID="$(id -u)" \
+      -e USER_GID="$(id -g)" \
+      -e DISPLAY=$DISPLAY \
+      -e XAUTHORITY=$XAUTHORITY \
+      -v /tmp/.X11-unix:/tmp/.X11-unix \
+      -v "$(pwd)":/home/devops/app \
+      -v tofu_plugins:/home/devops/.tofu.d \
+      ghost-stack-shell \
+      bash --norc --noprofile -c 'unset HISTFILE; export HISTFILE=/dev/null; export HISTSIZE=0; export HISTFILESIZE=0; exec bash'
+  fi
 fi

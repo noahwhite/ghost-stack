@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./opentofu/scripts/tofu.sh <env> <init|plan|apply|destroy|taint|state|output> [extra args...]
+# Usage: ./opentofu/scripts/tofu.sh <env> <init|plan|apply|destroy|taint|state|fmt|test|output> [extra args...]
 # Example:
 #   ./opentofu/scripts/tofu.sh dev init
 #   ./opentofu/scripts/tofu.sh dev plan
 #   ./opentofu/scripts/tofu.sh dev apply -auto-approve
+#   ./opentofu/scripts/tofu.sh dev fmt    # Format check — no credentials needed
+#   ./opentofu/scripts/tofu.sh dev test   # Run tests with mock providers — no credentials needed
 
 ENV="${1:-}"; ACTION="${2:-}"; shift 2 || true
 EXTRA_ARGS=("$@")
 if [[ -z "${ENV}" || -z "${ACTION}" ]]; then
-  echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|output> [extra args...]"
+  echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|fmt|test|output> [extra args...]"
   exit 1
 fi
 
@@ -120,29 +122,49 @@ if [ -n "${TF_VAR_cloudflare_api_token:-}" ]; then
   export CLOUDFLARE_API_TOKEN="${TF_VAR_cloudflare_api_token}"
 fi
 
-# --- Export R2 creds for ALL tofu invocations (backend needs them on plan/apply/etc) ---
-: "${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID required}"
-: "${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY required}"
-export AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}"
-export AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}"
-# if you use temporary creds, also export AWS_SESSION_TOKEN before calling this script
-export AWS_EC2_METADATA_DISABLED=true
-
 case "${ACTION}" in
   init)
+    # R2 credentials needed for backend access
+    : "${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID required}"
+    : "${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY required}"
+    export AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}"
+    export AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}"
+    export AWS_EC2_METADATA_DISABLED=true
     ensure_backend "${EXTRA_ARGS[@]}"
     tofu -chdir="${ENV_DIR}" init -reconfigure -backend-config="${OUT}" "${EXTRA_ARGS[@]}"
     ;;
 
-  plan|apply|destroy|taint|state|import|test|show|refresh|output)
+  plan|apply|destroy|taint|state|import|show|refresh|output)
+    # R2 credentials needed for backend access
+    : "${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID required}"
+    : "${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY required}"
+    export AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}"
+    export AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}"
+    # if you use temporary creds, also export AWS_SESSION_TOKEN before calling this script
+    export AWS_EC2_METADATA_DISABLED=true
     # Always ensure backend is generated and initialized (cheap & robust)
     ensure_backend
     # For provider auth (e.g., Vultr), expect env to be exported outside this script.
     tofu -chdir="${ENV_DIR}" "${ACTION}" "${EXTRA_ARGS[@]}"
     ;;
 
+  fmt)
+    # No credentials needed — pure formatting check.
+    tofu fmt -check -recursive "${REPO_ROOT}/opentofu" "${EXTRA_ARGS[@]}"
+    ;;
+
+  test)
+    # Tests use mock providers. No backend or real credentials needed.
+    # Set a dummy TAILSCALE_API_KEY if not already set — the tailscale provider reads this
+    # from the environment during provider initialization even when mock_provider intercepts
+    # all resource operations.
+    export TAILSCALE_API_KEY="${TAILSCALE_API_KEY:-dummy-for-unit-tests}"
+    tofu -chdir="${ENV_DIR}" init -backend=false
+    tofu -chdir="${ENV_DIR}" test "${EXTRA_ARGS[@]}"
+    ;;
+
   *)
-    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|import|test|show|refresh|output> [extra args...]"
+    echo "Usage: $0 <env> <init|plan|apply|destroy|taint|state|import|fmt|test|show|refresh|output> [extra args...]"
     exit 1
     ;;
 esac

@@ -330,18 +330,37 @@ Use `./opentofu/scripts/tofu.sh` instead of `tofu` directly:
 
 ## Running Locally
 
-### Using the ghost-stack-shell container
+### Full infra shell (requires credentials)
+```bash
+./docker/scripts/infra-shell.sh
+```
+Builds the container, retrieves all secrets from Bitwarden, and drops you into an interactive shell with all `TF_VAR_*` variables set. Use this for `tofu plan`, `tofu apply`, etc.
+
+### Format check and tests (no credentials required)
+```bash
+./docker/scripts/infra-shell.sh --no-secrets
+```
+Builds the container and drops you into a lightweight shell with no credential retrieval. Use this for `tofu fmt` and `tofu test`:
+
+```bash
+# Inside the --no-secrets container:
+
+# Check formatting
+./opentofu/scripts/tofu.sh dev fmt
+
+# Run unit tests with mock providers
+./opentofu/scripts/tofu.sh dev test
+```
+
+Both commands work without any credentials. `tofu test` automatically runs `tofu init -backend=false` and sets a dummy `TAILSCALE_API_KEY` if one is not already present.
+
+### Using the ghost-stack-shell container directly
 ```bash
 docker run -it --rm \
   -v "${PWD}:/home/devops/app" \
   -w /home/devops/app \
   ghcr.io/noahwhite/ghost-stack-shell:latest \
   bash
-```
-
-### Format checking
-```bash
-tofu fmt -check -recursive opentofu/
 ```
 
 ## Ghost Instance Access
