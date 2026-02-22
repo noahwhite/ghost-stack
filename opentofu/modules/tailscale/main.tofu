@@ -35,8 +35,11 @@ resource "tailscale_tailnet_key" "this" {
   tags          = ["tag:ghost-dev"]
 
   lifecycle {
-    # Explicitly replace this key whenever the instance would be replaced
-    # This guarantees a fresh one-time key when the instance is recreated
+    # Explicitly replace this key whenever the instance would be replaced.
+    # This guarantees a fresh one-time key when the instance is recreated.
+    # The instance_replacement_hash only changes on genuine infra changes — the
+    # Infisical boot token is isolated from user_data via terraform_data.boot_token_snapshot
+    # (GHO-85), so token consumption/renewal no longer triggers instance replacement.
     replace_triggered_by = [null_resource.instance_replacement_trigger]
 
     # Suppress recreation of the existing (already consumed) key when expiry is first added.
