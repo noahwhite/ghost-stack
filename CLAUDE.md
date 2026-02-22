@@ -45,6 +45,31 @@ Do NOT proceed with other tasks until the PR is assigned.
 - Include detailed acceptance criteria in issue descriptions
 - Link related issues using dependencies where applicable
 
+### Story Status Lifecycle
+
+Move stories through statuses in this order — **never skip ahead**:
+
+| Status | When to set |
+|--------|-------------|
+| **Triage** | Newly created, not yet reviewed |
+| **Todo** | Triaged, estimated, assigned, ready to work |
+| **In Progress** | Branch created, actively being implemented |
+| **In Review** | PR merged, CD running or deployment pending verification |
+| **Done** | CD completed successfully **AND** all AC verified **AND** all test plan items checked |
+
+**Critical:** Do NOT move to **Done** until:
+1. CD pipeline has completed successfully
+2. All acceptance criteria have been verified in the deployed environment
+3. All test plan items are checked off
+
+### Story Triage Checklist
+
+When triaging a story (moving from Triage → Todo):
+1. Set **status** to `Todo`
+2. Set **priority** (1=Urgent, 2=High, 3=Normal, 4=Low)
+3. Set **estimate** (story points)
+4. Set **assignee** to Noah White
+
 ### User Story Creation Checklist
 
 When creating a user story in Linear with `mcp__linear__create_issue`:
