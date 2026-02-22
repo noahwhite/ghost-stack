@@ -83,6 +83,28 @@ run "infisical_identity_is_single_use" {
   }
 }
 
+run "infisical_project_id_output" {
+  command = plan
+
+  plan_options {
+    refresh = false
+  }
+
+  module {
+    source = "../../modules/infisical"
+  }
+
+  variables {
+    org_id      = "test-org-id"
+    admin_email = "noah@noahwhite.net"
+  }
+
+  assert {
+    condition     = output.project_id != ""
+    error_message = "project_id output must be set for boot-time secrets fetch config"
+  }
+}
+
 run "infisical_project_configuration" {
   command = plan
 

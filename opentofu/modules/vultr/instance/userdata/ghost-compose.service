@@ -1,6 +1,6 @@
 [Unit]
 Description=Docker-Compose Ghost CMS Container
-After=docker.service var-mnt-storage.mount tinybird-provision.service
+After=docker.service var-mnt-storage.mount tinybird-provision.service infisical-secrets.service
 Requires=docker.service var-mnt-storage.mount
 Wants=tinybird-provision.service
 RequiresMountsFor=/var/mnt/storage

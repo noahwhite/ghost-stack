@@ -33,12 +33,14 @@ locals {
 
   # admin_ip: Strip CIDR notation for Caddy header matching (e.g., 1.2.3.4/32 -> 1.2.3.4)
   ghost_env_config = base64encode(templatefile("${path.module}/userdata/ghost-compose/env.config.tftpl", {
-    ghost_domain       = var.ghost_domain
-    ghost_admin_domain = var.ghost_admin_domain
-    ghost_version      = var.ghost_version
-    admin_ip           = split("/", var.admin_ip)[0]
-    mail_smtp_host     = var.mail_smtp_host
-    mail_smtp_user     = var.mail_smtp_user
+    ghost_domain          = var.ghost_domain
+    ghost_admin_domain    = var.ghost_admin_domain
+    ghost_version         = var.ghost_version
+    admin_ip              = split("/", var.admin_ip)[0]
+    mail_smtp_host        = var.mail_smtp_host
+    mail_smtp_user        = var.mail_smtp_user
+    infisical_project_id  = var.infisical_project_id
+    infisical_environment = var.infisical_environment
   }))
 
   # Static files - no variable interpolation needed
@@ -55,6 +57,9 @@ locals {
 
   # Infisical boot token (base64-encoded for Ignition data URI)
   infisical_boot_token_b64 = base64encode(var.infisical_boot_token)
+
+  # Infisical secrets fetch script
+  infisical_secrets_fetch_script = filebase64("${path.module}/userdata/infisical-secrets-fetch.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -85,6 +90,9 @@ data "ct_config" "ghost" {
 
     # Infisical boot token
     infisical_boot_token_b64 = local.infisical_boot_token_b64
+
+    # Infisical secrets fetch script
+    infisical_secrets_fetch_script = local.infisical_secrets_fetch_script
   })
   strict = true
 }

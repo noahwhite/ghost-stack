@@ -112,18 +112,19 @@ locals {
 
     # Template and config file hashes (changes to these rebuild userdata)
     files = {
-      ghost_bu              = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost.bu")
-      ghost_compose_service = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose.service")
-      tinybird_provision    = filesha256("${path.module}/../../modules/vultr/instance/userdata/tinybird-provision.sh")
-      compose_yml           = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl")
-      env_config            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/env.config.tftpl")
-      caddyfile             = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/Caddyfile")
-      caddy_activitypub     = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/ActivityPub")
-      caddy_logging         = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/Logging")
-      caddy_security        = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
-      caddy_analytics       = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
-      mysql_init            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
-      tinybird_dockerfile   = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
+      ghost_bu                = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost.bu")
+      ghost_compose_service   = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose.service")
+      tinybird_provision      = filesha256("${path.module}/../../modules/vultr/instance/userdata/tinybird-provision.sh")
+      compose_yml             = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl")
+      env_config              = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/env.config.tftpl")
+      caddyfile               = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/Caddyfile")
+      caddy_activitypub       = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/ActivityPub")
+      caddy_logging           = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/Logging")
+      caddy_security          = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/SecurityHeaders")
+      caddy_analytics         = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/caddy/snippets/TrafficAnalytics")
+      mysql_init              = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/mysql-init/create-multiple-databases.sh")
+      tinybird_dockerfile     = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
+      infisical_secrets_fetch = filesha256("${path.module}/../../modules/vultr/instance/userdata/infisical-secrets-fetch.sh")
     }
   }))
 }
@@ -183,7 +184,9 @@ module "vm" {
   admin_ip           = var.admin_ip
   mail_smtp_user     = var.mail_smtp_user
 
-  infisical_boot_token = module.infisical.ghost_dev_boot_token
+  infisical_boot_token  = module.infisical.ghost_dev_boot_token
+  infisical_project_id  = module.infisical.project_id
+  infisical_environment = "dev"
 }
 
 module "block_storage" {
