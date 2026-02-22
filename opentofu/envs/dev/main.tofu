@@ -186,7 +186,7 @@ module "vm" {
   mail_smtp_user     = var.mail_smtp_user
   tinybird_api_url   = var.tinybird_api_url
 
-  infisical_boot_token  = module.infisical.ghost_dev_boot_token
+  infisical_boot_token  = terraform_data.boot_token_snapshot.output
   infisical_project_id  = module.infisical.project_id
   infisical_environment = "dev"
 }
@@ -207,4 +207,33 @@ module "infisical" {
   environment               = "dev"
   admin_email               = "noah@noahwhite.net"
   instance_replacement_hash = local.instance_replacement_hash
+}
+
+# ==========================================================================
+# Boot Token Stable Snapshot (GHO-85)
+# ==========================================================================
+# Decouples the Infisical boot token lifecycle (15-min TTL, single-use —
+# Infisical deletes the record after consumption) from user_data.
+#
+# Without this, every plan run after first boot detects the deleted token,
+# recreates it with a new value, and propagates that new value into user_data
+# (ForceNew=true on Vultr instances), triggering an unintended instance rebuild
+# and — critically — rebuilding the instance with the already-consumed Tailscale
+# auth key, breaking Tailscale authentication.
+#
+# This resource captures the token value at instance creation time and holds it
+# stable. It is only replaced when instance_replacement_hash changes (i.e., when
+# the instance is genuinely being replaced), at which point a fresh token is
+# captured for the new instance.
+resource "terraform_data" "boot_token_snapshot" {
+  input            = module.infisical.ghost_dev_boot_token
+  triggers_replace = local.instance_replacement_hash
+
+  lifecycle {
+    # Suppress propagation of token value changes between instance replacements.
+    # After first boot, Infisical deletes the consumed token and OpenTofu recreates
+    # it with a new value. ignore_changes prevents that new value from reaching
+    # user_data and causing an unintended rebuild.
+    ignore_changes = [input]
+  }
 }
