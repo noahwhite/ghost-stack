@@ -42,6 +42,7 @@ locals {
     tinybird_api_url      = var.tinybird_api_url
     infisical_project_id  = var.infisical_project_id
     infisical_environment = var.infisical_environment
+    tailscale_tailnet     = var.tailscale_tailnet
   }))
 
   # Static files - no variable interpolation needed
@@ -61,6 +62,9 @@ locals {
 
   # Infisical secrets fetch script
   infisical_secrets_fetch_script = filebase64("${path.module}/userdata/infisical-secrets-fetch.sh")
+
+  # Tailscale monitor script
+  monitor_tailscale_script = filebase64("${path.module}/userdata/monitor_tailscale_conn.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -94,6 +98,9 @@ data "ct_config" "ghost" {
 
     # Infisical secrets fetch script
     infisical_secrets_fetch_script = local.infisical_secrets_fetch_script
+
+    # Tailscale monitor script
+    monitor_tailscale_script = local.monitor_tailscale_script
   })
   strict = true
 }

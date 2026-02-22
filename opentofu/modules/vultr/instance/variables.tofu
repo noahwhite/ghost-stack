@@ -112,3 +112,8 @@ variable "infisical_environment" {
   description = "Infisical environment slug for boot-time secrets fetch (e.g., dev)"
   type        = string
 }
+
+variable "tailscale_tailnet" {
+  description = "Tailscale tailnet name for device status monitoring (e.g., example.com)"
+  type        = string
+}

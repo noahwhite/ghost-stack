@@ -262,6 +262,18 @@ storage:
         source: "data:text/plain;charset=utf-8;base64,${infisical_secrets_fetch_script}"
 
     # ==========================================================================
+    # Tailscale Connection Monitor Script (GHO-83)
+    # ==========================================================================
+    # Delivered ephemerally via Ignition at /etc/ghost-compose/monitor_tailscale_conn.sh.
+    # Credentials (TAILSCALE_CLIENT_ID, TAILSCALE_CLIENT_SECRET, TAILSCALE_TAILNET)
+    # are written to /var/mnt/storage/sbin/tailscale_monitor/.env by infisical-secrets-fetch.sh at boot.
+    # ==========================================================================
+    - path: /etc/ghost-compose/monitor_tailscale_conn.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${monitor_tailscale_script}"
+
+    # ==========================================================================
     # Infisical Boot-Time Access Token (GHO-75)
     # ==========================================================================
     # Single-use Token Auth credential for boot-time secret fetching (GHO-76).
@@ -408,9 +420,8 @@ systemd:
 
         [Service]
         Type=oneshot
-        ExecStart=/var/mnt/storage/sbin/tailscale_monitor/monitor_tailscale_conn.sh --prometheus
+        ExecStart=/etc/ghost-compose/monitor_tailscale_conn.sh --prometheus
         WorkingDirectory=/var/mnt/storage/sbin/tailscale_monitor
-        ExecStartPre=/usr/bin/chmod +x /var/mnt/storage/sbin/tailscale_monitor/monitor_tailscale_conn.sh
         StandardOutput=journal
         StandardError=journal
         Restart=no

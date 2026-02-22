@@ -252,6 +252,7 @@ export_var "TF_VAR_cloudflare_api_token" "${TF_VAR_cloudflare_api_token}"
 export_var "CLOUDFLARE_API_TOKEN" "${TF_VAR_cloudflare_api_token}"
 export_var "TAILSCALE_API_KEY" "${TAILSCALE_API_KEY}"
 export_var "TAILSCALE_TAILNET" "${TAILSCALE_TAILNET}"
+export_var "TF_VAR_tailscale_tailnet" "${TAILSCALE_TAILNET}"
 export_var "TF_VAR_PD_CLIENT_ID" "${TF_VAR_PD_CLIENT_ID}"
 export_var "TF_VAR_PD_CLIENT_SECRET" "${TF_VAR_PD_CLIENT_SECRET}"
 export_var "TF_VAR_pd_subdomain" "${TF_VAR_pd_subdomain}"
@@ -372,6 +373,7 @@ if [[ "$RUN_CONTAINER" == "true" ]]; then
     -e R2_SECRET_ACCESS_KEY \
     -e TAILSCALE_API_KEY \
     -e TAILSCALE_TAILNET \
+    -e TF_VAR_tailscale_tailnet \
     -e TF_VAR_PD_CLIENT_ID \
     -e TF_VAR_PD_CLIENT_SECRET \
     -e TF_VAR_pd_subdomain \

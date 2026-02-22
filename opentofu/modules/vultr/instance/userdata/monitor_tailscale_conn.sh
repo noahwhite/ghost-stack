@@ -30,7 +30,7 @@ debug_log() {
 
 # Function to load .env file if it exists
 load_env_file() {
-    local env_file="${SCRIPT_DIR}/.env"
+    local env_file="/var/mnt/storage/sbin/tailscale_monitor/.env"
 
     if [[ -f "$env_file" ]]; then
         # Read .env file and export variables that aren't already set
@@ -446,6 +446,9 @@ main() {
     done
 
     debug_log "Starting Tailscale device status check"
+
+    # Ensure monitor directory exists on block storage (required for .env and metrics write)
+    mkdir -p "/var/mnt/storage/sbin/tailscale_monitor"
 
     # Load .env file if it exists
     load_env_file || true

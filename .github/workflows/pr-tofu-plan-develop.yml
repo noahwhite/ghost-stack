@@ -104,6 +104,7 @@ jobs:
           TF_VAR_vultr_api_key: ${{ env.TF_VAR_vultr_api_key }}
           TAILSCALE_API_KEY: ${{ env.TAILSCALE_API_KEY }}
           TAILSCALE_TAILNET: ${{ env.TAILSCALE_TAILNET }}
+          TF_VAR_tailscale_tailnet: ${{ env.TF_VAR_tailscale_tailnet }}
           TF_VAR_PD_CLIENT_ID: ${{ env.TF_VAR_PD_CLIENT_ID }}
           TF_VAR_PD_CLIENT_SECRET: ${{ env.TF_VAR_PD_CLIENT_SECRET }}
           TF_VAR_pd_subdomain: ${{ env.TF_VAR_pd_subdomain }}
@@ -122,6 +123,7 @@ jobs:
             -e TF_VAR_vultr_api_key \
             -e TAILSCALE_API_KEY \
             -e TAILSCALE_TAILNET \
+            -e TF_VAR_tailscale_tailnet \
             -e TF_VAR_PD_CLIENT_ID \
             -e TF_VAR_PD_CLIENT_SECRET \
             -e TF_VAR_pd_subdomain \
@@ -166,6 +168,7 @@ jobs:
           TF_VAR_vultr_api_key: ${{ env.TF_VAR_vultr_api_key }}
           TAILSCALE_API_KEY: ${{ env.TAILSCALE_API_KEY }}
           TAILSCALE_TAILNET: ${{ env.TAILSCALE_TAILNET }}
+          TF_VAR_tailscale_tailnet: ${{ env.TF_VAR_tailscale_tailnet }}
           TF_VAR_PD_CLIENT_ID: ${{ env.TF_VAR_PD_CLIENT_ID }}
           TF_VAR_PD_CLIENT_SECRET: ${{ env.TF_VAR_PD_CLIENT_SECRET }}
           TF_VAR_pd_subdomain: ${{ env.TF_VAR_pd_subdomain }}
@@ -191,6 +194,7 @@ jobs:
             -e TF_VAR_vultr_api_key \
             -e TAILSCALE_API_KEY \
             -e TAILSCALE_TAILNET \
+            -e TF_VAR_tailscale_tailnet \
             -e TF_VAR_PD_CLIENT_ID \
             -e TF_VAR_PD_CLIENT_SECRET \
             -e TF_VAR_pd_subdomain \
