@@ -17,8 +17,10 @@ if ! grep -q "TINYBIRD_ADMIN_TOKEN=" "$SECRETS_FILE" 2>/dev/null; then
     exit 0
 fi
 
-# Source the secrets to get TINYBIRD_ADMIN_TOKEN and TINYBIRD_API_URL
+# Source config for TINYBIRD_API_URL, then secrets for TINYBIRD_ADMIN_TOKEN
+# (secrets sourced second so they take precedence over any overlapping keys)
 set -a
+source "$CONFIG_FILE"
 source "$SECRETS_FILE"
 set +a
 

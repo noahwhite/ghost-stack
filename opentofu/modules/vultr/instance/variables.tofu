@@ -91,6 +91,12 @@ variable "mail_smtp_user" {
   type        = string
 }
 
+variable "tinybird_api_url" {
+  description = "Tinybird regional API endpoint (e.g., https://api.us-east.tinybird.co)"
+  type        = string
+  default     = "https://api.tinybird.co"
+}
+
 variable "infisical_boot_token" {
   description = "Single-use Infisical access token for boot-time secret fetching via Token Auth"
   type        = string

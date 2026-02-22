@@ -109,6 +109,7 @@ locals {
     admin_ip           = var.admin_ip
     mail_smtp_user     = var.mail_smtp_user
     locksmith_mask     = var.locksmith_mask
+    tinybird_api_url   = var.tinybird_api_url
 
     # Template and config file hashes (changes to these rebuild userdata)
     files = {
@@ -183,6 +184,7 @@ module "vm" {
   ghost_admin_domain = var.ghost_admin_domain
   admin_ip           = var.admin_ip
   mail_smtp_user     = var.mail_smtp_user
+  tinybird_api_url   = var.tinybird_api_url
 
   infisical_boot_token  = module.infisical.ghost_dev_boot_token
   infisical_project_id  = module.infisical.project_id
