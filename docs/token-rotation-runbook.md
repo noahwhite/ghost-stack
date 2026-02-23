@@ -20,6 +20,7 @@ This document provides step-by-step procedures for rotating all tokens and secre
 12. [TinyBird Credentials](#tinybird-credentials)
 13. [Linear API Token](#linear-api-token)
 14. [Verification Procedures](#verification-procedures)
+15. [Application Secrets (Infisical)](#application-secrets-infisical)
 
 ---
 
@@ -912,10 +913,56 @@ If a token is suspected to be compromised:
 
 Ghost application secrets — `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD`, `HEALTH_CHECK_TOKEN`, `mail__options__auth__pass`, `TINYBIRD_ADMIN_TOKEN` — are managed in Infisical rather than Bitwarden.
 
-See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for:
-- Initial provisioning from `.env.secrets`
-- Rotating each secret and restarting affected services
-- Restart requirements (container restart vs MySQL ALTER USER)
+For initial provisioning, CLI authentication, and an overview of the rotation approach (including how to update the live `.env.secrets` file on the instance), see [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md).
+
+---
+
+### `HEALTH_CHECK_TOKEN`
+
+**Purpose:** Caddy uses this token to authenticate health check requests from GitHub Actions and manual `curl` checks.
+
+**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` (in both `dev` and `dev-ci` environments) at the same time.
+
+**Rotation steps:**
+
+1. Generate a new token (random, URL-safe):
+   ```bash
+   openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
+   ```
+
+2. Update Infisical:
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+   unset SECRET_VALUE
+   ```
+
+3. Update GitHub Secrets (both environments):
+   - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
+   - Update `HEALTH_CHECK_TOKEN`
+   - Repeat for Environments → `dev-ci`
+
+4. Update `.env.secrets` on the instance and restart Caddy:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^HEALTH_CHECK_TOKEN=.*|HEALTH_CHECK_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-caddy-1
+   ```
+
+5. Verify health check works with the new token:
+   ```bash
+   read -s NEW_VALUE
+   curl -sI -H "X-Health-Check-Token: ${NEW_VALUE}" https://separationofconcerns.dev
+   unset NEW_VALUE
+   # Should return HTTP 200
+   ```
 
 ---
 
