@@ -627,7 +627,9 @@ To verify the key was invalidated:
 
 4. **Verify the token before saving:**
    ```bash
-   curl -H "Authorization: Bearer YOUR_TOKEN" https://grafana.com/api/instances
+   read -s BEARER_TOKEN
+   curl -H "Authorization: Bearer ${BEARER_TOKEN}" https://grafana.com/api/instances
+   unset BEARER_TOKEN
    ```
    - Should return a JSON response with your stacks
    - If you get 401 Unauthorized, the token is invalid or truncated
@@ -677,8 +679,10 @@ To verify the key was invalidated:
 
 4. **Verify the token before saving:**
    ```bash
-   curl -H "Authorization: Bearer YOUR_SA_TOKEN" \
+   read -s BEARER_TOKEN
+   curl -H "Authorization: Bearer ${BEARER_TOKEN}" \
      https://separationofconcerns0dev.grafana.net/api/folders
+   unset BEARER_TOKEN
    ```
    - Should return a JSON response with folders
    - If you get 401 Unauthorized, the token is invalid or truncated
