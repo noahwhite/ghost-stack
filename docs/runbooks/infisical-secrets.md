@@ -355,8 +355,8 @@ sudo systemctl restart ghost-compose
    ```
 
 4. Verify Ghost Stats is functional:
-   - Go to Ghost Admin → Stats
-   - Confirm analytics data loads without 403 errors
+   - Go to Ghost Admin → **Analytics**
+   - Confirm analytics data loads without errors
 
 ---
 
