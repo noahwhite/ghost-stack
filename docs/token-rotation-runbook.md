@@ -19,8 +19,10 @@ This document provides step-by-step procedures for rotating all tokens and secre
 11. [Grafana Cloud Credentials](#grafana-cloud-credentials)
 12. [TinyBird Credentials](#tinybird-credentials)
 13. [Linear API Token](#linear-api-token)
-14. [Verification Procedures](#verification-procedures)
-15. [Application Secrets (Infisical)](#application-secrets-infisical)
+14. [Health Check Token](#health-check-token)
+15. [Ghost Mail SMTP Password](#ghost-mail-smtp-password)
+16. [MySQL Database Credentials](#mysql-database-credentials)
+17. [Verification Procedures](#verification-procedures)
 
 ---
 
@@ -729,26 +731,35 @@ Ghost generates JWTs signed with the admin token for browser-side TinyBird API c
 
 #### Rotation Steps
 
-1. **Get the Workspace admin token:**
+1. **Get the Workspace admin token from TinyBird:**
    - Log into TinyBird dashboard
    - Go to Tokens
    - Copy the **Workspace admin token** (not your personal admin token)
 
-2. **Update the secrets file on the instance:**
+2. **Update Infisical:**
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+   unset SECRET_VALUE
+   ```
+
+3. **Update `.env.secrets` on the instance and restart Ghost:**
    ```bash
    tailscale ssh core@ghost-dev-01
-   sudo vim /var/mnt/storage/ghost-compose/.env.secrets
-   # Update TINYBIRD_ADMIN_TOKEN with the Workspace admin token
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^TINYBIRD_ADMIN_TOKEN=.*|TINYBIRD_ADMIN_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-ghost-1
    ```
 
-3. **Restart Ghost:**
-   ```bash
-   sudo systemctl restart ghost-compose
-   ```
-
-4. **Verify:**
-   - Go to Ghost Admin → Stats
-   - Confirm analytics data is displayed without 403 errors
+4. **Verify Ghost Stats is functional:**
+   - Go to Ghost Admin → **Analytics**
+   - Confirm analytics data loads without errors
 
 #### Troubleshooting
 
@@ -833,6 +844,225 @@ The tracker token is automatically extracted during provisioning:
 
 ---
 
+## Health Check Token
+
+**Secret name:** `HEALTH_CHECK_TOKEN` (managed in Infisical)
+
+**Purpose:** Caddy uses this token to authenticate health check requests from GitHub Actions and manual `curl` checks.
+
+**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` (in both `dev` and `dev-ci` environments) at the same time.
+
+#### Rotation Steps
+
+1. Generate a new token (random, URL-safe):
+   ```bash
+   openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
+   ```
+
+2. Update Infisical:
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+   unset SECRET_VALUE
+   ```
+
+3. Update GitHub Secrets (both environments):
+   - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
+   - Update `HEALTH_CHECK_TOKEN`
+   - Repeat for Environments → `dev-ci`
+
+4. Update `.env.secrets` on the instance and restart Caddy:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^HEALTH_CHECK_TOKEN=.*|HEALTH_CHECK_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-caddy-1
+   ```
+
+5. Verify health check works with the new token:
+   ```bash
+   read -s NEW_VALUE
+   curl -sI -H "X-Health-Check-Token: ${NEW_VALUE}" https://separationofconcerns.dev
+   unset NEW_VALUE
+   # Should return HTTP 200
+   ```
+
+---
+
+## Ghost Mail SMTP Password
+
+**Secret name:** `mail__options__auth__pass` (managed in Infisical)
+
+**Purpose:** SMTP password for transactional email via Mailgun (password resets, staff invites).
+
+**Impact:** Rotating this breaks outbound email until Ghost is restarted with the new value.
+
+#### Rotation Steps
+
+1. Reset the SMTP password in Mailgun:
+   1. Log into [Mailgun](https://app.mailgun.com)
+   2. Navigate to **Sending → Domain settings** in the left-hand sidebar
+   3. Select your domain: `mg.separationofconcerns.dev`
+   4. Click the **Reset password** button next to `postmaster@mg.separationofconcerns.dev`
+   5. Copy the new password shown — it will not be displayed again
+
+2. Update Infisical:
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+   unset SECRET_VALUE
+   ```
+
+3. Update `.env.secrets` on the instance and restart Ghost:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^mail__options__auth__pass=.*|mail__options__auth__pass=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-ghost-1
+   ```
+
+4. Verify email delivery:
+   1. Log into the Ghost admin dashboard at `https://admin.separationofconcerns.dev/ghost`
+   2. Click **Welcome emails** under **Membership** in the left-hand sidebar
+   3. Click the **Separation of Concerns** field in the **Free Members** section
+   4. Click the **Test** button
+   5. Set the email address to send the test to and click **Send**
+   6. Verify the test email was received
+
+---
+
+## MySQL Database Credentials
+
+Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER` statement — updating Infisical alone does not change the password stored in MySQL's data directory.
+
+### `DATABASE_PASSWORD`
+
+**Purpose:** Password for the `ghost` MySQL user. Used by Ghost to connect to its database.
+
+**Impact:** This rotation requires coordinating a MySQL password change with an Infisical update. If they get out of sync, Ghost will fail to connect to the database.
+
+#### Rotation Steps
+
+1. Generate a new password:
+   ```bash
+   openssl rand -base64 24
+   ```
+
+2. Update MySQL and `.env.secrets` on the instance:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   # Read passwords securely — no echo, no history
+   read -s NEW_PASSWORD    # enter the new ghost user password generated in step 1
+   read -s ROOT_PASSWORD   # enter the current DATABASE_ROOT_PASSWORD
+
+   # Apply ALTER USER — SQL piped via stdin, root auth via env var
+   # Neither value appears in shell history or MySQL history
+   printf "ALTER USER 'ghost'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" "${NEW_PASSWORD}" | \
+     sudo docker exec -i -e MYSQL_PWD="${ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
+   unset ROOT_PASSWORD
+
+   # Update .env.secrets with the new password so containers pick it up on restart
+   sudo sed -i "s|^DATABASE_PASSWORD=.*|DATABASE_PASSWORD=${NEW_PASSWORD}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_PASSWORD
+   ```
+
+3. Update Infisical with the new password:
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+   unset SECRET_VALUE
+   ```
+
+4. Restart Ghost containers:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+   sudo systemctl restart ghost-compose
+   ```
+
+5. Verify Ghost is running and can connect to the database:
+   ```bash
+   docker logs ghost-compose-ghost-1 2>&1 | tail -20
+   # Should show no database connection errors
+   ```
+
+---
+
+### `DATABASE_ROOT_PASSWORD`
+
+**Purpose:** MySQL root password. Used for administrative database operations only — Ghost uses `DATABASE_PASSWORD` (ghost user), not the root password.
+
+**Impact:** This only affects administrative access to MySQL, not Ghost's normal operation.
+
+#### Rotation Steps
+
+1. Generate a new root password:
+   ```bash
+   openssl rand -base64 24
+   ```
+
+2. Update MySQL and `.env.secrets` on the instance:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   # Read passwords securely — no echo, no history
+   read -s NEW_ROOT_PASSWORD      # enter the new root password generated in step 1
+   read -s CURRENT_ROOT_PASSWORD  # enter the current DATABASE_ROOT_PASSWORD
+
+   # Apply ALTER USER — SQL piped via stdin, current root auth via env var
+   # Neither value appears in shell history or MySQL history
+   printf "ALTER USER 'root'@'%%' IDENTIFIED BY '%s'; ALTER USER 'root'@'localhost' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" \
+     "${NEW_ROOT_PASSWORD}" "${NEW_ROOT_PASSWORD}" | \
+     sudo docker exec -i -e MYSQL_PWD="${CURRENT_ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
+   unset CURRENT_ROOT_PASSWORD
+
+   # Update .env.secrets with the new root password so containers pick it up on restart
+   sudo sed -i "s|^DATABASE_ROOT_PASSWORD=.*|DATABASE_ROOT_PASSWORD=${NEW_ROOT_PASSWORD}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_ROOT_PASSWORD
+   ```
+
+3. Update Infisical with the new password:
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+   unset SECRET_VALUE
+   ```
+
+4. Restart MySQL to pick up the new root password:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+   sudo docker restart ghost-compose-db-1
+   # Wait for MySQL to be ready, then restart Ghost
+   sleep 15
+   sudo docker restart ghost-compose-ghost-1
+   ```
+
+5. Verify MySQL is healthy:
+   ```bash
+   docker logs ghost-compose-db-1 2>&1 | tail -10
+   docker logs ghost-compose-ghost-1 2>&1 | tail -10
+   ```
+
+---
+
 ## Verification Procedures
 
 After rotating any token, perform the following verifications:
@@ -906,63 +1136,6 @@ If a token is suspected to be compromised:
 3. **Update all storage locations** (Bitwarden, GitHub Secrets)
 4. **Audit logs** for unauthorized access
 5. **Document the incident** and review access patterns
-
----
-
-## Application Secrets (Infisical)
-
-Ghost application secrets — `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD`, `HEALTH_CHECK_TOKEN`, `mail__options__auth__pass`, `TINYBIRD_ADMIN_TOKEN` — are managed in Infisical rather than Bitwarden.
-
-For initial provisioning, CLI authentication, and an overview of the rotation approach (including how to update the live `.env.secrets` file on the instance), see [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md).
-
----
-
-### `HEALTH_CHECK_TOKEN`
-
-**Purpose:** Caddy uses this token to authenticate health check requests from GitHub Actions and manual `curl` checks.
-
-**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` (in both `dev` and `dev-ci` environments) at the same time.
-
-**Rotation steps:**
-
-1. Generate a new token (random, URL-safe):
-   ```bash
-   openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
-   ```
-
-2. Update Infisical:
-   ```bash
-   read -s SECRET_VALUE; export SECRET_VALUE
-   infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
-     --projectId ghost-stack \
-     --env dev
-   unset SECRET_VALUE
-   ```
-
-3. Update GitHub Secrets (both environments):
-   - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
-   - Update `HEALTH_CHECK_TOKEN`
-   - Repeat for Environments → `dev-ci`
-
-4. Update `.env.secrets` on the instance and restart Caddy:
-   ```bash
-   tailscale ssh core@ghost-dev-01
-
-   read -s NEW_VALUE
-   sudo sed -i "s|^HEALTH_CHECK_TOKEN=.*|HEALTH_CHECK_TOKEN=${NEW_VALUE}|" \
-     /var/mnt/storage/ghost-compose/.env.secrets
-   unset NEW_VALUE
-
-   sudo docker restart ghost-compose-caddy-1
-   ```
-
-5. Verify health check works with the new token:
-   ```bash
-   read -s NEW_VALUE
-   curl -sI -H "X-Health-Check-Token: ${NEW_VALUE}" https://separationofconcerns.dev
-   unset NEW_VALUE
-   # Should return HTTP 200
-   ```
 
 ---
 
