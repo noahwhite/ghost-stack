@@ -65,8 +65,8 @@ Move stories through statuses in this order — **never skip ahead**:
 | **Triage** | Newly created, not yet reviewed |
 | **Todo** | Triaged, estimated, assigned, ready to work |
 | **In Progress** | Branch created, actively being implemented |
-| **In PR Review** | PR merged (Linear GitHub integration sets this automatically) |
-| **In Deployment Review** | CD pipeline completed, verifying AC in deployed environment |
+| **In PR Review** | PR open, awaiting review |
+| **In Deployment Review** | PR merged — Linear GitHub integration sets this automatically |
 | **Done** | All AC verified in deployed environment **AND** all test plan items checked |
 
 **Critical:** Do NOT move to **Done** until:
