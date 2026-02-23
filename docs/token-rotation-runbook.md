@@ -58,37 +58,36 @@ GitHub secrets are scoped at two levels:
 
 ### Quick Reference Table
 
-| Token | Source | Bitwarden ID | GitHub Secret | Env Scope | Expiration |
-|-------|--------|--------------|---------------|-----------|------------|
-| GHCR RW Token | GitHub PAT | N/A | `GHCR_TOKEN` | Repository | Configurable |
-| Ghost Stack PAT | GitHub PAT | N/A | `GHOST_STACK_PAT`* | Repository | 90 days |
+| Token | Source | GitHub Secret | Env Scope | Expiration |
+|-------|--------|---------------|-----------|------------|
+| GHCR RW Token | GitHub PAT | `GHCR_TOKEN` | Repository | Configurable |
+| Ghost Stack PAT¹ | GitHub PAT | `GHOST_STACK_PAT` | Repository | 90 days |
+| BWS Access Token² | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | Never |
+| Claude MCP Token | GitHub PAT | N/A (local) | N/A | Configurable |
+| Cloudflare API Token | Cloudflare | N/A | N/A | Configurable |
+| Cloudflare Token Creator | Cloudflare | N/A | N/A | 30 days recommended |
+| Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
+| R2 Access Key ID | Cloudflare R2 | N/A | N/A | Never |
+| R2 Secret Access Key | Cloudflare R2 | N/A | N/A | Never |
+| R2 Bootstrap Access Key | Cloudflare R2 | N/A | N/A | Never |
+| R2 Bootstrap Secret Key | Cloudflare R2 | N/A | N/A | Never |
+| Vultr API Key | Vultr | N/A | N/A | Never |
+| Tailscale API Key | Tailscale | N/A | N/A | 90 days default |
+| Tailscale Auth Key | Tailscale (OpenTofu) | N/A | N/A | One-time (single use) |
+| PagerDuty Client ID | PagerDuty | N/A | N/A | Never |
+| PagerDuty Client Secret | PagerDuty | N/A | N/A | Never |
+| PagerDuty User Token | PagerDuty | N/A | N/A | Never |
+| Grafana Cloud Token | Grafana | N/A | N/A | 30 days |
+| Grafana Cloud SA Token | Grafana | N/A | N/A | 30 days |
+| Linear API Token | Linear | N/A (local) | N/A | Never |
+| TinyBird Workspace Admin | TinyBird | N/A (instance) | N/A | Never |
+| TinyBird Tracker Token | TinyBird | N/A (instance) | N/A | Never |
+| Admin IP | N/A | `ADMIN_IP` | Environment (dev) | N/A |
+| Cloudflare Zone ID | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
+| Health Check Token | Infisical | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
 
-*Stored in `alloy-sysext-build` repository, not ghost-stack.
-| BWS Access Token | Bitwarden | N/A | `BWS_ACCESS_TOKEN` | Environment (dev) | Never* |
-| Claude MCP Token | GitHub PAT | N/A | N/A (local) | N/A | Configurable |
-| Cloudflare API Token | Cloudflare | `59624245-...` | N/A | N/A | Configurable |
-| Cloudflare Token Creator | Cloudflare | N/A | N/A | N/A | 30 days recommended |
-| Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | N/A | 30 days recommended |
-| R2 Access Key ID | Cloudflare R2 | `9dfdf110-...` | N/A | N/A | Never |
-| R2 Secret Access Key | Cloudflare R2 | `f5d9794d-...` | N/A | N/A | Never |
-| R2 Bootstrap Access Key | Cloudflare R2 | N/A | N/A | N/A | Never |
-| R2 Bootstrap Secret Key | Cloudflare R2 | N/A | N/A | N/A | Never |
-| Vultr API Key | Vultr | `d68b6562-...` | N/A | N/A | Never |
-| Tailscale API Key | Tailscale | `34b620b7-...` | N/A | N/A | 90 days default |
-| Tailscale Auth Key | Tailscale (OpenTofu) | N/A (generated) | N/A | N/A | One-time (single use) |
-| PagerDuty Client ID | PagerDuty | `7d51661b-...` | N/A | N/A | Never |
-| PagerDuty Client Secret | PagerDuty | `b15575c0-...` | N/A | N/A | Never |
-| PagerDuty User Token | PagerDuty | `02805292-...` | N/A | N/A | Never |
-| Grafana Cloud Token | Grafana | `bfc8dd06-...` | N/A | N/A | 30 days |
-| Grafana Cloud SA Token | Grafana | `3ebc4398-...` | N/A | N/A | 30 days |
-| Linear API Token | Linear | N/A | N/A (local) | N/A | Never |
-| TinyBird Workspace Admin | TinyBird | N/A | N/A (instance) | N/A | Never |
-| TinyBird Tracker Token | TinyBird | N/A | N/A (instance) | N/A | Never |
-| Admin IP | N/A | N/A | `ADMIN_IP` | Environment (dev) | N/A |
-| Cloudflare Zone ID | N/A | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
-| Health Check Token | N/A | N/A | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
-
-*Bitwarden machine account tokens do not expire but should be rotated periodically.
+¹ Stored in the `alloy-sysext-build` repository, not ghost-stack.
+² Bitwarden machine account tokens do not expire but should be rotated periodically.
 
 ---
 
