@@ -109,34 +109,40 @@ exit
 
 ### Step 3: Set Secrets in Infisical
 
-Set each secret using the Infisical CLI. Replace `<value>` with the actual secret values retrieved in Step 2:
+Set each secret using the Infisical CLI. Use `read -s` to enter each value interactively — the value is stored in a shell variable and never appears in the command text, so it cannot leak into shell history.
 
 ```bash
-# Set secrets one at a time to avoid shell history issues with sensitive values
-infisical secrets set DATABASE_PASSWORD="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set DATABASE_ROOT_PASSWORD="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set HEALTH_CHECK_TOKEN="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set "mail__options__auth__pass"="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set TINYBIRD_ADMIN_TOKEN="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
+
+unset SECRET_VALUE
 ```
 
-> **Alternative — Infisical UI:** Log into https://app.infisical.com, navigate to the **Ghost Stack** project → **dev** environment → **Secrets**, and add each secret manually. This avoids any risk of secrets appearing in terminal history.
+After the last secret is set, `unset SECRET_VALUE` clears the variable from the shell environment.
 
-> **Shell history note:** The commands above will store secret values in your shell history. After setting secrets, clear history with `history -c` or set `HISTIGNORE="infisical*"` before running these commands.
+> **Alternative — Infisical UI:** Log into https://app.infisical.com, navigate to the **Ghost Stack** project → **dev** environment → **Secrets**, and add each secret manually.
 
 ### Step 4: Verify Secrets Are Stored
 
@@ -212,9 +218,11 @@ sudo systemctl restart ghost-compose
 
 2. Update Infisical:
    ```bash
-   infisical secrets set HEALTH_CHECK_TOKEN="<new-token>" \
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
      --projectId ghost-stack \
      --env dev
+   unset SECRET_VALUE
    ```
 
 3. Update GitHub Secrets (both environments):
@@ -248,9 +256,11 @@ sudo systemctl restart ghost-compose
 
 2. Update Infisical:
    ```bash
-   infisical secrets set "mail__options__auth__pass"="<new-password>" \
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
      --projectId ghost-stack \
      --env dev
+   unset SECRET_VALUE
    ```
 
 3. Restart Ghost:
@@ -281,9 +291,11 @@ sudo systemctl restart ghost-compose
 
 2. Update Infisical:
    ```bash
-   infisical secrets set TINYBIRD_ADMIN_TOKEN="<new-token>" \
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
      --projectId ghost-stack \
      --env dev
+   unset SECRET_VALUE
    ```
 
 3. Restart Ghost:
@@ -327,9 +339,11 @@ sudo systemctl restart ghost-compose
 
 3. Update Infisical with the new password:
    ```bash
-   infisical secrets set DATABASE_PASSWORD="<new-password>" \
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
      --projectId ghost-stack \
      --env dev
+   unset SECRET_VALUE
    ```
 
 4. Restart Ghost containers:
@@ -375,9 +389,11 @@ sudo systemctl restart ghost-compose
 
 3. Update Infisical with the new password:
    ```bash
-   infisical secrets set DATABASE_ROOT_PASSWORD="<new-password>" \
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
      --projectId ghost-stack \
      --env dev
+   unset SECRET_VALUE
    ```
 
 4. Restart MySQL to pick up the new root password:
