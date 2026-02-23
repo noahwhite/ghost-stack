@@ -175,28 +175,49 @@ The full integration test occurs on first boot after [GHO-76](https://linear.app
 
 ## Rotating a Secret
 
-When rotating a secret, update it in Infisical first, then restart affected services. The instance will pick up the new value on the next boot (or after a service restart if [GHO-76](https://linear.app/noahwhite/issue/GHO-76) supports live reload).
+> **Important:** Updating a secret in Infisical does **not** automatically update the running instance. `infisical-secrets-fetch.service` only runs once at first boot — after that, the file at `/var/mnt/storage/ghost-compose/.env.secrets` is the live source of truth for containers. You must update that file on the instance before restarting containers, or the old value will continue to be used.
+
+### Rotation Approaches
+
+**Option A — Manual update (recommended for routine rotation):**
+1. Update the secret in Infisical
+2. Update `/var/mnt/storage/ghost-compose/.env.secrets` on the running instance directly
+3. Restart affected containers
+
+**Option B — Instance recreation (for multiple secrets or a clean slate):**
+1. Update all secrets in Infisical
+2. Trigger instance recreation via `tofu apply` (e.g., bump a config value to change `instance_replacement_hash`)
+3. The new instance runs Ignition on first boot, `infisical-secrets-fetch.service` fetches all current Infisical values, and containers start with fresh secrets
 
 ### Which Restart Is Required?
 
 | Scenario | Action |
 |----------|--------|
 | `HEALTH_CHECK_TOKEN`, `mail__options__auth__pass`, `TINYBIRD_ADMIN_TOKEN` | Container restart only |
-| `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD` | MySQL ALTER USER + container restart |
+| `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD` | MySQL ALTER USER + `.env.secrets` update + container restart |
 
-### Container Restart Procedure
+### Updating `.env.secrets` on the Running Instance
 
-After updating a secret in Infisical:
+Use `read -s` + `sed -i` to replace the value in-place without leaking it into shell history. Replace `KEY_NAME` and the file path as appropriate:
 
 ```bash
 tailscale ssh core@ghost-dev-01
 
-# Restart the entire Ghost Compose stack
-sudo systemctl restart ghost-compose
+read -s NEW_VALUE
+sudo sed -i "s|^KEY_NAME=.*|KEY_NAME=${NEW_VALUE}|" \
+  /var/mnt/storage/ghost-compose/.env.secrets
+unset NEW_VALUE
+```
 
-# Or restart individual containers if only one service is affected
-# sudo docker restart ghost-compose-ghost-1   # Ghost only
-# sudo docker restart ghost-compose-caddy-1   # Caddy only
+Then restart the affected container(s):
+
+```bash
+# Restart individual container
+sudo docker restart ghost-compose-caddy-1   # Caddy
+sudo docker restart ghost-compose-ghost-1   # Ghost
+
+# Or restart the entire stack
+sudo systemctl restart ghost-compose
 ```
 
 ---
@@ -230,15 +251,23 @@ sudo systemctl restart ghost-compose
    - Update `HEALTH_CHECK_TOKEN`
    - Repeat for Environments → `dev-ci`
 
-4. Restart Caddy:
+4. Update `.env.secrets` on the instance and restart Caddy:
    ```bash
    tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^HEALTH_CHECK_TOKEN=.*|HEALTH_CHECK_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
    sudo docker restart ghost-compose-caddy-1
    ```
 
 5. Verify health check works with the new token:
    ```bash
-   curl -sI -H "X-Health-Check-Token: <new-token>" https://separationofconcerns.dev
+   read -s NEW_VALUE
+   curl -sI -H "X-Health-Check-Token: ${NEW_VALUE}" https://separationofconcerns.dev
+   unset NEW_VALUE
    # Should return HTTP 200
    ```
 
@@ -263,9 +292,15 @@ sudo systemctl restart ghost-compose
    unset SECRET_VALUE
    ```
 
-3. Restart Ghost:
+3. Update `.env.secrets` on the instance and restart Ghost:
    ```bash
    tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^mail__options__auth__pass=.*|mail__options__auth__pass=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
    sudo docker restart ghost-compose-ghost-1
    ```
 
@@ -298,9 +333,15 @@ sudo systemctl restart ghost-compose
    unset SECRET_VALUE
    ```
 
-3. Restart Ghost:
+3. Update `.env.secrets` on the instance and restart Ghost:
    ```bash
    tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^TINYBIRD_ADMIN_TOKEN=.*|TINYBIRD_ADMIN_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
    sudo docker restart ghost-compose-ghost-1
    ```
 
@@ -323,7 +364,7 @@ sudo systemctl restart ghost-compose
    openssl rand -base64 24
    ```
 
-2. Update the MySQL user password on the instance:
+2. Update MySQL and `.env.secrets` on the instance:
    ```bash
    tailscale ssh core@ghost-dev-01
 
@@ -335,7 +376,12 @@ sudo systemctl restart ghost-compose
    # Neither value appears in shell history or MySQL history
    printf "ALTER USER 'ghost'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" "${NEW_PASSWORD}" | \
      sudo docker exec -i -e MYSQL_PWD="${ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
-   unset NEW_PASSWORD ROOT_PASSWORD
+   unset ROOT_PASSWORD
+
+   # Update .env.secrets with the new password so containers pick it up on restart
+   sudo sed -i "s|^DATABASE_PASSWORD=.*|DATABASE_PASSWORD=${NEW_PASSWORD}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_PASSWORD
    ```
 
 3. Update Infisical with the new password:
@@ -349,6 +395,7 @@ sudo systemctl restart ghost-compose
 
 4. Restart Ghost containers:
    ```bash
+   tailscale ssh core@ghost-dev-01
    sudo systemctl restart ghost-compose
    ```
 
@@ -373,7 +420,7 @@ sudo systemctl restart ghost-compose
    openssl rand -base64 24
    ```
 
-2. Update the MySQL root password on the instance:
+2. Update MySQL and `.env.secrets` on the instance:
    ```bash
    tailscale ssh core@ghost-dev-01
 
@@ -386,7 +433,12 @@ sudo systemctl restart ghost-compose
    printf "ALTER USER 'root'@'%%' IDENTIFIED BY '%s'; ALTER USER 'root'@'localhost' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" \
      "${NEW_ROOT_PASSWORD}" "${NEW_ROOT_PASSWORD}" | \
      sudo docker exec -i -e MYSQL_PWD="${CURRENT_ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
-   unset NEW_ROOT_PASSWORD CURRENT_ROOT_PASSWORD
+   unset CURRENT_ROOT_PASSWORD
+
+   # Update .env.secrets with the new root password so containers pick it up on restart
+   sudo sed -i "s|^DATABASE_ROOT_PASSWORD=.*|DATABASE_ROOT_PASSWORD=${NEW_ROOT_PASSWORD}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_ROOT_PASSWORD
    ```
 
 3. Update Infisical with the new password:
@@ -400,6 +452,7 @@ sudo systemctl restart ghost-compose
 
 4. Restart MySQL to pick up the new root password:
    ```bash
+   tailscale ssh core@ghost-dev-01
    sudo docker restart ghost-compose-db-1
    # Wait for MySQL to be ready, then restart Ghost
    sleep 15
