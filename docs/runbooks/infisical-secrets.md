@@ -421,7 +421,142 @@ tailscale ssh core@ghost-dev-01 '
 
 ---
 
+## Post-Deploy: Verifying Boot-Time Secret Delivery
+
+After deploying a new instance, run these steps to confirm `infisical-secrets-fetch.service` ran successfully and all secrets are in place.
+
+### Step 1: Check Service Status
+
+```bash
+tailscale ssh core@ghost-dev-01 'systemctl status infisical-secrets-fetch.service'
+```
+
+Expected output: `Active: inactive (dead)` with result `exit-code=0`. The service is a oneshot unit — it runs once at boot and exits.
+
+### Step 2: Check Service Logs
+
+```bash
+tailscale ssh core@ghost-dev-01 'journalctl -u infisical-secrets-fetch.service'
+```
+
+**Success output looks like:**
+
+```
+[infisical-secrets] Fetching secrets from Infisical (project=<id> env=dev)...
+[infisical-secrets] Secrets written to /var/mnt/storage/ghost-compose/.env.secrets
+[infisical-secrets] Tailscale monitor .env written to /var/mnt/storage/sbin/tailscale_monitor/.env
+```
+
+**Token already spent (subsequent reboots — normal):**
+
+```
+[infisical-secrets] ERROR: Boot token missing or empty at /etc/infisical/access-token — skipping fetch
+```
+
+This is expected on all reboots after the first. The service exits 0 and the existing `.env.secrets` on block storage is used.
+
+### Step 3: Verify Ghost Secrets File
+
+```bash
+tailscale ssh core@ghost-dev-01 'ls -la /var/mnt/storage/ghost-compose/.env.secrets'
+```
+
+Expected output:
+```
+-rw------- 1 root root <size> <date> /var/mnt/storage/ghost-compose/.env.secrets
+```
+
+- Permissions must be `0600` (`-rw-------`)
+- File must be non-empty (size > 0)
+
+To verify all five expected keys are present (without revealing values):
+
+```bash
+tailscale ssh core@ghost-dev-01 'sudo grep -o "^[^=]*" /var/mnt/storage/ghost-compose/.env.secrets | sort'
+```
+
+Expected keys:
+
+```
+DATABASE_PASSWORD
+DATABASE_ROOT_PASSWORD
+HEALTH_CHECK_TOKEN
+TINYBIRD_ADMIN_TOKEN
+mail__options__auth__pass
+```
+
+### Step 4: Verify Tailscale Monitor Secrets File
+
+```bash
+tailscale ssh core@ghost-dev-01 'ls -la /var/mnt/storage/sbin/tailscale_monitor/.env'
+```
+
+Expected output:
+```
+-rw------- 1 root root <size> <date> /var/mnt/storage/sbin/tailscale_monitor/.env
+```
+
+- Permissions must be `0600` (`-rw-------`)
+
+To verify all expected keys are present:
+
+```bash
+tailscale ssh core@ghost-dev-01 'sudo grep -o "^[^=]*" /var/mnt/storage/sbin/tailscale_monitor/.env | sort'
+```
+
+Expected keys:
+
+```
+TAILSCALE_CLIENT_ID
+TAILSCALE_CLIENT_SECRET
+TAILSCALE_TAILNET
+```
+
+### Step 5: Verify Boot Token Was Consumed
+
+The boot token at `/etc/infisical/access-token` is shredded by the service on exit (whether successful or not). Confirm it is gone:
+
+```bash
+tailscale ssh core@ghost-dev-01 'ls -la /etc/infisical/access-token 2>&1 || echo "Token absent — consumed as expected"'
+```
+
+Expected: `No such file or directory` or the "Token absent" message.
+
+You can also confirm token consumption in the Infisical UI:
+1. Log into [app.infisical.com](https://app.infisical.com)
+2. Navigate to **Organization Settings → Machine Identities → ghost-dev**
+3. Under **Token Auth**, the issued token should show a `uses` count of `1` (consumed), or it may no longer appear if it was a single-use token that has been spent
+
+---
+
 ## Troubleshooting
+
+### Boot-Time Fetch Failed — Containers Have No Secrets
+
+**Symptom:** `journalctl -u infisical-secrets-fetch.service` shows `ERROR: Infisical API call failed` on first boot. Ghost containers fail to start because `.env.secrets` is missing or empty.
+
+**Cause:** The boot token was expired or already consumed before first boot. This can happen if `tofu apply` ran but instance startup was delayed past the token's TTL, or if the token was consumed by a previous failed boot attempt.
+
+**Fix:** Force instance replacement to regenerate a fresh token:
+```bash
+# Trigger instance replacement by changing a value in instance_replacement_hash,
+# or apply with -replace on the instance resource
+./opentofu/scripts/tofu.sh dev apply
+```
+
+> **Note:** The boot token is a single-use Token Auth token (`number_of_uses_limit = 1`). If the API call failed partway through, the token is spent and cannot be reused.
+
+---
+
+### Boot-Time Fetch Failed — Token File Missing
+
+**Symptom:** `journalctl -u infisical-secrets-fetch.service` shows `ERROR: Boot token missing or empty at /etc/infisical/access-token`.
+
+**On first boot:** This indicates the Ignition config did not deliver the token file. Verify the `terraform_data` snapshot resource (GHO-85) was applied correctly and the token path `/etc/infisical/access-token` is present in the Butane config.
+
+**On subsequent reboots:** This is expected and normal — the token was consumed and shredded on first boot. The existing `.env.secrets` on block storage is used.
+
+---
 
 ### Secret Not Found in Infisical
 
