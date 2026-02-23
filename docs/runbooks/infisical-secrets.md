@@ -310,8 +310,12 @@ sudo systemctl restart ghost-compose
    ```
 
 4. Verify email delivery:
-   - Go to Ghost Admin → Settings → Email → Send test email
-   - Confirm it is delivered
+   1. Log into the Ghost admin dashboard at `https://admin.separationofconcerns.dev/ghost`
+   2. Click **Welcome emails** under **Membership** in the left-hand sidebar
+   3. Click the **Separation of Concerns** field in the **Free Members** section
+   4. Click the **Test** button
+   5. Set the email address to send the test to and click **Send**
+   6. Verify the test email was received
 
 ---
 
