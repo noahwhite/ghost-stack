@@ -7,11 +7,11 @@ This runbook documents how to provision and rotate application secrets stored in
 **Storage location:** Infisical project `Ghost Stack` (slug: `ghost-stack`), environment `dev`.
 
 **Related stories:**
-- GHO-74: Infisical infrastructure provisioned by OpenTofu (prerequisite)
-- GHO-75: Boot-time token generation (required before instance reads from Infisical)
-- GHO-76: RAM-backed secrets delivery at boot (required before instance reads from Infisical)
+- [GHO-74](https://linear.app/noahwhite/issue/GHO-74): Infisical infrastructure provisioned by OpenTofu (prerequisite)
+- [GHO-75](https://linear.app/noahwhite/issue/GHO-75): Boot-time token generation (required before instance reads from Infisical)
+- [GHO-76](https://linear.app/noahwhite/issue/GHO-76): RAM-backed secrets delivery at boot (required before instance reads from Infisical)
 
-> **Note:** Provisioning secrets in Infisical (this runbook) can be done before GHO-75/76 are deployed. The secrets will sit in Infisical ready to be consumed once boot-time delivery is in place.
+> **Note:** Provisioning secrets in Infisical (this runbook) can be done before [GHO-75](https://linear.app/noahwhite/issue/GHO-75)/[GHO-76](https://linear.app/noahwhite/issue/GHO-76) are deployed. The secrets will sit in Infisical ready to be consumed once boot-time delivery is in place.
 
 ---
 
@@ -19,7 +19,7 @@ This runbook documents how to provision and rotate application secrets stored in
 
 | Prerequisite | Why Required |
 |--------------|-------------|
-| GHO-74 deployed (`tofu apply`) | Creates the Infisical project, environment, and machine identity |
+| [GHO-74](https://linear.app/noahwhite/issue/GHO-74) deployed (`tofu apply`) | Creates the Infisical project, environment, and machine identity |
 | Infisical CLI installed | To set secrets from the command line |
 | Infisical management credentials | Client ID and client secret for the management identity |
 | Access to current `.env.secrets` on the instance | Source of truth for current secret values |
@@ -56,7 +56,7 @@ infisical login \
 
 ## Secrets Inventory
 
-These are the application secrets that must exist in Infisical before boot-time delivery (GHO-76) can serve them to the instance:
+These are the application secrets that must exist in Infisical before boot-time delivery ([GHO-76](https://linear.app/noahwhite/issue/GHO-76)) can serve them to the instance:
 
 | Secret Name | Description | Service Impact | Restart Required |
 |-------------|-------------|----------------|-----------------|
@@ -72,7 +72,7 @@ These are the application secrets that must exist in Infisical before boot-time 
 
 ## Initial Provisioning
 
-Run this procedure once after GHO-74 is deployed, to populate the Infisical `dev` environment with secret values from the existing instance.
+Run this procedure once after [GHO-74](https://linear.app/noahwhite/issue/GHO-74) is deployed, to populate the Infisical `dev` environment with secret values from the existing instance.
 
 ### Step 1: Confirm Infisical Infrastructure Is Deployed
 
@@ -152,7 +152,7 @@ Expected output should show all five secret names. Do not verify values here —
 
 This step confirms the `ghost-dev` machine identity's Token Auth method and privilege scoping are configured correctly.
 
-> **Important:** The `ghost-dev` identity uses Token Auth with single-use tokens (`number_of_uses_limit = 1`). Each token is generated per-provisioning-run by OpenTofu (GHO-75) and injected directly into the instance's Ignition config. Unlike Universal Auth, there are no client credentials to authenticate with manually — the token itself is the credential, and consuming it during verification wastes the boot token.
+> **Important:** The `ghost-dev` identity uses Token Auth with single-use tokens (`number_of_uses_limit = 1`). Each token is generated per-provisioning-run by OpenTofu ([GHO-75](https://linear.app/noahwhite/issue/GHO-75)) and injected directly into the instance's Ignition config. Unlike Universal Auth, there are no client credentials to authenticate with manually — the token itself is the credential, and consuming it during verification wastes the boot token.
 
 Verify the configuration in the Infisical UI instead:
 
@@ -163,13 +163,13 @@ Verify the configuration in the Infisical UI instead:
 5. Confirm `ghost-dev` appears with the `no-access` base role
 6. Confirm a **Specific Privilege** exists granting `read` on `secrets` scoped to the `dev` environment only
 
-The full integration test occurs on first boot after GHO-76 is deployed — the instance will use the injected token to fetch secrets and populate `.env.secrets`.
+The full integration test occurs on first boot after [GHO-76](https://linear.app/noahwhite/issue/GHO-76) is deployed — the instance will use the injected token to fetch secrets and populate `.env.secrets`.
 
 ---
 
 ## Rotating a Secret
 
-When rotating a secret, update it in Infisical first, then restart affected services. The instance will pick up the new value on the next boot (or after a service restart if GHO-76 supports live reload).
+When rotating a secret, update it in Infisical first, then restart affected services. The instance will pick up the new value on the next boot (or after a service restart if [GHO-76](https://linear.app/noahwhite/issue/GHO-76) supports live reload).
 
 ### Which Restart Is Required?
 
@@ -552,7 +552,7 @@ You can also confirm token consumption in the Infisical UI:
 
 **Symptom:** `journalctl -u infisical-secrets-fetch.service` shows `ERROR: Boot token missing or empty at /etc/infisical/access-token`.
 
-**On first boot:** This indicates the Ignition config did not deliver the token file. Verify the `terraform_data` snapshot resource (GHO-85) was applied correctly and the token path `/etc/infisical/access-token` is present in the Butane config.
+**On first boot:** This indicates the Ignition config did not deliver the token file. Verify the `terraform_data` snapshot resource ([GHO-85](https://linear.app/noahwhite/issue/GHO-85)) was applied correctly and the token path `/etc/infisical/access-token` is present in the Butane config.
 
 **On subsequent reboots:** This is expected and normal — the token was consumed and shredded on first boot. The existing `.env.secrets` on block storage is used.
 
@@ -567,7 +567,7 @@ You can also confirm token consumption in the Infisical UI:
 infisical secrets list --projectId ghost-stack --env dev
 ```
 
-If the project does not exist, the Infisical infrastructure (GHO-74) has not been deployed. Run:
+If the project does not exist, the Infisical infrastructure ([GHO-74](https://linear.app/noahwhite/issue/GHO-74)) has not been deployed. Run:
 ```bash
 ./opentofu/scripts/tofu.sh dev apply
 ```
