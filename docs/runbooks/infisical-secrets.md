@@ -281,7 +281,12 @@ sudo systemctl restart ghost-compose
 
 **Rotation steps:**
 
-1. Generate or retrieve the new SMTP password from your mail provider (Mailgun or similar).
+1. Reset the SMTP password in Mailgun:
+   1. Log into [Mailgun](https://app.mailgun.com)
+   2. Navigate to **Sending → Domain settings** in the left-hand sidebar
+   3. Select your domain: `mg.separationofconcerns.dev`
+   4. Click the **Reset password** button next to `postmaster@mg.separationofconcerns.dev`
+   5. Copy the new password shown — it will not be displayed again
 
 2. Update Infisical:
    ```bash
