@@ -38,8 +38,8 @@ brew install infisical/get-cli/infisical
 Use the management identity credentials (stored in Bitwarden, retrieved via `infra-shell.sh`):
 
 ```bash
-export INFISICAL_CLIENT_ID="<management identity client ID>"
-export INFISICAL_CLIENT_SECRET="<management identity client secret>"
+read -s INFISICAL_CLIENT_ID; export INFISICAL_CLIENT_ID
+read -s INFISICAL_CLIENT_SECRET; export INFISICAL_CLIENT_SECRET
 
 infisical login \
   --method=universal-auth \
@@ -327,14 +327,15 @@ sudo systemctl restart ghost-compose
    ```bash
    tailscale ssh core@ghost-dev-01
 
-   # Connect to MySQL as root
-   sudo docker exec -it ghost-compose-db-1 mysql -u root -p
-   # Enter DATABASE_ROOT_PASSWORD when prompted
+   # Read passwords securely — no echo, no history
+   read -s NEW_PASSWORD    # enter the new ghost user password generated in step 1
+   read -s ROOT_PASSWORD   # enter the current DATABASE_ROOT_PASSWORD
 
-   # Change the ghost user password
-   ALTER USER 'ghost'@'%' IDENTIFIED BY '<new-password>';
-   FLUSH PRIVILEGES;
-   EXIT;
+   # Apply ALTER USER — SQL piped via stdin, root auth via env var
+   # Neither value appears in shell history or MySQL history
+   printf "ALTER USER 'ghost'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" "${NEW_PASSWORD}" | \
+     sudo docker exec -i -e MYSQL_PWD="${ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
+   unset NEW_PASSWORD ROOT_PASSWORD
    ```
 
 3. Update Infisical with the new password:
@@ -376,15 +377,16 @@ sudo systemctl restart ghost-compose
    ```bash
    tailscale ssh core@ghost-dev-01
 
-   # Connect to MySQL as root (with current password)
-   sudo docker exec -it ghost-compose-db-1 mysql -u root -p
-   # Enter current DATABASE_ROOT_PASSWORD when prompted
+   # Read passwords securely — no echo, no history
+   read -s NEW_ROOT_PASSWORD      # enter the new root password generated in step 1
+   read -s CURRENT_ROOT_PASSWORD  # enter the current DATABASE_ROOT_PASSWORD
 
-   # Change root password
-   ALTER USER 'root'@'%' IDENTIFIED BY '<new-password>';
-   ALTER USER 'root'@'localhost' IDENTIFIED BY '<new-password>';
-   FLUSH PRIVILEGES;
-   EXIT;
+   # Apply ALTER USER — SQL piped via stdin, current root auth via env var
+   # Neither value appears in shell history or MySQL history
+   printf "ALTER USER 'root'@'%%' IDENTIFIED BY '%s'; ALTER USER 'root'@'localhost' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" \
+     "${NEW_ROOT_PASSWORD}" "${NEW_ROOT_PASSWORD}" | \
+     sudo docker exec -i -e MYSQL_PWD="${CURRENT_ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
+   unset NEW_ROOT_PASSWORD CURRENT_ROOT_PASSWORD
    ```
 
 3. Update Infisical with the new password:
