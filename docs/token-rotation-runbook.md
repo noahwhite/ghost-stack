@@ -662,7 +662,7 @@ To verify the key was invalidated:
 1. **Generate new token:**
    - Log into Grafana Cloud
    - Go to Administration → Users and access → Service Accounts
-   - Find the service account named `sa-1-extsvc-grafana-terraform-app`
+   - Click on `sa-1-extsvc-grafana-terraform-app` to open the service account details page
    - Click "Add service account token"
    - Keep the auto-generated name
    - Set expiration to 30 days
