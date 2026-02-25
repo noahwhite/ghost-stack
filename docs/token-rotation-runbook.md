@@ -745,13 +745,17 @@ Ghost generates JWTs signed with the admin token for browser-side TinyBird API c
    - Copy the new token value from the command output
 
 2. **Update Infisical:**
-   ```bash
-   read -s SECRET_VALUE; export SECRET_VALUE
-   infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
-     --projectId ghost-stack \
-     --env dev
-   unset SECRET_VALUE
-   ```
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `TINYBIRD_ADMIN_TOKEN` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
 
 3. **Update `.env.secrets` on the instance and restart Ghost:**
    ```bash
@@ -878,13 +882,17 @@ The tracker token is automatically extracted during provisioning:
    ```
 
 2. Update Infisical:
-   ```bash
-   read -s SECRET_VALUE; export SECRET_VALUE
-   infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
-     --projectId ghost-stack \
-     --env dev
-   unset SECRET_VALUE
-   ```
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `HEALTH_CHECK_TOKEN` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
 
 3. Update GitHub Secrets (both environments):
    - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
@@ -931,13 +939,17 @@ The tracker token is automatically extracted during provisioning:
    5. Copy the new password shown — it will not be displayed again
 
 2. Update Infisical:
-   ```bash
-   read -s SECRET_VALUE; export SECRET_VALUE
-   infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
-     --projectId ghost-stack \
-     --env dev
-   unset SECRET_VALUE
-   ```
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `mail__options__auth__pass` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
 
 3. Update `.env.secrets` on the instance and restart Ghost:
    ```bash
@@ -999,13 +1011,17 @@ Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER
    ```
 
 3. Update Infisical with the new password:
-   ```bash
-   read -s SECRET_VALUE; export SECRET_VALUE
-   infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
-     --projectId ghost-stack \
-     --env dev
-   unset SECRET_VALUE
-   ```
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `DATABASE_PASSWORD` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
 
 4. Restart Ghost containers:
    ```bash
@@ -1056,13 +1072,17 @@ Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER
    ```
 
 3. Update Infisical with the new password:
-   ```bash
-   read -s SECRET_VALUE; export SECRET_VALUE
-   infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
-     --projectId ghost-stack \
-     --env dev
-   unset SECRET_VALUE
-   ```
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `DATABASE_ROOT_PASSWORD` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
 
 4. Restart MySQL to pick up the new root password:
    ```bash
