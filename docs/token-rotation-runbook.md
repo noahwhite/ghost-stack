@@ -734,10 +734,15 @@ Ghost generates JWTs signed with the admin token for browser-side TinyBird API c
 
 #### Rotation Steps
 
-1. **Get the Workspace admin token from TinyBird:**
-   - Log into TinyBird dashboard
-   - Go to Tokens
-   - Copy the **Workspace admin token** (not your personal admin token)
+1. **Refresh the token in TinyBird:**
+   - Log into [TinyBird console](https://ui.tinybird.co) and select the `soc_dev` workspace
+   - Click **Tokens** in the left sidebar
+   - Find **"Workspace admin token"** and click the refresh button — TinyBird will display the CLI command
+   - Run the command locally:
+     ```bash
+     tb --cloud token refresh "workspace admin token"
+     ```
+   - Copy the new token value from the command output
 
 2. **Update Infisical:**
    ```bash
@@ -803,16 +808,26 @@ The tracker token is automatically extracted during provisioning:
 
 #### Manual Rotation (if needed)
 
-1. **Get the tracker token:**
-   - Log into TinyBird dashboard
-   - Go to Tokens
-   - Copy the **tracker** token
+> **Note:** On instance recreation, `tinybird-provision.service` automatically fetches the current tracker token from TinyBird and writes it to `.env.generated`. Manual rotation is only needed if the token is compromised on a running instance.
 
-2. **Update the generated file:**
+1. **Refresh the token in TinyBird:**
+   - Log into [TinyBird console](https://ui.tinybird.co) and select the `soc_dev` workspace
+   - Click **Tokens** in the left sidebar
+   - Find **"tracker"** and click the refresh button — TinyBird will display the CLI command
+   - Run the command locally:
+     ```bash
+     tb --cloud token refresh "tracker"
+     ```
+   - Copy the new token value from the command output
+
+2. **Update `.env.generated` on the instance:**
    ```bash
    tailscale ssh core@ghost-dev-01
-   sudo vim /var/mnt/storage/ghost-compose/.env.generated
-   # Update TINYBIRD_TRACKER_TOKEN
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^TINYBIRD_TRACKER_TOKEN=.*|TINYBIRD_TRACKER_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.generated
+   unset NEW_VALUE
    ```
 
 3. **Restart the stack:**
