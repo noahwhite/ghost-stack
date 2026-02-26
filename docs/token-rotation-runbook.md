@@ -71,7 +71,7 @@ GitHub secrets are scoped at two levels:
 |-------|--------|---------------|-----------|------------|
 | GHCR RW Token | GitHub PAT | `GHCR_TOKEN` | Repository | Configurable |
 
-| BWS Access Token¹ | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | Never |
+| BWS Access Token¹ | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | 30 days |
 | Cloudflare API Token | Cloudflare | N/A | N/A | Configurable |
 | Cloudflare Token Creator | Cloudflare | N/A | N/A | 30 days recommended |
 | Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
@@ -95,7 +95,7 @@ GitHub secrets are scoped at two levels:
 | Claude MCP Token | GitHub PAT | N/A (local) | N/A | Configurable |
 | Linear API Token | Linear | N/A (local) | N/A | Never |
 
-¹ Bitwarden machine account tokens do not expire but should be rotated periodically.
+¹ BWS Access Tokens expire after 30 days; rotate before expiry.
 
 ---
 
@@ -147,17 +147,18 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 - `dev` environment: Used by deploy workflows
 - `dev-ci` environment: Used by PR workflows (shadow environment for validation)
 
-**Expiration:** Machine account tokens do not expire, but rotation is recommended every 6-12 months.
+**Expiration:** 30 days (set at creation time)
 
 #### Rotation Steps
 
 1. **Generate new token:**
    - Log into Bitwarden web vault
    - Go to Organizations → Machine accounts
-   - Select the relevant machine account (e.g., `ghost-stack-dev`)
+   - Select the `github-actions` machine account
    - Go to Access tokens tab
    - Click "Create access token"
-   - Name: Include date (e.g., `ci-2025-01`)
+   - Name: `gha-bw-tok-MMDDYY` (where MMDDYY is the expiration date, e.g., `gha-bw-tok-032626`)
+   - Set expiration to 30 days
    - Copy the token immediately (shown only once)
 
 2. **Update GitHub Secrets (both environments):**
@@ -1137,7 +1138,7 @@ After rotating any token, perform the following verifications:
 | Tailscale API Key | Before 90-day expiry | High |
 | Tailscale Auth Key | Before each instance provisioning | High |
 | Grafana Tokens | Every 30 days (expiry enforced) | High |
-| BWS Access Tokens | Every 6-12 months | Medium |
+| BWS Access Tokens | Every 30 days (before expiry) | High |
 | R2 Credentials | Every 6-12 months | Medium |
 | Vultr API Key | Annually | Medium |
 | PagerDuty Tokens | Annually | Low |
