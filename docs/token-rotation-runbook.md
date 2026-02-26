@@ -75,8 +75,8 @@ GitHub secrets are scoped at two levels:
 | Cloudflare API Token | Cloudflare | N/A | N/A | Configurable |
 | Cloudflare Token Creator | Cloudflare | N/A | N/A | 30 days recommended |
 | Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
-| R2 Access Key ID | Cloudflare R2 | N/A | N/A | Never |
-| R2 Secret Access Key | Cloudflare R2 | N/A | N/A | Never |
+| R2 Access Key ID | Cloudflare R2 | N/A | N/A | 90 days |
+| R2 Secret Access Key | Cloudflare R2 | N/A | N/A | 90 days |
 | R2 Bootstrap Access Key | Cloudflare R2 | N/A | N/A | Never |
 | R2 Bootstrap Secret Key | Cloudflare R2 | N/A | N/A | Never |
 | Vultr API Key | Vultr | N/A | N/A | Never |
@@ -313,7 +313,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Name: `ghost-stack-r2-YYYY-MM`
    - Permissions: Object Read & Write
    - Specify bucket(s): `ghost-stack-dev-state`, `ghost-dev-sysext-images`
-   - TTL: None (or set expiration)
+   - TTL: 90 days
    - Create and copy both Access Key ID and Secret Access Key
 
 2. **Update Bitwarden:**
@@ -1169,7 +1169,7 @@ After rotating any token, perform the following verifications:
 | Tailscale Auth Key | Before each instance provisioning | High |
 | Grafana Tokens | Every 30 days (expiry enforced) | High |
 | BWS Access Tokens | Every 30 days (before expiry) | High |
-| R2 Credentials | Every 6-12 months | Medium |
+| R2 Credentials | Every 90 days | High |
 | Vultr API Key | Annually | Medium |
 | PagerDuty Tokens | Annually | Low |
 | TinyBird Tokens | Annually | Low |
