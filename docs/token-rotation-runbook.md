@@ -253,14 +253,27 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 #### Rotation Steps
 
 1. **Generate new token:**
-   - Use the token creator script:
+   - Use the token creator script (recommended):
      ```bash
      ./opentofu/bootstrap/scripts/generate-bootstrap-token.sh
      ```
-   - Or manually create in Cloudflare with permissions:
-     - Zone: Edit, Read
-     - DNS: Edit
-     - R2 Storage Buckets: Edit
+   - Or manually create in Cloudflare:
+     - Go to My Profile → API Tokens → Create Token → Create Custom Token
+     - Name: `bootstrap-dev-token`
+     - Add the following permission rows:
+
+       | Resource Type | Permission | Access |
+       |---|---|---|
+       | Account | Workers R2 Storage | Edit |
+       | Account | Email Routing Addresses | Edit |
+       | Zone (all zones) | Zone Settings | Edit |
+       | Zone (all zones) | Zone | Edit |
+       | Zone (all zones) | DNS | Edit |
+       | Zone (all zones) | Email Routing Rules | Edit |
+
+     - Set IP restrictions to your admin IP (this token is only used from your workstation)
+     - Set TTL: 30 days
+     - Create and copy token
 
 2. **Update Bitwarden:**
    - Update the `bootstrap-dev-token` secret in Bitwarden
