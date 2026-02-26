@@ -121,7 +121,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Click "Generate new token (classic)"
    - Name: `ghost-stack-ghcr-rw`
    - Expiration: 90 days (or your preferred period)
-   - Scopes: `write:packages`, `read:packages`
+   - Scopes: `repo` (includes `repo:status`, `repo_deployment`, `public_repo`, `repo:invite`, `security_events`), `write:packages`, `read:packages`
    - Click "Generate token"
    - Copy the token immediately
 
