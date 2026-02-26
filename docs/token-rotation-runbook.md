@@ -264,11 +264,17 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 
        | Resource Type | Permission | Access |
        |---|---|---|
+       | Account | Workers R2 Storage | Read |
        | Account | Workers R2 Storage | Edit |
+       | Account | Email Routing Addresses | Read |
        | Account | Email Routing Addresses | Edit |
+       | Zone (all zones) | Zone Settings | Read |
        | Zone (all zones) | Zone Settings | Edit |
+       | Zone (all zones) | Zone | Read |
        | Zone (all zones) | Zone | Edit |
+       | Zone (all zones) | DNS | Read |
        | Zone (all zones) | DNS | Edit |
+       | Zone (all zones) | Email Routing Rules | Read |
        | Zone (all zones) | Email Routing Rules | Edit |
 
      - Set IP restrictions to your admin IP (this token is only used from your workstation)
