@@ -307,8 +307,9 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 
 1. **Generate new credentials:**
    - Log into Cloudflare dashboard
-   - Go to R2 → Overview → Manage R2 API Tokens
-   - Click "Create API token"
+   - Go to Storage & Databases → R2 Object Storage → Overview
+   - Click the **Manage** button next to **API tokens** in the Account Details section
+   - Click **Create Account API token**
    - Name: `ghost-stack-r2-YYYY-MM`
    - Permissions: Object Read & Write
    - Specify bucket(s): `ghost-stack-dev-state`, `ghost-dev-sysext-images`
