@@ -10,7 +10,7 @@ This document provides step-by-step procedures for rotating all tokens and secre
 2. [Token Inventory](#token-inventory)
 3. [CI/CD Tokens](#cicd-tokens)
    - [GHCR Read/Write Token](#ghcr-readwrite-token-ghcr_token)
-   - [Ghost Stack PAT](#ghost-stack-pat-ghost_stack_pat)
+
    - [BWS Access Token](#bws-access-token-bws_access_token)
    - [Cloudflare API Token](#cloudflare-api-token-opentofu)
    - [Cloudflare Token Creator](#cloudflare-token-creator-dev-token-creator)
@@ -70,8 +70,8 @@ GitHub secrets are scoped at two levels:
 | Token | Source | GitHub Secret | Env Scope | Expiration |
 |-------|--------|---------------|-----------|------------|
 | GHCR RW Token | GitHub PAT | `GHCR_TOKEN` | Repository | Configurable |
-| Ghost Stack PAT¹ | GitHub PAT | `GHOST_STACK_PAT` | Repository | 90 days |
-| BWS Access Token² | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | Never |
+
+| BWS Access Token¹ | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | Never |
 | Cloudflare API Token | Cloudflare | N/A | N/A | Configurable |
 | Cloudflare Token Creator | Cloudflare | N/A | N/A | 30 days recommended |
 | Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
@@ -95,8 +95,7 @@ GitHub secrets are scoped at two levels:
 | Claude MCP Token | GitHub PAT | N/A (local) | N/A | Configurable |
 | Linear API Token | Linear | N/A (local) | N/A | Never |
 
-¹ Stored in the `alloy-sysext-build` repository, not ghost-stack.
-² Bitwarden machine account tokens do not expire but should be rotated periodically.
+¹ Bitwarden machine account tokens do not expire but should be rotated periodically.
 
 ---
 
@@ -138,51 +137,6 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 
 ---
 
-### Ghost Stack PAT (`GHOST_STACK_PAT`)
-
-**Purpose:** Allow the `alloy-sysext-build` repository's CI/CD workflow to create PRs in `ghost-stack` after building new Alloy sysext images.
-
-**Repository:** `alloy-sysext-build` (not ghost-stack)
-
-**Scope:** `public_repo` (under `repo` scope - access public repositories only)
-
-**Expiration:** 90 days
-
-#### What This Token Does
-
-When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml` workflow uses this token to:
-1. Clone the ghost-stack repository
-2. Create a feature branch with updated ghost.bu (new version + SHA256 hash)
-3. Push the branch and create a PR
-4. Assign the PR to Noah White
-
-#### Rotation Steps
-
-1. **Generate new token:**
-   - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
-   - Click "Generate new token (classic)"
-   - Name: `alloy-sysext-ghost-stack-pat`
-   - Expiration: 90 days
-   - Under `repo` scope, select only `public_repo`
-   - Click "Generate token"
-   - Copy the token immediately
-
-2. **Update GitHub Secret:**
-   - Go to `github.com/noahwhite/alloy-sysext-build` → Settings → Secrets and variables → Actions
-   - Find `GHOST_STACK_PAT` under Repository secrets (or create if first time)
-   - Click "Update" (or "New repository secret")
-   - Paste the new token
-   - Click "Update secret"
-
-3. **Revoke old token:**
-   - Go to GitHub → Settings → Developer settings → Personal access tokens
-   - Find the old token and click "Delete"
-
-4. **Verify:**
-   - Trigger the `build-and-publish.yml` workflow manually with a test version
-   - Or wait for the next automated build and verify PR creation succeeds
-
----
 
 ### BWS Access Token (`BWS_ACCESS_TOKEN`)
 
@@ -1178,7 +1132,7 @@ After rotating any token, perform the following verifications:
 | Token | Recommended Rotation | Priority |
 |-------|---------------------|----------|
 | GHCR Token | Every 90 days | High |
-| Ghost Stack PAT | Every 90 days | High |
+
 | Cloudflare API Tokens | Every 90 days | High |
 | Tailscale API Key | Before 90-day expiry | High |
 | Tailscale Auth Key | Before each instance provisioning | High |
