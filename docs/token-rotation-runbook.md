@@ -192,7 +192,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
      - Zone: DNS: Edit
      - Zone: Zone: Read
      - Zone Resources: Include specific zone or all zones
-   - Set IP restrictions if desired
+   - Do not set IP restrictions — GitHub runner IPs are too numerous and dynamic to whitelist
    - Set TTL (recommend 90 days)
    - Create token and copy immediately
 
