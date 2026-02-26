@@ -227,12 +227,15 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Go to My Profile → API Tokens → Create Token
    - Select template: "Create Additional Tokens"
    - Permissions: User, API Tokens, Edit
-   - Set IP restrictions to your admin IP
+   - Do not set IP restrictions
    - Set TTL: 30 days
    - Create and copy token
 
 2. **Update Bitwarden:**
-   - Update the `dev-token-creator` secret in Bitwarden
+   - Log into Bitwarden web vault
+   - Find secret with ID `6bc45446-1aa1-4e2c-804e-b39b002c32ea`
+   - Update the value with the new token
+   - Save
 
 3. **Revoke old token:**
    - In Cloudflare, revoke the previous token creator
