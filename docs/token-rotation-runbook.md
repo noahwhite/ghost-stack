@@ -260,22 +260,25 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Or manually create in Cloudflare:
      - Go to My Profile → API Tokens → Create Token → Create Custom Token
      - Name: `bootstrap-dev-token`
-     - Add the following permission rows, selecting **Include `Noah@separationofconcerns.dev` Account** for Account resources and **Include Specific Zone `separationofconcerns.dev`** for Zone resources:
+     - Add the following permission rows:
 
-       | Resource Type | Resource | Permission | Access |
-       |---|---|---|---|
-       | Account | Noah@separationofconcerns.dev Account | Workers R2 Storage | Read |
-       | Account | Noah@separationofconcerns.dev Account | Workers R2 Storage | Edit |
-       | Account | Noah@separationofconcerns.dev Account | Email Routing Addresses | Read |
-       | Account | Noah@separationofconcerns.dev Account | Email Routing Addresses | Edit |
-       | Zone | separationofconcerns.dev | Zone Settings | Read |
-       | Zone | separationofconcerns.dev | Zone Settings | Edit |
-       | Zone | separationofconcerns.dev | Zone | Read |
-       | Zone | separationofconcerns.dev | Zone | Edit |
-       | Zone | separationofconcerns.dev | DNS | Read |
-       | Zone | separationofconcerns.dev | DNS | Edit |
-       | Zone | separationofconcerns.dev | Email Routing Rules | Read |
-       | Zone | separationofconcerns.dev | Email Routing Rules | Edit |
+       | Resource Type | Permission | Access |
+       |---|---|---|
+       | Account | Workers R2 Storage | Read |
+       | Account | Workers R2 Storage | Edit |
+       | Account | Email Routing Addresses | Read |
+       | Account | Email Routing Addresses | Edit |
+       | Zone | Zone Settings | Read |
+       | Zone | Zone Settings | Edit |
+       | Zone | Zone | Read |
+       | Zone | Zone | Edit |
+       | Zone | DNS | Read |
+       | Zone | DNS | Edit |
+       | Zone | Email Routing Rules | Read |
+       | Zone | Email Routing Rules | Edit |
+
+     - **Account Resources:** Set to Include → **Noah@separationofconcerns.dev's Account**
+     - **Zone Resources:** Set to Include → **Specific zone** → **separationofconcerns.dev**
 
      - **IP Address Filtering:** Set Operator to **is in**, then click **Use my IP** (assuming you are on the dev workstation — otherwise enter the dev workstation's public IP)
      - **TTL:** Set start date to today and end date to 30 days in the future
