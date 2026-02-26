@@ -314,6 +314,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Permissions: Object Read & Write
    - Specify bucket(s): `ghost-stack-dev-state`, `ghost-dev-sysext-images`
    - TTL: 90 days
+   - Client IP Address Filtering: leave blank — GitHub runner IPs are too numerous and dynamic to whitelist
    - Create and copy both Access Key ID and Secret Access Key
 
 2. **Update Bitwarden:**
