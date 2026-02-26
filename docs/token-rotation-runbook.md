@@ -260,29 +260,33 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Or manually create in Cloudflare:
      - Go to My Profile → API Tokens → Create Token → Create Custom Token
      - Name: `bootstrap-dev-token`
-     - Add the following permission rows:
+     - Add the following permission rows, selecting **Include `Noah@separationofconcerns.dev` Account** for Account resources and **Include Specific Zone `separationofconcerns.dev`** for Zone resources:
 
-       | Resource Type | Permission | Access |
-       |---|---|---|
-       | Account | Workers R2 Storage | Read |
-       | Account | Workers R2 Storage | Edit |
-       | Account | Email Routing Addresses | Read |
-       | Account | Email Routing Addresses | Edit |
-       | Zone (all zones) | Zone Settings | Read |
-       | Zone (all zones) | Zone Settings | Edit |
-       | Zone (all zones) | Zone | Read |
-       | Zone (all zones) | Zone | Edit |
-       | Zone (all zones) | DNS | Read |
-       | Zone (all zones) | DNS | Edit |
-       | Zone (all zones) | Email Routing Rules | Read |
-       | Zone (all zones) | Email Routing Rules | Edit |
+       | Resource Type | Resource | Permission | Access |
+       |---|---|---|---|
+       | Account | Noah@separationofconcerns.dev Account | Workers R2 Storage | Read |
+       | Account | Noah@separationofconcerns.dev Account | Workers R2 Storage | Edit |
+       | Account | Noah@separationofconcerns.dev Account | Email Routing Addresses | Read |
+       | Account | Noah@separationofconcerns.dev Account | Email Routing Addresses | Edit |
+       | Zone | separationofconcerns.dev | Zone Settings | Read |
+       | Zone | separationofconcerns.dev | Zone Settings | Edit |
+       | Zone | separationofconcerns.dev | Zone | Read |
+       | Zone | separationofconcerns.dev | Zone | Edit |
+       | Zone | separationofconcerns.dev | DNS | Read |
+       | Zone | separationofconcerns.dev | DNS | Edit |
+       | Zone | separationofconcerns.dev | Email Routing Rules | Read |
+       | Zone | separationofconcerns.dev | Email Routing Rules | Edit |
 
-     - Set IP restrictions to your admin IP (this token is only used from your workstation)
-     - Set TTL: 30 days
-     - Create and copy token
+     - **IP Address Filtering:** Set Operator to **is in**, then click **Use my IP** (assuming you are on the dev workstation — otherwise enter the dev workstation's public IP)
+     - **TTL:** Set start date to today and end date to 30 days in the future
+     - Click **Continue to Summary**, review all details, and if correct click **Create Token**
+     - Copy the token immediately (shown only once)
 
 2. **Update Bitwarden:**
-   - Update the `bootstrap-dev-token` secret in Bitwarden
+   - Log into Bitwarden web vault
+   - Find secret with ID `bde8e810-8be6-4090-aa1d-b39b002c9eb8`
+   - Update the value with the new token
+   - Save
 
 ---
 
