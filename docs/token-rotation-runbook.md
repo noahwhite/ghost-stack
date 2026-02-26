@@ -16,7 +16,7 @@ This document provides step-by-step procedures for rotating all tokens and secre
    - [Cloudflare Token Creator](#cloudflare-token-creator-dev-token-creator)
    - [Cloudflare Bootstrap Token](#cloudflare-bootstrap-token)
    - [R2 Access Key ID & Secret Access Key](#r2-access-key-id--secret-access-key)
-   - [R2 Bootstrap Credentials](#r2-bootstrap-credentials)
+
    - [Vultr API Key](#vultr-api-key)
    - [Tailscale API Key](#tailscale-api-key)
    - [Tailscale Auth Key](#tailscale-auth-key-device-registration)
@@ -77,8 +77,7 @@ GitHub secrets are scoped at two levels:
 | Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
 | R2 Access Key ID | Cloudflare R2 | N/A | N/A | 90 days |
 | R2 Secret Access Key | Cloudflare R2 | N/A | N/A | 90 days |
-| R2 Bootstrap Access Key | Cloudflare R2 | N/A | N/A | Never |
-| R2 Bootstrap Secret Key | Cloudflare R2 | N/A | N/A | Never |
+
 | Vultr API Key | Vultr | N/A | N/A | Never |
 | Tailscale API Key | Tailscale | N/A | N/A | 90 days default |
 | Tailscale Auth Key | Tailscale (OpenTofu) | N/A | N/A | One-time (single use) |
@@ -330,26 +329,6 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 
 ---
 
-### R2 Bootstrap Credentials
-
-**Purpose:** Bootstrap R2 bucket creation (used only during initial setup).
-
-**Storage:** Bitwarden Secrets Manager
-
-**Rotation:** Only needed if re-bootstrapping infrastructure
-
-#### Rotation Steps
-
-1. **Generate new credentials:**
-   - Log into Cloudflare dashboard
-   - Go to R2 → Overview → Manage R2 API Tokens
-   - Create new token with R2 bucket creation permissions
-   - Copy Access Key ID and Secret Access Key
-
-2. **Update Bitwarden:**
-   - Update the bootstrap R2 access key and secret key secrets in Bitwarden
-
----
 
 ### Vultr API Key
 
