@@ -8,27 +8,36 @@ This document provides step-by-step procedures for rotating all tokens and secre
 
 1. [Overview](#overview)
 2. [Token Inventory](#token-inventory)
-3. [GitHub Tokens](#github-tokens)
-4. [Bitwarden Secrets Manager](#bitwarden-secrets-manager)
-5. [Cloudflare Tokens](#cloudflare-tokens)
-6. [R2 Storage Credentials](#r2-storage-credentials)
-7. [Vultr API Key](#vultr-api-key)
-8. [Tailscale API Key](#tailscale-api-key)
-9. [Tailscale Auth Key](#tailscale-auth-key-device-registration)
-10. [PagerDuty Credentials](#pagerduty-credentials)
-11. [Grafana Cloud Credentials](#grafana-cloud-credentials)
-12. [TinyBird Credentials](#tinybird-credentials)
-13. [Linear API Token](#linear-api-token)
-14. [Health Check Token](#health-check-token)
-15. [Ghost Mail SMTP Password](#ghost-mail-smtp-password)
-16. [MySQL Database Credentials](#mysql-database-credentials)
-17. [Verification Procedures](#verification-procedures)
+3. [CI/CD Tokens](#cicd-tokens)
+   - [GHCR Read/Write Token](#ghcr-readwrite-token-ghcr_token)
+   - [Ghost Stack PAT](#ghost-stack-pat-ghost_stack_pat)
+   - [BWS Access Token](#bws-access-token-bws_access_token)
+   - [Cloudflare API Token](#cloudflare-api-token-opentofu)
+   - [Cloudflare Token Creator](#cloudflare-token-creator-dev-token-creator)
+   - [Cloudflare Bootstrap Token](#cloudflare-bootstrap-token)
+   - [R2 Access Key ID & Secret Access Key](#r2-access-key-id--secret-access-key)
+   - [R2 Bootstrap Credentials](#r2-bootstrap-credentials)
+   - [Vultr API Key](#vultr-api-key)
+   - [Tailscale API Key](#tailscale-api-key)
+   - [Tailscale Auth Key](#tailscale-auth-key-device-registration)
+   - [PagerDuty OAuth Credentials](#pagerduty-oauth-credentials)
+   - [PagerDuty User API Token](#pagerduty-user-api-token)
+   - [Grafana Cloud Access Token](#grafana-cloud-access-token)
+   - [Grafana Cloud Terraform Service Account Token](#grafana-cloud-terraform-service-account-token)
+4. [Ghost Application Secrets (Infisical)](#ghost-application-secrets-infisical)
+   - [TinyBird Workspace Admin Token](#tinybird-workspace-admin-token-tinybird_admin_token)
+   - [TinyBird Tracker Token](#tinybird-tracker-token-tinybird_tracker_token)
+   - [Health Check Token](#health-check-token)
+   - [Ghost Mail SMTP Password](#ghost-mail-smtp-password)
+   - [MySQL Database Credentials](#mysql-database-credentials)
+5. [Claude Code Integration](#claude-code-integration)
+   - [Claude GitHub MCP Access Token](#claude-github-mcp-access-token)
+   - [Linear API Token](#linear-api-token)
+6. [Verification Procedures](#verification-procedures)
 
 ---
 
 ## Overview
-
-> **Application secrets (Ghost, MySQL, TinyBird)** are managed in Infisical, not Bitwarden. See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for those procedures.
 
 ### Storage Locations
 
@@ -63,7 +72,6 @@ GitHub secrets are scoped at two levels:
 | GHCR RW Token | GitHub PAT | `GHCR_TOKEN` | Repository | Configurable |
 | Ghost Stack PAT¹ | GitHub PAT | `GHOST_STACK_PAT` | Repository | 90 days |
 | BWS Access Token² | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | Never |
-| Claude MCP Token | GitHub PAT | N/A (local) | N/A | Configurable |
 | Cloudflare API Token | Cloudflare | N/A | N/A | Configurable |
 | Cloudflare Token Creator | Cloudflare | N/A | N/A | 30 days recommended |
 | Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
@@ -79,19 +87,24 @@ GitHub secrets are scoped at two levels:
 | PagerDuty User Token | PagerDuty | N/A | N/A | Never |
 | Grafana Cloud Token | Grafana | N/A | N/A | 30 days |
 | Grafana Cloud SA Token | Grafana | N/A | N/A | 30 days |
-| Linear API Token | Linear | N/A (local) | N/A | Never |
 | TinyBird Workspace Admin | TinyBird | N/A (instance) | N/A | Never |
 | TinyBird Tracker Token | TinyBird | N/A (instance) | N/A | Never |
+| Health Check Token | Infisical | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
 | Admin IP | N/A | `ADMIN_IP` | Environment (dev) | N/A |
 | Cloudflare Zone ID | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
-| Health Check Token | Infisical | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
+| Claude MCP Token | GitHub PAT | N/A (local) | N/A | Configurable |
+| Linear API Token | Linear | N/A (local) | N/A | Never |
 
 ¹ Stored in the `alloy-sysext-build` repository, not ghost-stack.
 ² Bitwarden machine account tokens do not expire but should be rotated periodically.
 
 ---
 
-## GitHub Tokens
+## CI/CD Tokens
+
+These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provisioning, and supporting infrastructure services. Most are stored in Bitwarden Secrets Manager and retrieved at runtime by `infra-shell.sh`.
+
+---
 
 ### GHCR Read/Write Token (`GHCR_TOKEN`)
 
@@ -122,38 +135,6 @@ GitHub secrets are scoped at two levels:
 3. **Verify:**
    - Trigger a workflow that uses GHCR (e.g., create a draft PR)
    - Confirm the "Log in to GHCR" step succeeds
-
----
-
-### Claude GitHub MCP Access Token
-
-**Purpose:** Allows Claude Code to interact with GitHub via MCP (Model Context Protocol) for issue management, PR creation, etc.
-
-**Scope:** Local development only (not stored in GitHub)
-
-**Expiration:** Configurable (recommend 90 days)
-
-#### Rotation Steps
-
-1. **Generate new token:**
-   - Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
-   - Click "Generate new token"
-   - Name: `claude-mcp-access`
-   - Expiration: 90 days
-   - Repository access: Select repositories → choose `ghost-stack`, `alloy-sysext-build`
-   - Permissions:
-     - Contents: Read and write
-     - Issues: Read and write
-     - Pull requests: Read and write
-     - Metadata: Read-only
-   - Click "Generate token"
-
-2. **Update local configuration:**
-   - Update your Claude Code MCP configuration with the new token
-   - Location varies by setup (typically `~/.config/claude/mcp.json` or similar)
-
-3. **Verify:**
-   - Use Claude Code to list issues or create a test comment
 
 ---
 
@@ -203,8 +184,6 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-## Bitwarden Secrets Manager
-
 ### BWS Access Token (`BWS_ACCESS_TOKEN`)
 
 **Purpose:** Authenticate to Bitwarden Secrets Manager to retrieve runtime secrets in CI/CD.
@@ -240,8 +219,6 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
    - Confirm secrets retrieval succeeds in the logs
 
 ---
-
-## Cloudflare Tokens
 
 ### Cloudflare API Token (OpenTofu)
 
@@ -332,8 +309,6 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-## R2 Storage Credentials
-
 ### R2 Access Key ID & Secret Access Key
 
 **Purpose:** Access R2 buckets for OpenTofu state storage and sysext image storage.
@@ -390,7 +365,7 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-## Vultr API Key
+### Vultr API Key
 
 **Purpose:** Manage Vultr compute instances, firewalls, and block storage.
 
@@ -417,7 +392,7 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-## Tailscale API Key
+### Tailscale API Key
 
 **Purpose:** Register/deregister Tailscale devices via OpenTofu.
 
@@ -544,8 +519,6 @@ To verify the key was invalidated:
 
 ---
 
-## PagerDuty Credentials
-
 ### PagerDuty OAuth Credentials
 
 **Purpose:** Configure PagerDuty integrations via OpenTofu.
@@ -593,8 +566,6 @@ To verify the key was invalidated:
    - Delete the old API user token in PagerDuty
 
 ---
-
-## Grafana Cloud Credentials
 
 ### Grafana Cloud Access Token
 
@@ -701,7 +672,11 @@ To verify the key was invalidated:
 
 ---
 
-## TinyBird Credentials
+## Ghost Application Secrets (Infisical)
+
+These secrets are stored in Infisical and fetched by the Ghost instance at boot time via `infisical-secrets-fetch.service`. For initial provisioning and an overview of the rotation approach, see [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md).
+
+---
 
 ### TinyBird Workspace Admin Token (`TINYBIRD_ADMIN_TOKEN`)
 
@@ -841,32 +816,7 @@ The tracker token is automatically extracted during provisioning:
 
 ---
 
-## Linear API Token
-
-**Purpose:** Claude Code integration with Linear for issue tracking.
-
-**Storage:** Local Claude Code MCP configuration
-
-**Expiration:** Never
-
-#### Rotation Steps
-
-1. **Generate new token:**
-   - Log into Linear
-   - Go to Settings → API → Personal API keys
-   - Click "Create key"
-   - Label: `claude-code-YYYY-MM`
-   - Copy the token
-
-2. **Update local configuration:**
-   - Update your Claude Code MCP configuration with the new token
-
-3. **Revoke old token:**
-   - Delete the old API key in Linear
-
----
-
-## Health Check Token
+### Health Check Token
 
 **Secret name:** `HEALTH_CHECK_TOKEN` (managed in Infisical)
 
@@ -921,7 +871,7 @@ The tracker token is automatically extracted during provisioning:
 
 ---
 
-## Ghost Mail SMTP Password
+### Ghost Mail SMTP Password
 
 **Secret name:** `mail__options__auth__pass` (managed in Infisical)
 
@@ -973,17 +923,17 @@ The tracker token is automatically extracted during provisioning:
 
 ---
 
-## MySQL Database Credentials
+### MySQL Database Credentials
 
 Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER` statement — updating Infisical alone does not change the password stored in MySQL's data directory.
 
-### `DATABASE_PASSWORD`
+#### `DATABASE_PASSWORD`
 
 **Purpose:** Password for the `ghost` MySQL user. Used by Ghost to connect to its database.
 
 **Impact:** This rotation requires coordinating a MySQL password change with an Infisical update. If they get out of sync, Ghost will fail to connect to the database.
 
-#### Rotation Steps
+##### Rotation Steps
 
 1. Generate a new password:
    ```bash
@@ -1037,13 +987,13 @@ Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER
 
 ---
 
-### `DATABASE_ROOT_PASSWORD`
+#### `DATABASE_ROOT_PASSWORD`
 
 **Purpose:** MySQL root password. Used for administrative database operations only — Ghost uses `DATABASE_PASSWORD` (ghost user), not the root password.
 
 **Impact:** This only affects administrative access to MySQL, not Ghost's normal operation.
 
-#### Rotation Steps
+##### Rotation Steps
 
 1. Generate a new root password:
    ```bash
@@ -1101,6 +1051,83 @@ Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER
 
 ---
 
+## Claude Code Integration
+
+These tokens are used locally by Claude Code for GitHub and Linear integration. They are not stored in Bitwarden or GitHub Secrets.
+
+---
+
+### Claude GitHub MCP Access Token
+
+**Purpose:** Allows Claude Code to interact with GitHub via MCP (Model Context Protocol) for issue management, PR creation, etc.
+
+**Scope:** Local development only (not stored in GitHub)
+
+**Expiration:** Configurable (recommend 90 days)
+
+#### Rotation Steps
+
+1. **Generate new token:**
+   - Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+   - Click "Generate new token"
+   - Name: `claude-mcp-access`
+   - Expiration: 90 days
+   - Repository access: Select repositories → choose `ghost-stack`, `alloy-sysext-build`
+   - Permissions:
+     - Contents: Read and write
+     - Issues: Read and write
+     - Pull requests: Read and write
+     - Metadata: Read-only
+   - Click "Generate token"
+
+2. **Update local configuration:**
+   - Update your Claude Code MCP configuration with the new token
+   - Location varies by setup (typically `~/.config/claude/mcp.json` or similar)
+
+3. **Verify:**
+   - Use Claude Code to list issues or create a test comment
+
+---
+
+### Linear API Token
+
+**Purpose:** Claude Code integration with Linear for issue tracking.
+
+**Storage:** Local Claude Code MCP configuration
+
+**Expiration:** Never
+
+#### Rotation Steps
+
+1. **Log into Linear.**
+
+2. **Open your account settings:**
+   - Click **NO noahwhite** (avatar/initials) in the bottom-left corner
+   - Select **Settings** from the dropdown menu
+
+3. **Navigate to Security & access.**
+
+4. **Generate a new key:**
+   - Under **Personal API keys**, click **New API Key**
+   - Name it something like `claude-mcp-linear-key-2` (increment the suffix each rotation)
+   - Click **Only select permissions...** and select **Read and Write**
+   - Under **Team access**, select **All teams you have access to**
+   - Click **Create**
+   - Copy the token immediately — it is only shown once
+
+5. **Update local configuration:**
+   - Update your Claude Code MCP configuration with the new token
+
+6. **Test the new key:**
+   - Open a Claude dev container session and verify the Linear MCP integration responds correctly
+
+7. **Revoke the old key:**
+   - Back on the **Security & access** screen, find the old key in the list
+   - Click the **...** button next to it
+   - Select **Revoke API key**
+
+---
+
 ## Verification Procedures
 
 After rotating any token, perform the following verifications:
@@ -1142,7 +1169,7 @@ After rotating any token, perform the following verifications:
 | Tailscale | Check admin console for API key status |
 | PagerDuty | OpenTofu plan with PagerDuty resources |
 | Grafana | OpenTofu plan with Grafana resources |
-| TinyBird | Ghost Admin → Stats shows analytics data without 403 errors |
+| TinyBird | Ghost Admin → Analytics shows data without 403 errors |
 
 ---
 
@@ -1155,11 +1182,11 @@ After rotating any token, perform the following verifications:
 | Cloudflare API Tokens | Every 90 days | High |
 | Tailscale API Key | Before 90-day expiry | High |
 | Tailscale Auth Key | Before each instance provisioning | High |
+| Grafana Tokens | Every 30 days (expiry enforced) | High |
 | BWS Access Tokens | Every 6-12 months | Medium |
 | R2 Credentials | Every 6-12 months | Medium |
 | Vultr API Key | Annually | Medium |
 | PagerDuty Tokens | Annually | Low |
-| Grafana Tokens | Annually | Low |
 | TinyBird Tokens | Annually | Low |
 | Linear API Token | Annually | Low |
 
