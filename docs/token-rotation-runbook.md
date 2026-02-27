@@ -383,12 +383,12 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 2. **Update Bitwarden:**
    - Update secret `34b620b7-edf6-4d06-9792-b39b00317467` with new key
 
-3. **Revoke old key:**
-   - In Tailscale, delete the old API key
-
-4. **Verify:**
+3. **Verify:**
    - Run `./opentofu/scripts/tofu.sh dev plan`
    - Confirm Tailscale provider initializes
+
+4. **Revoke old key:**
+   - In Tailscale, delete the old API key
 
 ---
 
