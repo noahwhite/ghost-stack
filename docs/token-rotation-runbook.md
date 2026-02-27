@@ -492,22 +492,39 @@ To verify the key was invalidated:
 **Purpose:** Configure PagerDuty integrations via OpenTofu.
 
 **Bitwarden Secret IDs:**
-- Subdomain: `8ee84397-e563-4278-9a3f-b39c013f7575`
 - Client ID: `7d51661b-736a-43ff-b01f-b39c013fe49b`
 - Client Secret: `b15575c0-0d28-459d-b92d-b39c01403a38`
 
-**Expiration:** Never
+**Expiration:** Never (no expiration can be set on PagerDuty App registrations)
 
 #### Rotation Steps
 
-1. **Regenerate OAuth credentials:**
+1. **Create a new App:**
    - Log into PagerDuty
-   - Go to Integrations → Developer Mode → My Apps
-   - Find your OAuth app
-   - Regenerate client secret (this invalidates the old one)
+   - Go to Integrations → App Registrations
+   - Click **New App**
+   - Name: `ghost-stack-terraform-#` (increment # from the current app's name)
+   - Description: `Opentofu integration`
+   - Under Functionality, check **OAuth 2.0**
+   - Click **Next**
 
-2. **Update Bitwarden:**
-   - Update secret `b15575c0-0d28-459d-b92d-b39c01403a38` with new Client Secret
+2. **Configure OAuth permissions:**
+   - In the Authorization section, leave **Scoped OAuth** selected
+   - In the Permission Scope table, check **Read Access** and **Write Access** in the **Resource** row — this selects all Read and Write checkboxes
+   - Click **Register App**
+   - Copy the generated Client ID and Client Secret immediately
+
+3. **Update Bitwarden:**
+   - Update secret `7d51661b-736a-43ff-b01f-b39c013fe49b` with the new Client ID
+   - Update secret `b15575c0-0d28-459d-b92d-b39c01403a38` with the new Client Secret
+
+4. **Verify:**
+   - Run `./opentofu/scripts/tofu.sh dev plan`
+   - Confirm PagerDuty provider initializes
+
+5. **Delete old App:**
+   - Go to Integrations → App Registrations
+   - Find the old `ghost-stack-terraform-#` app and delete it
 
 ---
 
