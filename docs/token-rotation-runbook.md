@@ -811,7 +811,7 @@ The tracker token is automatically extracted during provisioning:
 
 **Purpose:** Caddy uses this token to authenticate health check requests from GitHub Actions and manual `curl` checks.
 
-**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` (in both `dev` and `dev-ci` environments) at the same time.
+**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` in the `dev` environment and on the instance at the same time.
 
 #### Rotation Steps
 
@@ -833,10 +833,9 @@ The tracker token is automatically extracted during provisioning:
    > unset SECRET_VALUE
    > ```
 
-3. Update GitHub Secrets (both environments):
+3. Update GitHub Secret:
    - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
    - Update `HEALTH_CHECK_TOKEN`
-   - Repeat for Environments → `dev-ci`
 
 4. Update `.env.secrets` on the instance and restart Caddy:
    ```bash
@@ -850,7 +849,7 @@ The tracker token is automatically extracted during provisioning:
    sudo docker restart ghost-compose-caddy-1
    ```
 
-5. Verify health check works with the new token:
+5. Verify health check works with the new token (run from the dev workstation or another whitelisted IP):
    ```bash
    read -s NEW_VALUE
    curl -sI -H "X-Health-Check-Token: ${NEW_VALUE}" https://separationofconcerns.dev
