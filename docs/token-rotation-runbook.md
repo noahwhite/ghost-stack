@@ -78,7 +78,7 @@ GitHub secrets are scoped at two levels:
 | R2 Access Key ID | Cloudflare R2 | N/A | N/A | 90 days |
 | R2 Secret Access Key | Cloudflare R2 | N/A | N/A | 90 days |
 
-| Vultr API Key | Vultr | N/A | N/A | Never |
+| Vultr API Key | Vultr | N/A | N/A | 30 days |
 | Tailscale API Key | Tailscale | N/A | N/A | 90 days default |
 | Tailscale Auth Key | Tailscale (OpenTofu) | N/A | N/A | One-time (single use) |
 | PagerDuty Client ID | PagerDuty | N/A | N/A | Never |
@@ -336,7 +336,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 
 **Bitwarden Secret ID:** `d68b6562-0d9e-424c-b2c5-b39c013ae34d`
 
-**Expiration:** Never
+**Expiration:** 30 days
 
 #### Rotation Steps
 
@@ -344,6 +344,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
    - Log into Vultr (dev account)
    - Go to Account → API
    - Click "Enable API" if not already enabled
+   - Set expiration to 30 days
    - Copy the API key (or regenerate if rotating)
 
    **Note:** Vultr only supports one API key per account. Regenerating creates a new key and invalidates the old one immediately.
@@ -1150,7 +1151,7 @@ After rotating any token, perform the following verifications:
 | Grafana Tokens | Every 30 days (expiry enforced) | High |
 | BWS Access Tokens | Every 30 days (before expiry) | High |
 | R2 Credentials | Every 90 days | High |
-| Vultr API Key | Annually | Medium |
+| Vultr API Key | Every 30 days (before expiry) | High |
 | PagerDuty Tokens | Annually | Low |
 | TinyBird Tokens | Annually | Low |
 | Linear API Token | Annually | Low |
