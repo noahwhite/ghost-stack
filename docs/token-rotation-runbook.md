@@ -349,6 +349,8 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 
    **Note:** Vultr only supports one API key per account. Regenerating creates a new key and invalidates the old one immediately.
 
+   **IP Access Control:** The API page has a separate IP access control section that applies to all API keys account-wide. It is currently configured with the management workstation IP and a catch-all **Any IPv4** entry. The catch-all is required because GitHub Actions runner IPs cannot be whitelisted. Do not remove either entry.
+
 2. **Update Bitwarden:**
    - Update secret `d68b6562-0d9e-424c-b2c5-b39c013ae34d` with new key
 
