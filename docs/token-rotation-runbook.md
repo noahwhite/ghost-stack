@@ -540,15 +540,19 @@ To verify the key was invalidated:
 
 1. **Generate new token:**
    - Log into PagerDuty
-   - Go to My Profile → User Settings → Create API User Token
-   - Description: `ghost-stack-tofu-YYYY-MM`
-   - Copy the token
+   - Go to Integrations → API Access Keys
+   - Click **Create New API Key**
+   - Description: `ghost-dev-pd-api-key`
+   - Leave **Read-only API Key** unchecked
+   - Click **Create Key**
+   - Copy the API key immediately (shown only once)
 
 2. **Update Bitwarden:**
-   - Update secret `02805292-4311-4290-9b6e-b39c01554ae6` with new token
+   - Update secret `02805292-4311-4290-9b6e-b39c01554ae6` with the new token
+   - Also update the secret's **Note** field with the new key's ID, which is visible on the API Access Keys page
 
 3. **Revoke old token:**
-   - Delete the old API user token in PagerDuty
+   - Delete the old API key on the Integrations → API Access Keys page
 
 ---
 
