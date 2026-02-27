@@ -375,7 +375,7 @@ These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provi
 1. **Generate new key:**
    - Log into Tailscale admin console
    - Go to Settings → Keys
-   - Click "Generate API key"
+   - Click "Generate access token..."
    - Description: `ghost-stack-tofu-YYYY-MM`
    - Expiry: 90 days
    - Copy the key
