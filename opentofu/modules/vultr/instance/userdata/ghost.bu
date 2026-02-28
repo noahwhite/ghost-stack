@@ -365,23 +365,23 @@ systemd:
         Description=Create Ghost and Caddy storage directories after block device mount
         After=var-mnt-storage.mount
         Requires=var-mnt-storage.mount
-        
+
         [Service]
         Type=oneshot
-        ExecStart=/usr/bin/bash -c '\
-        mkdir -p /var/mnt/storage/ghost/content && chmod 0755 /var/mnt/storage/ghost/content && \
-        mkdir -p /var/mnt/storage/ghost/upload-data && chmod 0755 /var/mnt/storage/ghost/upload-data && \
-        mkdir -p /var/mnt/storage/caddy/data && chmod 0755 /var/mnt/storage/caddy/data && \
-        mkdir -p /var/mnt/storage/caddy/config && chmod 0755 /var/mnt/storage/caddy/config && \
-        mkdir -p /var/mnt/storage/caddy/certs && chmod 0755 /var/mnt/storage/caddy/certs && \
-        mkdir -p /var/mnt/storage/alloy && chmod 0750 /var/mnt/storage/alloy && \
-        mkdir -p /var/mnt/storage/mysql/data && chmod 0755 /var/mnt/storage/mysql/data && \
-        mkdir -p /var/mnt/storage/ghost-compose && chmod 0700 /var/mnt/storage/ghost-compose && \
-        mkdir -p /var/mnt/storage/traffic-analytics/data && chmod 0755 /var/mnt/storage/traffic-analytics/data && \
-        mkdir -p /var/mnt/storage/tinybird && chmod 0755 /var/mnt/storage/tinybird && \
-        touch /var/mnt/storage/ghost-compose/.env.generated && chmod 0600 /var/mnt/storage/ghost-compose/.env.generated\'
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/ghost/content
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/ghost/upload-data
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/caddy/data
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/caddy/config
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/caddy/certs
+        ExecStart=/usr/bin/install -d -m 0750 /var/mnt/storage/alloy
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/mysql/data
+        ExecStart=/usr/bin/install -d -m 0700 /var/mnt/storage/ghost-compose
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/traffic-analytics/data
+        ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/tinybird
+        ExecStart=/usr/bin/touch /var/mnt/storage/ghost-compose/.env.generated
+        ExecStart=/usr/bin/chmod 0600 /var/mnt/storage/ghost-compose/.env.generated
         RemainAfterExit=true
-        
+
         [Install]
         WantedBy=multi-user.target
 
