@@ -1166,7 +1166,6 @@ After rotating any token, perform the following verifications:
 | Token | Recommended Rotation | Priority |
 |-------|---------------------|----------|
 | GHCR Token | Every 90 days | High |
-
 | Cloudflare API Tokens | Every 90 days | High |
 | Tailscale API Key | Before 90-day expiry | High |
 | Tailscale Auth Key | Before each instance provisioning | High |
