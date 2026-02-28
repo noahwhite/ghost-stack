@@ -925,7 +925,7 @@ Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER
 
 1. Generate a new password:
    ```bash
-   openssl rand -base64 24
+   openssl rand -base64 96 | tr -d '\n='
    ```
 
 2. Update MySQL and `.env.secrets` on the instance:
@@ -985,7 +985,7 @@ Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER
 
 1. Generate a new root password:
    ```bash
-   openssl rand -base64 24
+   openssl rand -base64 96 | tr -d '\n='
    ```
 
 2. Update MySQL and `.env.secrets` on the instance:
