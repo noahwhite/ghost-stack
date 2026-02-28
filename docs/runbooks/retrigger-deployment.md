@@ -116,7 +116,38 @@ instance creation, leaving the instance in an emergency shell at boot.
 
 3. Delete the instance from the Vultr console. **Do not delete the block storage.**
 
-4. Follow the "Correct Procedure" above to open a PR, get a plan, and deploy.
+4. Remove the instance from OpenTofu state (see "Vultr Provider Bug" below), then
+   follow the "Correct Procedure" above to open a PR, get a plan, and deploy.
+
+### Vultr Provider Bug: Plan Errors Instead of Planning Recreation
+
+**Issue:** [vultr/terraform-provider-vultr#688](https://github.com/vultr/terraform-provider-vultr/issues/688)
+
+When a `vultr_instance` is deleted outside of OpenTofu (e.g., via the Vultr console),
+`tofu plan` **errors out** instead of detecting the missing resource and planning to
+recreate it:
+
+```
+│ Error: error getting instance (xxxx-xxxx): {"error":"instance not found","status":404}
+│
+│   with module.vm.vultr_instance.this,
+```
+
+This means the plan CI on any PR will fail until the stale state entry is removed.
+
+**Workaround — remove the instance from state before planning:**
+
+```bash
+# From inside the infra-shell
+./opentofu/scripts/tofu.sh dev init
+./opentofu/scripts/tofu.sh dev state rm module.vm.vultr_instance.this
+```
+
+After `state rm`, `tofu plan` will show the instance as `1 to add` and the plan CI
+on your retrigger PR will succeed.
+
+**Important:** `state rm` must be run before opening the retrigger PR, otherwise the
+plan CI job will fail with the provider error.
 
 ### Deployment Cancelled Mid-Apply
 

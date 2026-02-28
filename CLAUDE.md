@@ -531,6 +531,16 @@ directly to `develop` fails immediately (no PR number in the commit message). Th
 **Run workflow** button is also absent because workflows only appear in the UI for
 workflows on the default branch (`main`), not `develop`.
 
+**Known issue:** If the instance was manually deleted from Vultr, `tofu plan` will
+**error** (not show drift) due to a Vultr provider bug
+([#688](https://github.com/vultr/terraform-provider-vultr/issues/688)). Remove it
+from state first or the plan CI will fail:
+
+```bash
+./opentofu/scripts/tofu.sh dev init
+./opentofu/scripts/tofu.sh dev state rm module.vm.vultr_instance.this
+```
+
 **To retrigger with a plan**, open a PR with a trivial infra file change:
 
 ```bash
