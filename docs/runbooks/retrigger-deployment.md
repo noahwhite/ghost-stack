@@ -3,65 +3,92 @@
 ## Overview
 
 This runbook covers how to retrigger the `deploy-dev.yml` CI/CD pipeline when you need
-to redeploy without a code change — for example, after manually recovering from a
-transient infrastructure failure.
+to deploy without a meaningful code change — for example, after manually recovering from
+a transient infrastructure failure that left OpenTofu state out of sync with Vultr.
 
 ## Background
 
+### How deploy-dev.yml works
+
+`deploy-dev.yml` is strict about requiring a PR-backed plan:
+
+1. **Extracts PR number** from the merge commit message (e.g., `(#123)`) — fails if absent
+2. **Downloads plan artifact** from `pr-tofu-plan-develop.yml` that ran on that PR
+3. **Skips deployment** if no plan artifact exists (docs-only PRs, empty commits)
+4. **Compares** the stored PR plan against a fresh plan to detect drift since approval
+5. **Applies** only if both plans match
+
 ### Why the "Run workflow" Button Doesn't Appear
 
-`deploy-dev.yml` has a `workflow_dispatch` trigger in its YAML, but GitHub only shows
-the **Run workflow** button in the UI for workflows that exist on the repository's
-**default branch**. The default branch is `main`, which is sparse (only contains GitHub
-issue templates). All CI/CD workflows live on `develop`, so the button is never shown.
+`deploy-dev.yml` has a `workflow_dispatch` trigger, but GitHub only shows the **Run
+workflow** button for workflows present on the **default branch** (`main`). All CI
+workflows live on `develop`, so the button is never available.
 
-**Workaround:** Push an empty commit to `develop` to trigger the `push` event.
+### Why an empty commit doesn't work
 
-## When to Use This Runbook
+Pushing an empty commit directly to `develop` fails at step 1 above — the commit
+message has no `(#XXX)` PR reference, so `deploy-dev.yml` exits immediately with
+"No PR number found in commit message".
 
-- A transient Vultr infrastructure failure required manual instance deletion (e.g., block
-  storage failed to attach on first boot)
-- The OpenTofu state has drifted from actual infrastructure after manual recovery
-- You need to redeploy without making a code change
-- A deployment was cancelled and needs to be re-run
+## Correct Procedure: Open a PR with an Infra File Touch
 
-## Procedure
+The only reliable way to retrigger is to open a PR that touches at least one file
+matching the `pr-tofu-plan-develop.yml` path filter. This causes the plan CI to run,
+generates a plan artifact, and lets the deploy proceed after merge.
 
-### 1. Verify Current State
-
-Before retriggering, confirm the state is what you expect:
-
-```bash
-# Check the latest workflow runs
-gh run list --repo noahwhite/ghost-stack --workflow=deploy-dev.yml --limit 5
-
-# If you have infra access, check for drift
-./opentofu/scripts/tofu.sh dev plan
+**Files that trigger the plan CI (path filter):**
+```
+opentofu/**/*.tofu
+opentofu/**/*.bu
+opentofu/**/*.tftpl
+opentofu/**/*.sh
+opentofu/**/userdata/**
+docker/scripts/**
+.github/workflows/pr-tofu-*.yml
+.github/workflows/deploy-dev.yml
 ```
 
-### 2. Retrigger via Empty Commit
+### Steps
+
+**1. Create a branch and make a trivial infra change**
+
+A comment change in any `.tofu` file is sufficient. The drift recovery note in
+`opentofu/envs/dev/main.tofu` was added specifically for this purpose — update
+the date or add a line to use it as the trigger:
 
 ```bash
-git checkout develop
-git pull origin develop
-git commit --allow-empty -m "chore: retrigger deployment"
-git push origin develop
+git checkout develop && git pull origin develop
+git checkout -b feature/retrigger-deployment-YYYY-MM-DD
 ```
 
-### 3. Approve the Deployment
+Edit `opentofu/envs/dev/main.tofu` — add or update the comment in the
+"Drift Recovery Note" block near the top of the `locals {}` section.
 
-1. Go to https://github.com/noahwhite/ghost-stack/actions/workflows/deploy-dev.yml
-2. Click the running workflow
-3. Approve the deployment when the environment protection prompt appears
+**2. Push and open a PR to develop**
 
-### 4. Monitor the Deployment
+```bash
+git add opentofu/envs/dev/main.tofu
+git commit -m "chore: retrigger deployment to recover from drift"
+git push -u origin feature/retrigger-deployment-YYYY-MM-DD
+```
 
-Watch the workflow logs for:
-- **Drift detection step**: Will show the diff between stored plan and current state.
-  After a manual instance deletion, this will show the instance as needing creation —
-  that is expected.
-- **Apply step**: Should recreate the missing resource(s)
-- **Health check step**: Confirms the instance is up and responding
+Open a PR targeting `develop`. `pr-tofu-plan-develop.yml` will run automatically
+and generate a plan artifact showing the drift (e.g., instance needs to be created).
+
+**3. Review the plan**
+
+The plan output will appear as a PR comment. Verify it shows the expected changes
+(e.g., `1 to add, 0 to change, 0 to destroy` for the missing instance).
+
+**4. Merge the PR and approve the deployment**
+
+Merge the PR. `deploy-dev.yml` will:
+- Download the PR plan artifact
+- Generate a fresh plan (should match, since the instance is still missing)
+- Prompt for environment approval
+- Apply once approved
+
+Approve the deployment in the GitHub Actions UI when prompted.
 
 ## Recovery Scenarios
 
@@ -71,34 +98,41 @@ This is a known intermittent Vultr issue where block storage fails to attach dur
 instance creation, leaving the instance in an emergency shell at boot.
 
 **Symptoms:**
-- Instance is reachable via Vultr console but drops to emergency shell
+- Instance is reachable via Vultr VNC console but drops to emergency shell
 - `journalctl -b` shows block storage mount failure
-- Tailscale SSH is not available (Ignition didn't complete)
+- Tailscale SSH is unavailable (Ignition didn't complete)
 
 **Resolution:**
+
 1. Check whether Tailscale auth ran before the failure:
    ```bash
    # In the emergency shell via Vultr VNC console
    systemctl status tailscale-auth.service
    ```
-2. If Tailscale auth did not run (likely), skip device cleanup — no stale device was registered
-3. If Tailscale auth ran, remove the device from the Tailscale admin console first.
-   See `docs/runbooks/tailscale-device-cleanup.md`
-4. Delete the instance from the Vultr console (**do not delete the block storage**)
-5. Retrigger the deployment using the empty commit procedure above
+
+2. If Tailscale auth did not run (likely), skip device cleanup — no device was
+   registered. If it did run, remove the device from Tailscale admin first.
+   See `docs/runbooks/tailscale-device-cleanup.md`.
+
+3. Delete the instance from the Vultr console. **Do not delete the block storage.**
+
+4. Follow the "Correct Procedure" above to open a PR, get a plan, and deploy.
 
 ### Deployment Cancelled Mid-Apply
 
 If a deployment was cancelled while `tofu apply` was running, state may be partially
 updated.
 
-**Resolution:**
-1. Run `tofu plan` inside the infra-shell to assess the actual drift
-2. If safe, retrigger via empty commit — the apply will converge to the desired state
-3. If state is corrupted, manually reconcile before retriggering
+1. Run `tofu plan` inside the infra-shell to assess actual drift:
+   ```bash
+   ./opentofu/scripts/tofu.sh dev plan
+   ```
+2. If safe, follow the "Correct Procedure" above — the apply will converge to the
+   desired state.
+3. If state is corrupted, manually reconcile before retriggering.
 
 ## Related Documentation
 
 - Tailscale Device Cleanup: `docs/runbooks/tailscale-device-cleanup.md`
 - CI/CD Workflows: See "CI/CD Workflows" section in `CLAUDE.md`
-- Running Locally: See "Running Locally" section in `CLAUDE.md`
+- Drift Recovery Note in code: `opentofu/envs/dev/main.tofu` (`locals {}` block)

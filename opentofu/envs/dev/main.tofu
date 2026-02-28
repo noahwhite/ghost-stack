@@ -88,6 +88,18 @@ locals {
   cloudflare_zone_id = var.cloudflare_zone_id != "" ? var.cloudflare_zone_id : data.terraform_remote_state.bootstrap[0].outputs.cloudflare_zone_id
 
   # ==========================================================================
+  # Drift Recovery Note
+  # ==========================================================================
+  # If you need to retrigger a deployment to recover from drift (e.g., after
+  # manually deleting an instance from Vultr), you must open a PR that touches
+  # an infra file so that pr-tofu-plan-develop.yml generates a plan artifact.
+  # A trivial comment change to this file is sufficient. Pushing a bare commit
+  # directly to develop will NOT work — deploy-dev.yml requires a PR-backed
+  # plan artifact.
+  # See: docs/runbooks/retrigger-deployment.md
+  # ==========================================================================
+
+  # ==========================================================================
   # Instance Replacement Hash
   # ==========================================================================
   # This hash captures all inputs that would cause the Vultr instance to be

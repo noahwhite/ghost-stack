@@ -525,17 +525,27 @@ Examples of valid branch names:
 
 ### Retriggering a Deployment
 
-The `deploy-dev.yml` workflow has a `workflow_dispatch` trigger, but the **Run workflow** button does not appear in the GitHub UI because the workflow file only exists on `develop`, not on the default branch (`main`). The only way to retrigger is to push a commit to `develop`.
+`deploy-dev.yml` requires a PR-backed plan artifact — it extracts the PR number from
+the merge commit and downloads the plan that ran on that PR. Pushing an empty commit
+directly to `develop` fails immediately (no PR number in the commit message). The
+**Run workflow** button is also absent because workflows only appear in the UI for
+workflows on the default branch (`main`), not `develop`.
+
+**To retrigger with a plan**, open a PR with a trivial infra file change:
 
 ```bash
 git checkout develop && git pull origin develop
-git commit --allow-empty -m "chore: retrigger deployment"
-git push origin develop
+git checkout -b feature/retrigger-deployment-YYYY-MM-DD
+# Edit the drift recovery comment in opentofu/envs/dev/main.tofu
+git add opentofu/envs/dev/main.tofu
+git commit -m "chore: retrigger deployment to recover from drift"
+git push -u origin feature/retrigger-deployment-YYYY-MM-DD
 ```
 
-Then approve the deployment in the GitHub Actions UI when the environment protection prompt appears.
+Open a PR to `develop`. The plan CI will run, produce a plan showing the drift, and
+the deploy will apply after you merge and approve.
 
-See `docs/runbooks/retrigger-deployment.md` for full details including when this is needed and recovery scenarios.
+See `docs/runbooks/retrigger-deployment.md` for full details and recovery scenarios.
 
 ### Updating Alloy Sysext Version
 
