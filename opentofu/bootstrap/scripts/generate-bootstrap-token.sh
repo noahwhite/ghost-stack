@@ -96,4 +96,4 @@ fi
 echo -n "$NEW_TOKEN" | pbcopy
 
 echo "✅ R2 bootstrap token created and copied to clipboard."
-echo "📋 Paste it into 1Password and delete securely after use."
+echo "📋 Paste it into Bitwarden secret ID bde8e810-8be6-4090-aa1d-b39b002c9eb8 and save."
