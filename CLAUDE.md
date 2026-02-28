@@ -523,6 +523,40 @@ Examples of valid branch names:
 4. PR checks run automatically (fmt, plan)
 5. Merge triggers deployment (requires approval)
 
+### Retriggering a Deployment
+
+`deploy-dev.yml` requires a PR-backed plan artifact — it extracts the PR number from
+the merge commit and downloads the plan that ran on that PR. Pushing an empty commit
+directly to `develop` fails immediately (no PR number in the commit message). The
+**Run workflow** button is also absent because workflows only appear in the UI for
+workflows on the default branch (`main`), not `develop`.
+
+**Known issue:** If the instance was manually deleted from Vultr, `tofu plan` will
+**error** (not show drift) due to a Vultr provider bug
+([#688](https://github.com/vultr/terraform-provider-vultr/issues/688)). Remove it
+from state first or the plan CI will fail:
+
+```bash
+./opentofu/scripts/tofu.sh dev init
+./opentofu/scripts/tofu.sh dev state rm module.vm.vultr_instance.this
+```
+
+**To retrigger with a plan**, open a PR with a trivial infra file change:
+
+```bash
+git checkout develop && git pull origin develop
+git checkout -b feature/retrigger-deployment-YYYY-MM-DD
+# Edit the drift recovery comment in opentofu/envs/dev/main.tofu
+git add opentofu/envs/dev/main.tofu
+git commit -m "chore: retrigger deployment to recover from drift"
+git push -u origin feature/retrigger-deployment-YYYY-MM-DD
+```
+
+Open a PR to `develop`. The plan CI will run, produce a plan showing the drift, and
+the deploy will apply after you merge and approve.
+
+See `docs/runbooks/retrigger-deployment.md` for full details and recovery scenarios.
+
 ### Updating Alloy Sysext Version
 
 The Grafana Alloy systemd-sysext image is built automatically by the
