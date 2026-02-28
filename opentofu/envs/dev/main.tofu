@@ -97,7 +97,7 @@ locals {
   # directly to develop will NOT work — deploy-dev.yml requires a PR-backed
   # plan artifact.
   # See: docs/runbooks/retrigger-deployment.md
-  # Last drift recovery: 2026-02-28 (block storage attach failure + Vultr provider bug #688)
+  # Last drift recovery: 2026-02-28b (state rm complete, retriggering plan)
   # ==========================================================================
 
   # ==========================================================================
