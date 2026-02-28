@@ -523,6 +523,20 @@ Examples of valid branch names:
 4. PR checks run automatically (fmt, plan)
 5. Merge triggers deployment (requires approval)
 
+### Retriggering a Deployment
+
+The `deploy-dev.yml` workflow has a `workflow_dispatch` trigger, but the **Run workflow** button does not appear in the GitHub UI because the workflow file only exists on `develop`, not on the default branch (`main`). The only way to retrigger is to push a commit to `develop`.
+
+```bash
+git checkout develop && git pull origin develop
+git commit --allow-empty -m "chore: retrigger deployment"
+git push origin develop
+```
+
+Then approve the deployment in the GitHub Actions UI when the environment protection prompt appears.
+
+See `docs/runbooks/retrigger-deployment.md` for full details including when this is needed and recovery scenarios.
+
 ### Updating Alloy Sysext Version
 
 The Grafana Alloy systemd-sysext image is built automatically by the
