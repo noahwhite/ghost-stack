@@ -262,6 +262,23 @@ storage:
         source: "data:text/plain;charset=utf-8;base64,${infisical_secrets_fetch_script}"
 
     # ==========================================================================
+    # Docker Compose Service Entrypoint Scripts (GHO-69)
+    # ==========================================================================
+    # These scripts are exec'd by Caddy and Ghost containers to inject secrets
+    # from Docker Compose secrets: (mounted at /run/secrets/) without ever
+    # exporting them as env vars. Delivered ephemerally via Ignition.
+    # ==========================================================================
+    - path: /etc/ghost-compose/ghost-entrypoint.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_entrypoint_script}"
+
+    - path: /etc/ghost-compose/caddy-entrypoint.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${caddy_entrypoint_script}"
+
+    # ==========================================================================
     # Tailscale Connection Monitor Script (GHO-83)
     # ==========================================================================
     # Delivered ephemerally via Ignition at /etc/ghost-compose/monitor_tailscale_conn.sh.
@@ -378,6 +395,7 @@ systemd:
         ExecStart=/usr/bin/install -d -m 0700 /var/mnt/storage/ghost-compose
         ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/traffic-analytics/data
         ExecStart=/usr/bin/install -d -m 0755 /var/mnt/storage/tinybird
+        ExecStart=/usr/bin/install -d -m 0700 /var/mnt/storage/ghost-compose/secrets
         ExecStart=/usr/bin/touch /var/mnt/storage/ghost-compose/.env.generated
         ExecStart=/usr/bin/chmod 0600 /var/mnt/storage/ghost-compose/.env.generated
         RemainAfterExit=true

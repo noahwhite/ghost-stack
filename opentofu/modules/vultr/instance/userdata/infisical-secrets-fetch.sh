@@ -50,27 +50,49 @@ HTTP_RESPONSE=$(curl -s -f \
     exit 0
 }
 
-# Write selected KEY=VALUE pairs atomically to avoid leaving a partial secrets file
+# Write individual Docker secret files (GHO-69)
+# Each secret gets its own file at /var/mnt/storage/ghost-compose/secrets/<name>
+# mounted into containers via Docker Compose secrets: directive.
+# Files use printf '%s' (no trailing newline) so $(cat ...) in containers reads clean values.
+SECRETS_DIR="${SECRETS_FILE%/*}/secrets"
+mkdir -p "${SECRETS_DIR}"
+
+write_secret() {
+    local key="$1" filename="$2" value tmpfile
+    value=$(jq -r --arg k "$key" '.secrets[] | select(.secretKey == $k) | .secretValue' <<< "${HTTP_RESPONSE}")
+    if [ -n "$value" ] && [ "$value" != "null" ]; then
+        tmpfile=$(mktemp "${SECRETS_DIR}/${filename}.XXXXXX")
+        printf '%s' "$value" > "${tmpfile}"
+        chmod 0600 "${tmpfile}"
+        mv "${tmpfile}" "${SECRETS_DIR}/${filename}"
+        log "Secret file written: ${SECRETS_DIR}/${filename}"
+    else
+        log_err "Secret '${key}' not found in Infisical response"
+    fi
+}
+
+write_secret "DATABASE_PASSWORD"         "db_password"
+write_secret "DATABASE_ROOT_PASSWORD"    "db_root_password"
+write_secret "HEALTH_CHECK_TOKEN"        "health_check_token"
+write_secret "mail__options__auth__pass" "mail_smtp_password"
+write_secret "TINYBIRD_ADMIN_TOKEN"      "tinybird_admin_token"
+
+# Write .env.secrets with TINYBIRD_ADMIN_TOKEN only.
+# tinybird-provision.sh sources this file directly; no Docker service uses it via env_file any more.
 TMPFILE=$(mktemp "${SECRETS_FILE}.XXXXXX")
 jq -r '
   .secrets[]
-  | select(.secretKey | IN(
-      "DATABASE_PASSWORD",
-      "DATABASE_ROOT_PASSWORD",
-      "HEALTH_CHECK_TOKEN",
-      "mail__options__auth__pass",
-      "TINYBIRD_ADMIN_TOKEN"
-    ))
+  | select(.secretKey == "TINYBIRD_ADMIN_TOKEN")
   | "\(.secretKey)=\(.secretValue)"
 ' <<< "${HTTP_RESPONSE}" > "${TMPFILE}" || {
-    log_err "Failed to parse Infisical response"
+    log_err "Failed to write .env.secrets"
     rm -f "${TMPFILE}"
     exit 0
 }
 chmod 0600 "${TMPFILE}"
 mv "${TMPFILE}" "${SECRETS_FILE}"
 
-log "Secrets written to ${SECRETS_FILE}"
+log "Secrets written to ${SECRETS_DIR}/ and ${SECRETS_FILE}"
 
 # Write Tailscale monitor .env (second jq pass over same API response)
 TAILSCALE_DIR="/var/mnt/storage/sbin/tailscale_monitor"

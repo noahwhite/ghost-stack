@@ -65,6 +65,10 @@ locals {
 
   # Tailscale monitor script
   monitor_tailscale_script = filebase64("${path.module}/userdata/monitor_tailscale_conn.sh")
+
+  # Docker Compose service entrypoint scripts (GHO-69)
+  ghost_entrypoint_script = filebase64("${path.module}/userdata/ghost-entrypoint.sh")
+  caddy_entrypoint_script = filebase64("${path.module}/userdata/caddy-entrypoint.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -101,6 +105,10 @@ data "ct_config" "ghost" {
 
     # Tailscale monitor script
     monitor_tailscale_script = local.monitor_tailscale_script
+
+    # Docker Compose service entrypoint scripts (GHO-69)
+    ghost_entrypoint_script = local.ghost_entrypoint_script
+    caddy_entrypoint_script = local.caddy_entrypoint_script
   })
   strict = true
 }
