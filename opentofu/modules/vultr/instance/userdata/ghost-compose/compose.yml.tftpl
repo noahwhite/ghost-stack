@@ -6,28 +6,31 @@
 #
 # This file is deployed via Ignition at boot time. Configuration is split:
 #   - .env.config (ephemeral): Non-secret config deployed via Ignition
-#   - .env.secrets (persistent): Secrets stored on block storage
+#   - secrets/ (persistent): Per-secret files on block storage, mounted via Docker Compose secrets:
 #
 services:
   caddy:
     image: caddy:2.10.2-alpine@sha256:953131cfea8e12bfe1c631a36308e9660e4389f0c3dfb3be957044d3ac92d446
     restart: always
+    entrypoint: ["/caddy-entrypoint.sh"]
     ports:
       - "80:80"
       - "443:443"
     env_file:
       - .env.config
-      - /var/mnt/storage/ghost-compose/.env.secrets
     environment:
       DOMAIN: $${DOMAIN:?DOMAIN environment variable is required}
       ADMIN_DOMAIN: $${ADMIN_DOMAIN:-}
       ADMIN_IP: $${ADMIN_IP:-}
       # ACTIVITYPUB_TARGET: $${ACTIVITYPUB_TARGET:-https://ap.ghost.org}
     volumes:
+      - /etc/ghost-compose/caddy-entrypoint.sh:/caddy-entrypoint.sh:ro
       - ./caddy:/etc/caddy
       - caddy_data:/data
       - caddy_config:/config
       - /var/mnt/storage/caddy/certs:/certs:ro
+    secrets:
+      - health_check_token
     depends_on:
       - ghost
     networks:
@@ -37,9 +40,9 @@ services:
     # Do not alter this without updating the Tinybird Sync container as well
     image: ghost:$${GHOST_VERSION:-6-alpine}
     restart: always
+    entrypoint: ["/ghost-entrypoint.sh"]
     env_file:
       - .env.config
-      - /var/mnt/storage/ghost-compose/.env.secrets
       - /var/mnt/storage/ghost-compose/.env.generated
     environment:
       NODE_ENV: production
@@ -48,16 +51,19 @@ services:
       database__client: mysql
       database__connection__host: db
       database__connection__user: $${DATABASE_USER:-ghost}
-      database__connection__password: $${DATABASE_PASSWORD:?DATABASE_PASSWORD environment variable is required}
       database__connection__database: ghost
-      # TinyBird Analytics (enabled when TINYBIRD_ADMIN_TOKEN is in .env.secrets)
+      # TinyBird Analytics — adminToken and database password injected via ghost-entrypoint.sh
       tinybird__tracker__endpoint: https://$${DOMAIN:?DOMAIN environment variable is required}/.ghost/analytics/api/v1/page_hit
-      tinybird__adminToken: $${TINYBIRD_ADMIN_TOKEN:-}
       tinybird__workspaceId: $${TINYBIRD_WORKSPACE_ID:-}
       tinybird__tracker__datasource: analytics_events
       tinybird__stats__endpoint: $${TINYBIRD_API_URL:-https://api.tinybird.co}
     volumes:
+      - /etc/ghost-compose/ghost-entrypoint.sh:/ghost-entrypoint.sh:ro
       - $${UPLOAD_LOCATION:-./data/ghost}:/var/lib/ghost/content
+    secrets:
+      - db_password
+      - mail_smtp_password
+      - tinybird_admin_token
     depends_on:
       db:
         condition: service_healthy
@@ -74,22 +80,24 @@ services:
       - "3306"
     env_file:
       - .env.config
-      - /var/mnt/storage/ghost-compose/.env.secrets
     environment:
-      MYSQL_ROOT_PASSWORD: $${DATABASE_ROOT_PASSWORD:?DATABASE_ROOT_PASSWORD environment variable is required}
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_USER: $${DATABASE_USER:-ghost}
-      MYSQL_PASSWORD: $${DATABASE_PASSWORD:?DATABASE_PASSWORD environment variable is required}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
       MYSQL_DATABASE: ghost
       MYSQL_MULTIPLE_DATABASES: activitypub
     volumes:
       - $${MYSQL_DATA_LOCATION:-./data/mysql}:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: mysqladmin ping -p$$MYSQL_ROOT_PASSWORD -h 127.0.0.1
+      test: ["CMD", "sh", "-c", "mysqladmin ping -p$(cat /run/secrets/db_root_password) -h 127.0.0.1"]
       interval: 1s
       start_period: 30s
       start_interval: 10s
       retries: 120
+    secrets:
+      - db_password
+      - db_root_password
     networks:
       - ghost_network
 
@@ -104,7 +112,6 @@ services:
       - /var/mnt/storage/traffic-analytics/data:/data
     env_file:
       - .env.config
-      - /var/mnt/storage/ghost-compose/.env.secrets
       - /var/mnt/storage/ghost-compose/.env.generated
     environment:
       NODE_ENV: production
@@ -203,6 +210,18 @@ volumes:
   caddy_data:
   caddy_config:
   tinybird_files:
+
+secrets:
+  db_password:
+    file: /var/mnt/storage/ghost-compose/secrets/db_password
+  db_root_password:
+    file: /var/mnt/storage/ghost-compose/secrets/db_root_password
+  health_check_token:
+    file: /var/mnt/storage/ghost-compose/secrets/health_check_token
+  mail_smtp_password:
+    file: /var/mnt/storage/ghost-compose/secrets/mail_smtp_password
+  tinybird_admin_token:
+    file: /var/mnt/storage/ghost-compose/secrets/tinybird_admin_token
 
 networks:
   ghost_network:

@@ -146,6 +146,8 @@ locals {
       tinybird_dockerfile     = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/tinybird/Dockerfile")
       infisical_secrets_fetch = filesha256("${path.module}/../../modules/vultr/instance/userdata/infisical-secrets-fetch.sh")
       monitor_tailscale       = filesha256("${path.module}/../../modules/vultr/instance/userdata/monitor_tailscale_conn.sh")
+      ghost_entrypoint        = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-entrypoint.sh")
+      caddy_entrypoint        = filesha256("${path.module}/../../modules/vultr/instance/userdata/caddy-entrypoint.sh")
     }
   }))
 }
