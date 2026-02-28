@@ -20,7 +20,7 @@ TB_TOKEN=""
 # DB_PASS="$DB_PASS" ... syntax sets vars only in node's subprocess env (not exported to shell).
 # node handles proper JSON encoding so special characters in passwords are safe.
 DB_PASS="$DB_PASS" MAIL_PASS="$MAIL_PASS" TB_TOKEN="$TB_TOKEN" \
-  node -e "
+  /usr/local/bin/node -e "
 var f = require('fs');
 var cfg = {
   database: { connection: { password: process.env.DB_PASS } },
