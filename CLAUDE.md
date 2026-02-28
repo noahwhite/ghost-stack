@@ -63,10 +63,11 @@ Move stories through statuses in this order — **never skip ahead**:
 | Status | When to set |
 |--------|-------------|
 | **Triage** | Newly created, not yet reviewed |
-| **Todo** | Triaged, estimated, assigned, ready to work |
+| **Backlog** | Triaged, estimated, assigned — not yet scheduled |
 | **In Progress** | Branch created, actively being implemented |
-| **In Review** | PR merged, CD running or deployment pending verification |
-| **Done** | CD completed successfully **AND** all AC verified **AND** all test plan items checked |
+| **In PR Review** | PR open, awaiting review |
+| **In Deployment Review** | PR merged — Linear GitHub integration sets this automatically |
+| **Done** | All AC verified in deployed environment **AND** all test plan items checked |
 
 **Critical:** Do NOT move to **Done** until:
 1. CD pipeline has completed successfully
@@ -75,8 +76,8 @@ Move stories through statuses in this order — **never skip ahead**:
 
 ### Story Triage Checklist
 
-When triaging a story (moving from Triage → Todo):
-1. Set **status** to `Todo`
+When triaging a story (moving from Triage → Backlog):
+1. Set **status** to `Backlog`
 2. Set **priority** (1=Urgent, 2=High, 3=Normal, 4=Low)
 3. Set **estimate** (story points)
 4. Set **assignee** to Noah White

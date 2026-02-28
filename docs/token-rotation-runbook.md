@@ -8,24 +8,36 @@ This document provides step-by-step procedures for rotating all tokens and secre
 
 1. [Overview](#overview)
 2. [Token Inventory](#token-inventory)
-3. [GitHub Tokens](#github-tokens)
-4. [Bitwarden Secrets Manager](#bitwarden-secrets-manager)
-5. [Cloudflare Tokens](#cloudflare-tokens)
-6. [R2 Storage Credentials](#r2-storage-credentials)
-7. [Vultr API Key](#vultr-api-key)
-8. [Tailscale API Key](#tailscale-api-key)
-9. [Tailscale Auth Key](#tailscale-auth-key-device-registration)
-10. [PagerDuty Credentials](#pagerduty-credentials)
-11. [Grafana Cloud Credentials](#grafana-cloud-credentials)
-12. [TinyBird Credentials](#tinybird-credentials)
-13. [Linear API Token](#linear-api-token)
-14. [Verification Procedures](#verification-procedures)
+3. [CI/CD Tokens](#cicd-tokens)
+   - [GHCR Read/Write Token](#ghcr-readwrite-token-ghcr_token)
+
+   - [BWS Access Token](#bws-access-token-bws_access_token)
+   - [Cloudflare API Token](#cloudflare-api-token-opentofu)
+   - [Cloudflare Token Creator](#cloudflare-token-creator-dev-token-creator)
+   - [Cloudflare Bootstrap Token](#cloudflare-bootstrap-token)
+   - [R2 Access Key ID & Secret Access Key](#r2-access-key-id--secret-access-key)
+
+   - [Vultr API Key](#vultr-api-key)
+   - [Tailscale API Key](#tailscale-api-key)
+   - [Tailscale Auth Key](#tailscale-auth-key-device-registration)
+   - [PagerDuty OAuth Credentials](#pagerduty-oauth-credentials)
+   - [PagerDuty User API Token](#pagerduty-user-api-token)
+   - [Grafana Cloud Access Token](#grafana-cloud-access-token)
+   - [Grafana Cloud Terraform Service Account Token](#grafana-cloud-terraform-service-account-token)
+4. [Ghost Application Secrets (Infisical)](#ghost-application-secrets-infisical)
+   - [TinyBird Workspace Admin Token](#tinybird-workspace-admin-token-tinybird_admin_token)
+   - [TinyBird Tracker Token](#tinybird-tracker-token-tinybird_tracker_token)
+   - [Health Check Token](#health-check-token)
+   - [Ghost Mail SMTP Password](#ghost-mail-smtp-password)
+   - [MySQL Database Credentials](#mysql-database-credentials)
+5. [Claude Code Integration](#claude-code-integration)
+   - [Claude GitHub MCP Access Token](#claude-github-mcp-access-token)
+   - [Linear API Token](#linear-api-token)
+6. [Verification Procedures](#verification-procedures)
 
 ---
 
 ## Overview
-
-> **Application secrets (Ghost, MySQL, TinyBird)** are managed in Infisical, not Bitwarden. See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for those procedures.
 
 ### Storage Locations
 
@@ -55,41 +67,42 @@ GitHub secrets are scoped at two levels:
 
 ### Quick Reference Table
 
-| Token | Source | Bitwarden ID | GitHub Secret | Env Scope | Expiration |
-|-------|--------|--------------|---------------|-----------|------------|
-| GHCR RW Token | GitHub PAT | N/A | `GHCR_TOKEN` | Repository | Configurable |
-| Ghost Stack PAT | GitHub PAT | N/A | `GHOST_STACK_PAT`* | Repository | 90 days |
+| Token | Source | GitHub Secret | Env Scope | Expiration |
+|-------|--------|---------------|-----------|------------|
+| GHCR RW Token | GitHub PAT | `GHCR_TOKEN` | Repository | 30 days |
 
-*Stored in `alloy-sysext-build` repository, not ghost-stack.
-| BWS Access Token | Bitwarden | N/A | `BWS_ACCESS_TOKEN` | Environment (dev) | Never* |
-| Claude MCP Token | GitHub PAT | N/A | N/A (local) | N/A | Configurable |
-| Cloudflare API Token | Cloudflare | `59624245-...` | N/A | N/A | Configurable |
-| Cloudflare Token Creator | Cloudflare | N/A | N/A | N/A | 30 days recommended |
-| Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | N/A | 30 days recommended |
-| R2 Access Key ID | Cloudflare R2 | `9dfdf110-...` | N/A | N/A | Never |
-| R2 Secret Access Key | Cloudflare R2 | `f5d9794d-...` | N/A | N/A | Never |
-| R2 Bootstrap Access Key | Cloudflare R2 | N/A | N/A | N/A | Never |
-| R2 Bootstrap Secret Key | Cloudflare R2 | N/A | N/A | N/A | Never |
-| Vultr API Key | Vultr | `d68b6562-...` | N/A | N/A | Never |
-| Tailscale API Key | Tailscale | `34b620b7-...` | N/A | N/A | 90 days default |
-| Tailscale Auth Key | Tailscale (OpenTofu) | N/A (generated) | N/A | N/A | One-time (single use) |
-| PagerDuty Client ID | PagerDuty | `7d51661b-...` | N/A | N/A | Never |
-| PagerDuty Client Secret | PagerDuty | `b15575c0-...` | N/A | N/A | Never |
-| PagerDuty User Token | PagerDuty | `02805292-...` | N/A | N/A | Never |
-| Grafana Cloud Token | Grafana | `bfc8dd06-...` | N/A | N/A | 30 days |
-| Grafana Cloud SA Token | Grafana | `3ebc4398-...` | N/A | N/A | 30 days |
-| Linear API Token | Linear | N/A | N/A (local) | N/A | Never |
-| TinyBird Workspace Admin | TinyBird | N/A | N/A (instance) | N/A | Never |
-| TinyBird Tracker Token | TinyBird | N/A | N/A (instance) | N/A | Never |
-| Admin IP | N/A | N/A | `ADMIN_IP` | Environment (dev) | N/A |
-| Cloudflare Zone ID | N/A | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
-| Health Check Token | N/A | N/A | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
+| BWS Access Token¹ | Bitwarden | `BWS_ACCESS_TOKEN` | Environment (dev) | 30 days |
+| Cloudflare API Token | Cloudflare | N/A | N/A | Configurable |
+| Cloudflare Token Creator | Cloudflare | N/A | N/A | 30 days recommended |
+| Cloudflare Bootstrap Token | Cloudflare | N/A | N/A | 30 days recommended |
+| R2 Access Key ID | Cloudflare R2 | N/A | N/A | 30 days |
+| R2 Secret Access Key | Cloudflare R2 | N/A | N/A | 30 days |
 
-*Bitwarden machine account tokens do not expire but should be rotated periodically.
+| Vultr API Key | Vultr | N/A | N/A | 30 days |
+| Tailscale API Key | Tailscale | N/A | N/A | 90 days default |
+| Tailscale Auth Key | Tailscale (OpenTofu) | N/A | N/A | One-time (single use) |
+| PagerDuty Client ID | PagerDuty | N/A | N/A | Never |
+| PagerDuty Client Secret | PagerDuty | N/A | N/A | Never |
+| PagerDuty User Token | PagerDuty | N/A | N/A | Never |
+| Grafana Cloud Token | Grafana | N/A | N/A | 30 days |
+| Grafana Cloud SA Token | Grafana | N/A | N/A | 30 days |
+| TinyBird Workspace Admin | TinyBird | N/A (instance) | N/A | Never |
+| TinyBird Tracker Token | TinyBird | N/A (instance) | N/A | Never |
+| Health Check Token | Infisical | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
+| Admin IP | N/A | `ADMIN_IP` | Environment (dev) | N/A |
+| Cloudflare Zone ID | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
+| Claude MCP Token | GitHub PAT | N/A (local) | N/A | Configurable |
+| Linear API Token | Linear | N/A (local) | N/A | Never |
+
+¹ BWS Access Tokens expire after 30 days; rotate before expiry.
 
 ---
 
-## GitHub Tokens
+## CI/CD Tokens
+
+These tokens are used by GitHub Actions workflows, OpenTofu infrastructure provisioning, and supporting infrastructure services. Most are stored in Bitwarden Secrets Manager and retrieved at runtime by `infra-shell.sh`.
+
+---
 
 ### GHCR Read/Write Token (`GHCR_TOKEN`)
 
@@ -97,7 +110,7 @@ GitHub secrets are scoped at two levels:
 
 **Scope:** Repository-level (used by both PR and deploy workflows)
 
-**Expiration:** Configurable (recommend 90 days)
+**Expiration:** 30 days
 
 #### Rotation Steps
 
@@ -105,8 +118,8 @@ GitHub secrets are scoped at two levels:
    - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
    - Click "Generate new token (classic)"
    - Name: `ghost-stack-ghcr-rw`
-   - Expiration: 90 days (or your preferred period)
-   - Scopes: `write:packages`, `read:packages`
+   - Expiration: 30 days
+   - Scopes: `repo` (includes `repo:status`, `repo_deployment`, `public_repo`, `repo:invite`, `security_events`), `write:packages`, `read:packages`
    - Click "Generate token"
    - Copy the token immediately
 
@@ -123,85 +136,6 @@ GitHub secrets are scoped at two levels:
 
 ---
 
-### Claude GitHub MCP Access Token
-
-**Purpose:** Allows Claude Code to interact with GitHub via MCP (Model Context Protocol) for issue management, PR creation, etc.
-
-**Scope:** Local development only (not stored in GitHub)
-
-**Expiration:** Configurable (recommend 90 days)
-
-#### Rotation Steps
-
-1. **Generate new token:**
-   - Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
-   - Click "Generate new token"
-   - Name: `claude-mcp-access`
-   - Expiration: 90 days
-   - Repository access: Select repositories → choose `ghost-stack`, `alloy-sysext-build`
-   - Permissions:
-     - Contents: Read and write
-     - Issues: Read and write
-     - Pull requests: Read and write
-     - Metadata: Read-only
-   - Click "Generate token"
-
-2. **Update local configuration:**
-   - Update your Claude Code MCP configuration with the new token
-   - Location varies by setup (typically `~/.config/claude/mcp.json` or similar)
-
-3. **Verify:**
-   - Use Claude Code to list issues or create a test comment
-
----
-
-### Ghost Stack PAT (`GHOST_STACK_PAT`)
-
-**Purpose:** Allow the `alloy-sysext-build` repository's CI/CD workflow to create PRs in `ghost-stack` after building new Alloy sysext images.
-
-**Repository:** `alloy-sysext-build` (not ghost-stack)
-
-**Scope:** `public_repo` (under `repo` scope - access public repositories only)
-
-**Expiration:** 90 days
-
-#### What This Token Does
-
-When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml` workflow uses this token to:
-1. Clone the ghost-stack repository
-2. Create a feature branch with updated ghost.bu (new version + SHA256 hash)
-3. Push the branch and create a PR
-4. Assign the PR to Noah White
-
-#### Rotation Steps
-
-1. **Generate new token:**
-   - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
-   - Click "Generate new token (classic)"
-   - Name: `alloy-sysext-ghost-stack-pat`
-   - Expiration: 90 days
-   - Under `repo` scope, select only `public_repo`
-   - Click "Generate token"
-   - Copy the token immediately
-
-2. **Update GitHub Secret:**
-   - Go to `github.com/noahwhite/alloy-sysext-build` → Settings → Secrets and variables → Actions
-   - Find `GHOST_STACK_PAT` under Repository secrets (or create if first time)
-   - Click "Update" (or "New repository secret")
-   - Paste the new token
-   - Click "Update secret"
-
-3. **Revoke old token:**
-   - Go to GitHub → Settings → Developer settings → Personal access tokens
-   - Find the old token and click "Delete"
-
-4. **Verify:**
-   - Trigger the `build-and-publish.yml` workflow manually with a test version
-   - Or wait for the next automated build and verify PR creation succeeds
-
----
-
-## Bitwarden Secrets Manager
 
 ### BWS Access Token (`BWS_ACCESS_TOKEN`)
 
@@ -212,17 +146,18 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 - `dev` environment: Used by deploy workflows
 - `dev-ci` environment: Used by PR workflows (shadow environment for validation)
 
-**Expiration:** Machine account tokens do not expire, but rotation is recommended every 6-12 months.
+**Expiration:** 30 days (set at creation time)
 
 #### Rotation Steps
 
 1. **Generate new token:**
    - Log into Bitwarden web vault
    - Go to Organizations → Machine accounts
-   - Select the relevant machine account (e.g., `ghost-stack-dev`)
+   - Select the `github-actions` machine account
    - Go to Access tokens tab
    - Click "Create access token"
-   - Name: Include date (e.g., `ci-2025-01`)
+   - Name: `gha-bw-tok-MMDDYY` (where MMDDYY is the expiration date, e.g., `gha-bw-tok-032626`)
+   - Set expiration to 30 days
    - Copy the token immediately (shown only once)
 
 2. **Update GitHub Secrets (both environments):**
@@ -239,15 +174,13 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-## Cloudflare Tokens
-
 ### Cloudflare API Token (OpenTofu)
 
 **Purpose:** Manage Cloudflare resources (DNS, Page Rules) via OpenTofu.
 
 **Bitwarden Secret ID:** `59624245-6a0c-4fde-9d6d-b39c014882a6`
 
-**Expiration:** Configurable at creation
+**Expiration:** 30 days
 
 #### Rotation Steps
 
@@ -258,8 +191,8 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
      - Zone: DNS: Edit
      - Zone: Zone: Read
      - Zone Resources: Include specific zone or all zones
-   - Set IP restrictions if desired
-   - Set TTL (recommend 90 days)
+   - Do not set IP restrictions — GitHub runner IPs are too numerous and dynamic to whitelist
+   - Set TTL: 30 days
    - Create token and copy immediately
 
 2. **Update Bitwarden:**
@@ -293,12 +226,15 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
    - Go to My Profile → API Tokens → Create Token
    - Select template: "Create Additional Tokens"
    - Permissions: User, API Tokens, Edit
-   - Set IP restrictions to your admin IP
+   - Do not set IP restrictions
    - Set TTL: 30 days
    - Create and copy token
 
 2. **Update Bitwarden:**
-   - Update the `dev-token-creator` secret in Bitwarden
+   - Log into Bitwarden web vault
+   - Find secret with ID `6bc45446-1aa1-4e2c-804e-b39b002c32ea`
+   - Update the value with the new token
+   - Save
 
 3. **Revoke old token:**
    - In Cloudflare, revoke the previous token creator
@@ -316,21 +252,45 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 #### Rotation Steps
 
 1. **Generate new token:**
-   - Use the token creator script:
+   - Use the token creator script (recommended):
      ```bash
      ./opentofu/bootstrap/scripts/generate-bootstrap-token.sh
      ```
-   - Or manually create in Cloudflare with permissions:
-     - Zone: Edit, Read
-     - DNS: Edit
-     - R2 Storage Buckets: Edit
+   - Or manually create in Cloudflare:
+     - Go to My Profile → API Tokens → Create Token → Create Custom Token
+     - Name: `bootstrap-dev-token`
+     - Add the following permission rows:
+
+       | Resource Type | Permission | Access |
+       |---|---|---|
+       | Account | Workers R2 Storage | Read |
+       | Account | Workers R2 Storage | Edit |
+       | Account | Email Routing Addresses | Read |
+       | Account | Email Routing Addresses | Edit |
+       | Zone | Zone Settings | Read |
+       | Zone | Zone Settings | Edit |
+       | Zone | Zone | Read |
+       | Zone | Zone | Edit |
+       | Zone | DNS | Read |
+       | Zone | DNS | Edit |
+       | Zone | Email Routing Rules | Read |
+       | Zone | Email Routing Rules | Edit |
+
+     - **Account Resources:** Set to Include → **Noah@separationofconcerns.dev's Account**
+     - **Zone Resources:** Set to Include → **Specific zone** → **separationofconcerns.dev**
+
+     - **IP Address Filtering:** Set Operator to **is in**, then click **Use my IP** (assuming you are on the dev workstation — otherwise enter the dev workstation's public IP)
+     - **TTL:** Set start date to today and end date to 30 days in the future
+     - Click **Continue to Summary**, review all details, and if correct click **Create Token**
+     - Copy the token immediately (shown only once)
 
 2. **Update Bitwarden:**
-   - Update the `bootstrap-dev-token` secret in Bitwarden
+   - Log into Bitwarden web vault
+   - Find secret with ID `bde8e810-8be6-4090-aa1d-b39b002c9eb8`
+   - Update the value with the new token
+   - Save
 
 ---
-
-## R2 Storage Credentials
 
 ### R2 Access Key ID & Secret Access Key
 
@@ -340,18 +300,20 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 - Access Key ID: `9dfdf110-5a84-48c3-ad7e-b39b002afd6b`
 - Secret Access Key: `f5d9794d-fd45-4dcb-9994-b39b002b5056`
 
-**Expiration:** Never (but rotate periodically)
+**Expiration:** 30 days
 
 #### Rotation Steps
 
 1. **Generate new credentials:**
    - Log into Cloudflare dashboard
-   - Go to R2 → Overview → Manage R2 API Tokens
-   - Click "Create API token"
+   - Go to Storage & Databases → R2 Object Storage → Overview
+   - Click the **Manage** button next to **API tokens** in the Account Details section
+   - Click **Create Account API token**
    - Name: `ghost-stack-r2-YYYY-MM`
    - Permissions: Object Read & Write
    - Specify bucket(s): `ghost-stack-dev-state`, `ghost-dev-sysext-images`
-   - TTL: None (or set expiration)
+   - TTL: 30 days
+   - Client IP Address Filtering: leave blank — GitHub runner IPs are too numerous and dynamic to whitelist
    - Create and copy both Access Key ID and Secret Access Key
 
 2. **Update Bitwarden:**
@@ -367,34 +329,14 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-### R2 Bootstrap Credentials
 
-**Purpose:** Bootstrap R2 bucket creation (used only during initial setup).
-
-**Storage:** Bitwarden Secrets Manager
-
-**Rotation:** Only needed if re-bootstrapping infrastructure
-
-#### Rotation Steps
-
-1. **Generate new credentials:**
-   - Log into Cloudflare dashboard
-   - Go to R2 → Overview → Manage R2 API Tokens
-   - Create new token with R2 bucket creation permissions
-   - Copy Access Key ID and Secret Access Key
-
-2. **Update Bitwarden:**
-   - Update the bootstrap R2 access key and secret key secrets in Bitwarden
-
----
-
-## Vultr API Key
+### Vultr API Key
 
 **Purpose:** Manage Vultr compute instances, firewalls, and block storage.
 
 **Bitwarden Secret ID:** `d68b6562-0d9e-424c-b2c5-b39c013ae34d`
 
-**Expiration:** Never
+**Expiration:** 30 days
 
 #### Rotation Steps
 
@@ -402,9 +344,12 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
    - Log into Vultr (dev account)
    - Go to Account → API
    - Click "Enable API" if not already enabled
+   - Set expiration to 30 days
    - Copy the API key (or regenerate if rotating)
 
    **Note:** Vultr only supports one API key per account. Regenerating creates a new key and invalidates the old one immediately.
+
+   **IP Access Control:** The API page has a separate IP access control section that applies to all API keys account-wide. It is currently configured with the management workstation IP and a catch-all **Any IPv4** entry. The catch-all is required because GitHub Actions runner IPs cannot be whitelisted. Do not remove either entry.
 
 2. **Update Bitwarden:**
    - Update secret `d68b6562-0d9e-424c-b2c5-b39c013ae34d` with new key
@@ -415,7 +360,7 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 
 ---
 
-## Tailscale API Key
+### Tailscale API Key
 
 **Purpose:** Register/deregister Tailscale devices via OpenTofu.
 
@@ -423,16 +368,16 @@ When a new Alloy version is built and uploaded to R2, the `build-and-publish.yml
 - API Key: `34b620b7-edf6-4d06-9792-b39b00317467`
 - Tailnet: `a8f07ce5-ed4d-42bb-b012-b39b00311d41`
 
-**Expiration:** 90 days by default
+**Expiration:** 30 days
 
 #### Rotation Steps
 
 1. **Generate new key:**
    - Log into Tailscale admin console
    - Go to Settings → Keys
-   - Click "Generate API key"
+   - Click "Generate access token..."
    - Description: `ghost-stack-tofu-YYYY-MM`
-   - Expiry: 90 days
+   - Expiry: 30 days
    - Copy the key
 
 2. **Update Bitwarden:**
@@ -542,29 +487,44 @@ To verify the key was invalidated:
 
 ---
 
-## PagerDuty Credentials
-
 ### PagerDuty OAuth Credentials
 
 **Purpose:** Configure PagerDuty integrations via OpenTofu.
 
 **Bitwarden Secret IDs:**
-- Subdomain: `8ee84397-e563-4278-9a3f-b39c013f7575`
 - Client ID: `7d51661b-736a-43ff-b01f-b39c013fe49b`
 - Client Secret: `b15575c0-0d28-459d-b92d-b39c01403a38`
 
-**Expiration:** Never
+**Expiration:** No expiry (cannot be set on PagerDuty App registrations) — rotate every 30 days
 
 #### Rotation Steps
 
-1. **Regenerate OAuth credentials:**
+1. **Create a new App:**
    - Log into PagerDuty
-   - Go to Integrations → Developer Mode → My Apps
-   - Find your OAuth app
-   - Regenerate client secret (this invalidates the old one)
+   - Go to Integrations → App Registrations
+   - Click **New App**
+   - Name: `ghost-stack-terraform-#` (increment # from the current app's name)
+   - Description: `Opentofu integration`
+   - Under Functionality, check **OAuth 2.0**
+   - Click **Next**
 
-2. **Update Bitwarden:**
-   - Update secret `b15575c0-0d28-459d-b92d-b39c01403a38` with new Client Secret
+2. **Configure OAuth permissions:**
+   - In the Authorization section, leave **Scoped OAuth** selected
+   - In the Permission Scope table, check **Read Access** and **Write Access** in the **Resource** row — this selects all Read and Write checkboxes
+   - Click **Register App**
+   - Copy the generated Client ID and Client Secret immediately
+
+3. **Update Bitwarden:**
+   - Update secret `7d51661b-736a-43ff-b01f-b39c013fe49b` with the new Client ID
+   - Update secret `b15575c0-0d28-459d-b92d-b39c01403a38` with the new Client Secret
+
+4. **Verify:**
+   - Run `./opentofu/scripts/tofu.sh dev plan`
+   - Confirm PagerDuty provider initializes
+
+5. **Delete old App:**
+   - Go to Integrations → App Registrations
+   - Find the old `ghost-stack-terraform-#` app and delete it
 
 ---
 
@@ -574,25 +534,27 @@ To verify the key was invalidated:
 
 **Bitwarden Secret ID:** `02805292-4311-4290-9b6e-b39c01554ae6`
 
-**Expiration:** Never
+**Expiration:** No expiry — rotate every 30 days
 
 #### Rotation Steps
 
 1. **Generate new token:**
    - Log into PagerDuty
-   - Go to My Profile → User Settings → Create API User Token
-   - Description: `ghost-stack-tofu-YYYY-MM`
-   - Copy the token
+   - Go to Integrations → API Access Keys
+   - Click **Create New API Key**
+   - Description: `ghost-dev-pd-api-key`
+   - Leave **Read-only API Key** unchecked
+   - Click **Create Key**
+   - Copy the API key immediately (shown only once)
 
 2. **Update Bitwarden:**
-   - Update secret `02805292-4311-4290-9b6e-b39c01554ae6` with new token
+   - Update secret `02805292-4311-4290-9b6e-b39c01554ae6` with the new token
+   - Also update the secret's **Note** field with the new key's ID, which is visible on the API Access Keys page
 
 3. **Revoke old token:**
-   - Delete the old API user token in PagerDuty
+   - Delete the old API key on the Integrations → API Access Keys page
 
 ---
-
-## Grafana Cloud Credentials
 
 ### Grafana Cloud Access Token
 
@@ -625,7 +587,9 @@ To verify the key was invalidated:
 
 4. **Verify the token before saving:**
    ```bash
-   curl -H "Authorization: Bearer YOUR_TOKEN" https://grafana.com/api/instances
+   read -s BEARER_TOKEN
+   curl -H "Authorization: Bearer ${BEARER_TOKEN}" https://grafana.com/api/instances
+   unset BEARER_TOKEN
    ```
    - Should return a JSON response with your stacks
    - If you get 401 Unauthorized, the token is invalid or truncated
@@ -658,7 +622,7 @@ To verify the key was invalidated:
 1. **Generate new token:**
    - Log into Grafana Cloud
    - Go to Administration → Users and access → Service Accounts
-   - Find the service account named `sa-1-extsvc-grafana-terraform-app`
+   - Click on `sa-1-extsvc-grafana-terraform-app` to open the service account details page
    - Click "Add service account token"
    - Keep the auto-generated name
    - Set expiration to 30 days
@@ -675,8 +639,10 @@ To verify the key was invalidated:
 
 4. **Verify the token before saving:**
    ```bash
-   curl -H "Authorization: Bearer YOUR_SA_TOKEN" \
+   read -s BEARER_TOKEN
+   curl -H "Authorization: Bearer ${BEARER_TOKEN}" \
      https://separationofconcerns0dev.grafana.net/api/folders
+   unset BEARER_TOKEN
    ```
    - Should return a JSON response with folders
    - If you get 401 Unauthorized, the token is invalid or truncated
@@ -695,7 +661,11 @@ To verify the key was invalidated:
 
 ---
 
-## TinyBird Credentials
+## Ghost Application Secrets (Infisical)
+
+These secrets are stored in Infisical and fetched by the Ghost instance at boot time via `infisical-secrets-fetch.service`. For initial provisioning and an overview of the rotation approach, see [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md).
+
+---
 
 ### TinyBird Workspace Admin Token (`TINYBIRD_ADMIN_TOKEN`)
 
@@ -703,7 +673,7 @@ To verify the key was invalidated:
 
 **Storage:** `/var/mnt/storage/ghost-compose/.env.secrets` on the Ghost instance
 
-**Expiration:** Never (but rotate periodically)
+**Expiration:** No expiry — rotate every 60 days
 
 #### Critical: Workspace Admin Token vs Personal Admin Token
 
@@ -728,26 +698,44 @@ Ghost generates JWTs signed with the admin token for browser-side TinyBird API c
 
 #### Rotation Steps
 
-1. **Get the Workspace admin token:**
-   - Log into TinyBird dashboard
-   - Go to Tokens
-   - Copy the **Workspace admin token** (not your personal admin token)
+1. **Refresh the token in TinyBird:**
+   - Log into [TinyBird console](https://ui.tinybird.co) and select the `soc_dev` workspace
+   - Click **Tokens** in the left sidebar
+   - Find **"Workspace admin token"** and click the refresh button — TinyBird will display the CLI command
+   - Run the command locally:
+     ```bash
+     tb --cloud token refresh "workspace admin token"
+     ```
+   - Copy the new token value from the command output
 
-2. **Update the secrets file on the instance:**
+2. **Update Infisical:**
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `TINYBIRD_ADMIN_TOKEN` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
+
+3. **Update `.env.secrets` on the instance and restart Ghost:**
    ```bash
    tailscale ssh core@ghost-dev-01
-   sudo vim /var/mnt/storage/ghost-compose/.env.secrets
-   # Update TINYBIRD_ADMIN_TOKEN with the Workspace admin token
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^TINYBIRD_ADMIN_TOKEN=.*|TINYBIRD_ADMIN_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-ghost-1
    ```
 
-3. **Restart Ghost:**
-   ```bash
-   sudo systemctl restart ghost-compose
-   ```
-
-4. **Verify:**
-   - Go to Ghost Admin → Stats
-   - Confirm analytics data is displayed without 403 errors
+4. **Verify Ghost Stats is functional:**
+   - Go to Ghost Admin → **Analytics**
+   - Confirm analytics data loads without errors
 
 #### Troubleshooting
 
@@ -776,7 +764,7 @@ echo "JWT_TOKEN_HERE" | cut -d. -f2 | base64 -d | jq .
 
 **Storage:** `/var/mnt/storage/ghost-compose/.env.generated` (auto-generated by tinybird-provision.service)
 
-**Expiration:** Never
+**Expiration:** No expiry — rotate every 60 days
 
 #### How It Works
 
@@ -788,16 +776,26 @@ The tracker token is automatically extracted during provisioning:
 
 #### Manual Rotation (if needed)
 
-1. **Get the tracker token:**
-   - Log into TinyBird dashboard
-   - Go to Tokens
-   - Copy the **tracker** token
+> **Note:** On instance recreation, `tinybird-provision.service` automatically fetches the current tracker token from TinyBird and writes it to `.env.generated`. Manual rotation is only needed if the token is compromised on a running instance.
 
-2. **Update the generated file:**
+1. **Refresh the token in TinyBird:**
+   - Log into [TinyBird console](https://ui.tinybird.co) and select the `soc_dev` workspace
+   - Click **Tokens** in the left sidebar
+   - Find **"tracker"** and click the refresh button — TinyBird will display the CLI command
+   - Run the command locally:
+     ```bash
+     tb --cloud token refresh "tracker"
+     ```
+   - Copy the new token value from the command output
+
+2. **Update `.env.generated` on the instance:**
    ```bash
    tailscale ssh core@ghost-dev-01
-   sudo vim /var/mnt/storage/ghost-compose/.env.generated
-   # Update TINYBIRD_TRACKER_TOKEN
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^TINYBIRD_TRACKER_TOKEN=.*|TINYBIRD_TRACKER_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.generated
+   unset NEW_VALUE
    ```
 
 3. **Restart the stack:**
@@ -807,28 +805,314 @@ The tracker token is automatically extracted during provisioning:
 
 ---
 
-## Linear API Token
+### Health Check Token
+
+**Secret name:** `HEALTH_CHECK_TOKEN` (managed in Infisical)
+
+**Purpose:** Caddy uses this token to authenticate health check requests from GitHub Actions and manual `curl` checks.
+
+**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` in the `dev` environment and on the instance at the same time.
+
+#### Rotation Steps
+
+1. Generate a new token (random, URL-safe):
+   ```bash
+   openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
+   ```
+
+2. Update Infisical:
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `HEALTH_CHECK_TOKEN` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
+
+3. Update GitHub Secret:
+   - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
+   - Update `HEALTH_CHECK_TOKEN`
+
+4. Update `.env.secrets` on the instance and restart Caddy:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^HEALTH_CHECK_TOKEN=.*|HEALTH_CHECK_TOKEN=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-caddy-1
+   ```
+
+5. Verify health check works with the new token (run from the dev workstation or another whitelisted IP):
+   ```bash
+   read -s NEW_VALUE
+   curl -sI -H "X-Health-Check-Token: ${NEW_VALUE}" https://separationofconcerns.dev
+   unset NEW_VALUE
+   # Should return HTTP 200
+   ```
+
+---
+
+### Ghost Mail SMTP Password
+
+**Secret name:** `mail__options__auth__pass` (managed in Infisical)
+
+**Purpose:** SMTP password for transactional email via Mailgun (password resets, staff invites).
+
+**Impact:** Rotating this breaks outbound email until Ghost is restarted with the new value.
+
+#### Rotation Steps
+
+1. Reset the SMTP password in Mailgun:
+   1. Log into [Mailgun](https://app.mailgun.com)
+   2. Navigate to **Sending → Domain settings** in the left-hand sidebar
+   3. Select your domain: `mg.separationofconcerns.dev`
+   4. Click the **Reset password** button next to `postmaster@mg.separationofconcerns.dev`
+   5. Copy the new password shown — it will not be displayed again
+
+2. Update Infisical:
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `mail__options__auth__pass` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
+
+3. Update `.env.secrets` on the instance and restart Ghost:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   read -s NEW_VALUE
+   sudo sed -i "s|^mail__options__auth__pass=.*|mail__options__auth__pass=${NEW_VALUE}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_VALUE
+
+   sudo docker restart ghost-compose-ghost-1
+   ```
+
+4. Verify email delivery:
+   1. Log into the Ghost admin dashboard at `https://admin.separationofconcerns.dev/ghost`
+   2. Click **Welcome emails** under **Membership** in the left-hand sidebar
+   3. Click the **Separation of Concerns** field in the **Free Members** section
+   4. Click the **Test** button
+   5. Set the email address to send the test to and click **Send**
+   6. Verify the test email was received
+
+---
+
+### MySQL Database Credentials
+
+Both MySQL secrets are managed in Infisical but also require a MySQL `ALTER USER` statement — updating Infisical alone does not change the password stored in MySQL's data directory.
+
+#### `DATABASE_PASSWORD`
+
+**Purpose:** Password for the `ghost` MySQL user. Used by Ghost to connect to its database.
+
+**Impact:** This rotation requires coordinating a MySQL password change with an Infisical update. If they get out of sync, Ghost will fail to connect to the database.
+
+##### Rotation Steps
+
+1. Generate a new password:
+   ```bash
+   cat /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 128 ; echo
+   ```
+
+2. Update MySQL and `.env.secrets` on the instance:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   # Read passwords securely — no echo, no history
+   read -s NEW_PASSWORD    # enter the new ghost user password generated in step 1
+   read -s ROOT_PASSWORD   # enter the current DATABASE_ROOT_PASSWORD
+
+   # Apply ALTER USER — SQL piped via stdin, root auth via env var
+   # Neither value appears in shell history or MySQL history
+   printf "ALTER USER 'ghost'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" "${NEW_PASSWORD}" | \
+     sudo docker exec -i -e MYSQL_PWD="${ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
+   unset ROOT_PASSWORD
+
+   # Update .env.secrets with the new password so containers pick it up on restart
+   sudo sed -i "s|^DATABASE_PASSWORD=.*|DATABASE_PASSWORD=${NEW_PASSWORD}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_PASSWORD
+   ```
+
+3. Update Infisical with the new password:
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `DATABASE_PASSWORD` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
+
+4. Restart Ghost containers:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+   sudo systemctl restart ghost-compose
+   ```
+
+5. Verify Ghost is running and can connect to the database:
+   ```bash
+   docker logs ghost-compose-ghost-1 2>&1 | tail -20
+   # Should show no database connection errors
+   ```
+
+---
+
+#### `DATABASE_ROOT_PASSWORD`
+
+**Purpose:** MySQL root password. Used for administrative database operations only — Ghost uses `DATABASE_PASSWORD` (ghost user), not the root password.
+
+**Impact:** This only affects administrative access to MySQL, not Ghost's normal operation.
+
+##### Rotation Steps
+
+1. Generate a new root password:
+   ```bash
+   cat /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 128 ; echo
+   ```
+
+2. Update MySQL and `.env.secrets` on the instance:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   # Read passwords securely — no echo, no history
+   read -s NEW_ROOT_PASSWORD      # enter the new root password generated in step 1
+   read -s CURRENT_ROOT_PASSWORD  # enter the current DATABASE_ROOT_PASSWORD
+
+   # Apply ALTER USER — SQL piped via stdin, current root auth via env var
+   # Neither value appears in shell history or MySQL history
+   printf "ALTER USER 'root'@'%%' IDENTIFIED BY '%s'; ALTER USER 'root'@'localhost' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;\n" \
+     "${NEW_ROOT_PASSWORD}" "${NEW_ROOT_PASSWORD}" | \
+     sudo docker exec -i -e MYSQL_PWD="${CURRENT_ROOT_PASSWORD}" ghost-compose-db-1 mysql -u root
+   unset CURRENT_ROOT_PASSWORD
+
+   # Update .env.secrets with the new root password so containers pick it up on restart
+   sudo sed -i "s|^DATABASE_ROOT_PASSWORD=.*|DATABASE_ROOT_PASSWORD=${NEW_ROOT_PASSWORD}|" \
+     /var/mnt/storage/ghost-compose/.env.secrets
+   unset NEW_ROOT_PASSWORD
+   ```
+
+3. Update Infisical with the new password:
+   - Log into [app.infisical.com](https://app.infisical.com) → **Ghost Stack** → **dev** → **Secrets**
+   - Find `DATABASE_ROOT_PASSWORD` and update the value
+
+   > **Alternative (CLI):**
+   > ```bash
+   > read -s SECRET_VALUE; export SECRET_VALUE
+   > infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
+   >   --projectId ghost-stack \
+   >   --env dev
+   > unset SECRET_VALUE
+   > ```
+
+4. Restart MySQL to pick up the new root password:
+   ```bash
+   tailscale ssh core@ghost-dev-01
+   sudo docker restart ghost-compose-db-1
+   # Wait for MySQL to be ready, then restart Ghost
+   sleep 15
+   sudo docker restart ghost-compose-ghost-1
+   ```
+
+5. Verify MySQL is healthy:
+   ```bash
+   docker logs ghost-compose-db-1 2>&1 | tail -10
+   docker logs ghost-compose-ghost-1 2>&1 | tail -10
+   ```
+
+---
+
+## Claude Code Integration
+
+These tokens are used locally by Claude Code for GitHub and Linear integration. They are not stored in Bitwarden or GitHub Secrets.
+
+---
+
+### Claude GitHub MCP Access Token
+
+**Purpose:** Allows Claude Code to interact with GitHub via MCP (Model Context Protocol) for issue management, PR creation, etc.
+
+**Scope:** Local development only (not stored in GitHub)
+
+**Expiration:** Configurable (recommend 90 days)
+
+#### Rotation Steps
+
+1. **Generate new token:**
+   - Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+   - Click "Generate new token"
+   - Name: `claude-mcp-access`
+   - Expiration: 90 days
+   - Repository access: Select repositories → choose `ghost-stack`, `alloy-sysext-build`
+   - Permissions:
+     - Contents: Read and write
+     - Issues: Read and write
+     - Pull requests: Read and write
+     - Metadata: Read-only
+   - Click "Generate token"
+
+2. **Update local configuration:**
+   - Update your Claude Code MCP configuration with the new token
+   - Location varies by setup (typically `~/.config/claude/mcp.json` or similar)
+
+3. **Verify:**
+   - Use Claude Code to list issues or create a test comment
+
+---
+
+### Linear API Token
 
 **Purpose:** Claude Code integration with Linear for issue tracking.
 
 **Storage:** Local Claude Code MCP configuration
 
-**Expiration:** Never
+**Expiration:** No expiry — rotate every 90 days
 
 #### Rotation Steps
 
-1. **Generate new token:**
-   - Log into Linear
-   - Go to Settings → API → Personal API keys
-   - Click "Create key"
-   - Label: `claude-code-YYYY-MM`
-   - Copy the token
+1. **Log into Linear.**
 
-2. **Update local configuration:**
+2. **Open your account settings:**
+   - Click **NO noahwhite** (avatar/initials) in the bottom-left corner
+   - Select **Settings** from the dropdown menu
+
+3. **Navigate to Security & access.**
+
+4. **Generate a new key:**
+   - Under **Personal API keys**, click **New API Key**
+   - Name it something like `claude-mcp-linear-key-2` (increment the suffix each rotation)
+   - Click **Only select permissions...** and select **Read and Write**
+   - Under **Team access**, select **All teams you have access to**
+   - Click **Create**
+   - Copy the token immediately — it is only shown once
+
+5. **Update local configuration:**
    - Update your Claude Code MCP configuration with the new token
 
-3. **Revoke old token:**
-   - Delete the old API key in Linear
+6. **Test the new key:**
+   - Open a Claude dev container session and verify the Linear MCP integration responds correctly
+
+7. **Revoke the old key:**
+   - Back on the **Security & access** screen, find the old key in the list
+   - Click the **...** button next to it
+   - Select **Revoke API key**
 
 ---
 
@@ -873,7 +1157,7 @@ After rotating any token, perform the following verifications:
 | Tailscale | Check admin console for API key status |
 | PagerDuty | OpenTofu plan with PagerDuty resources |
 | Grafana | OpenTofu plan with Grafana resources |
-| TinyBird | Ghost Admin → Stats shows analytics data without 403 errors |
+| TinyBird | Ghost Admin → Analytics shows data without 403 errors |
 
 ---
 
@@ -881,18 +1165,17 @@ After rotating any token, perform the following verifications:
 
 | Token | Recommended Rotation | Priority |
 |-------|---------------------|----------|
-| GHCR Token | Every 90 days | High |
-| Ghost Stack PAT | Every 90 days | High |
-| Cloudflare API Tokens | Every 90 days | High |
-| Tailscale API Key | Before 90-day expiry | High |
-| Tailscale Auth Key | Before each instance provisioning | High |
-| BWS Access Tokens | Every 6-12 months | Medium |
-| R2 Credentials | Every 6-12 months | Medium |
-| Vultr API Key | Annually | Medium |
-| PagerDuty Tokens | Annually | Low |
-| Grafana Tokens | Annually | Low |
-| TinyBird Tokens | Annually | Low |
-| Linear API Token | Annually | Low |
+| GHCR Token | Every 30 days | High |
+| Cloudflare API Tokens | Every 30 days | High |
+| BWS Access Tokens | Every 30 days (before expiry) | High |
+| R2 Credentials | Every 30 days | High |
+| Vultr API Key | Every 30 days (before expiry) | High |
+| Tailscale API Key | Every 30 days | High |
+| PagerDuty Tokens | Every 30 days | High |
+| Tailscale Auth Key | Before each instance provisioning | Medium |
+| Grafana Tokens | Every 30 days (expiry enforced) | Medium |
+| TinyBird Tokens | Every 60 days | Medium |
+| Linear API Token | Every 90 days | Low |
 
 ---
 
@@ -905,17 +1188,6 @@ If a token is suspected to be compromised:
 3. **Update all storage locations** (Bitwarden, GitHub Secrets)
 4. **Audit logs** for unauthorized access
 5. **Document the incident** and review access patterns
-
----
-
-## Application Secrets (Infisical)
-
-Ghost application secrets — `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD`, `HEALTH_CHECK_TOKEN`, `mail__options__auth__pass`, `TINYBIRD_ADMIN_TOKEN` — are managed in Infisical rather than Bitwarden.
-
-See [Infisical Secret Provisioning and Rotation](./runbooks/infisical-secrets.md) for:
-- Initial provisioning from `.env.secrets`
-- Rotating each secret and restarting affected services
-- Restart requirements (container restart vs MySQL ALTER USER)
 
 ---
 

@@ -7,11 +7,11 @@ This runbook documents how to provision and rotate application secrets stored in
 **Storage location:** Infisical project `Ghost Stack` (slug: `ghost-stack`), environment `dev`.
 
 **Related stories:**
-- GHO-74: Infisical infrastructure provisioned by OpenTofu (prerequisite)
-- GHO-75: Boot-time token generation (required before instance reads from Infisical)
-- GHO-76: RAM-backed secrets delivery at boot (required before instance reads from Infisical)
+- [GHO-74](https://linear.app/noahwhite/issue/GHO-74): Infisical infrastructure provisioned by OpenTofu (prerequisite)
+- [GHO-75](https://linear.app/noahwhite/issue/GHO-75): Boot-time token generation (required before instance reads from Infisical)
+- [GHO-76](https://linear.app/noahwhite/issue/GHO-76): RAM-backed secrets delivery at boot (required before instance reads from Infisical)
 
-> **Note:** Provisioning secrets in Infisical (this runbook) can be done before GHO-75/76 are deployed. The secrets will sit in Infisical ready to be consumed once boot-time delivery is in place.
+> **Note:** Provisioning secrets in Infisical (this runbook) can be done before [GHO-75](https://linear.app/noahwhite/issue/GHO-75)/[GHO-76](https://linear.app/noahwhite/issue/GHO-76) are deployed. The secrets will sit in Infisical ready to be consumed once boot-time delivery is in place.
 
 ---
 
@@ -19,7 +19,7 @@ This runbook documents how to provision and rotate application secrets stored in
 
 | Prerequisite | Why Required |
 |--------------|-------------|
-| GHO-74 deployed (`tofu apply`) | Creates the Infisical project, environment, and machine identity |
+| [GHO-74](https://linear.app/noahwhite/issue/GHO-74) deployed (`tofu apply`) | Creates the Infisical project, environment, and machine identity |
 | Infisical CLI installed | To set secrets from the command line |
 | Infisical management credentials | Client ID and client secret for the management identity |
 | Access to current `.env.secrets` on the instance | Source of truth for current secret values |
@@ -38,8 +38,8 @@ brew install infisical/get-cli/infisical
 Use the management identity credentials (stored in Bitwarden, retrieved via `infra-shell.sh`):
 
 ```bash
-export INFISICAL_CLIENT_ID="<management identity client ID>"
-export INFISICAL_CLIENT_SECRET="<management identity client secret>"
+read -s INFISICAL_CLIENT_ID; export INFISICAL_CLIENT_ID
+read -s INFISICAL_CLIENT_SECRET; export INFISICAL_CLIENT_SECRET
 
 infisical login \
   --method=universal-auth \
@@ -56,7 +56,7 @@ infisical login \
 
 ## Secrets Inventory
 
-These are the application secrets that must exist in Infisical before boot-time delivery (GHO-76) can serve them to the instance:
+These are the application secrets that must exist in Infisical before boot-time delivery ([GHO-76](https://linear.app/noahwhite/issue/GHO-76)) can serve them to the instance:
 
 | Secret Name | Description | Service Impact | Restart Required |
 |-------------|-------------|----------------|-----------------|
@@ -72,7 +72,7 @@ These are the application secrets that must exist in Infisical before boot-time 
 
 ## Initial Provisioning
 
-Run this procedure once after GHO-74 is deployed, to populate the Infisical `dev` environment with secret values from the existing instance.
+Run this procedure once after [GHO-74](https://linear.app/noahwhite/issue/GHO-74) is deployed, to populate the Infisical `dev` environment with secret values from the existing instance.
 
 ### Step 1: Confirm Infisical Infrastructure Is Deployed
 
@@ -109,34 +109,40 @@ exit
 
 ### Step 3: Set Secrets in Infisical
 
-Set each secret using the Infisical CLI. Replace `<value>` with the actual secret values retrieved in Step 2:
+Set each secret using the Infisical CLI. Use `read -s` to enter each value interactively — the value is stored in a shell variable and never appears in the command text, so it cannot leak into shell history.
 
 ```bash
-# Set secrets one at a time to avoid shell history issues with sensitive values
-infisical secrets set DATABASE_PASSWORD="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set DATABASE_PASSWORD="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set DATABASE_ROOT_PASSWORD="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set DATABASE_ROOT_PASSWORD="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set HEALTH_CHECK_TOKEN="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set HEALTH_CHECK_TOKEN="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set "mail__options__auth__pass"="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set "mail__options__auth__pass"="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
-infisical secrets set TINYBIRD_ADMIN_TOKEN="<value>" \
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
+
+unset SECRET_VALUE
 ```
 
-> **Alternative — Infisical UI:** Log into https://app.infisical.com, navigate to the **Ghost Stack** project → **dev** environment → **Secrets**, and add each secret manually. This avoids any risk of secrets appearing in terminal history.
+After the last secret is set, `unset SECRET_VALUE` clears the variable from the shell environment.
 
-> **Shell history note:** The commands above will store secret values in your shell history. After setting secrets, clear history with `history -c` or set `HISTIGNORE="infisical*"` before running these commands.
+> **Alternative — Infisical UI:** Log into https://app.infisical.com, navigate to the **Ghost Stack** project → **dev** environment → **Secrets**, and add each secret manually.
 
 ### Step 4: Verify Secrets Are Stored
 
@@ -152,7 +158,7 @@ Expected output should show all five secret names. Do not verify values here —
 
 This step confirms the `ghost-dev` machine identity's Token Auth method and privilege scoping are configured correctly.
 
-> **Important:** The `ghost-dev` identity uses Token Auth with single-use tokens (`number_of_uses_limit = 1`). Each token is generated per-provisioning-run by OpenTofu (GHO-75) and injected directly into the instance's Ignition config. Unlike Universal Auth, there are no client credentials to authenticate with manually — the token itself is the credential, and consuming it during verification wastes the boot token.
+> **Important:** The `ghost-dev` identity uses Token Auth with single-use tokens (`number_of_uses_limit = 1`). Each token is generated per-provisioning-run by OpenTofu ([GHO-75](https://linear.app/noahwhite/issue/GHO-75)) and injected directly into the instance's Ignition config. Unlike Universal Auth, there are no client credentials to authenticate with manually — the token itself is the credential, and consuming it during verification wastes the boot token.
 
 Verify the configuration in the Infisical UI instead:
 
@@ -163,34 +169,55 @@ Verify the configuration in the Infisical UI instead:
 5. Confirm `ghost-dev` appears with the `no-access` base role
 6. Confirm a **Specific Privilege** exists granting `read` on `secrets` scoped to the `dev` environment only
 
-The full integration test occurs on first boot after GHO-76 is deployed — the instance will use the injected token to fetch secrets and populate `.env.secrets`.
+The full integration test occurs on first boot after [GHO-76](https://linear.app/noahwhite/issue/GHO-76) is deployed — the instance will use the injected token to fetch secrets and populate `.env.secrets`.
 
 ---
 
 ## Rotating a Secret
 
-When rotating a secret, update it in Infisical first, then restart affected services. The instance will pick up the new value on the next boot (or after a service restart if GHO-76 supports live reload).
+> **Important:** Updating a secret in Infisical does **not** automatically update the running instance. `infisical-secrets-fetch.service` only runs once at first boot — after that, the file at `/var/mnt/storage/ghost-compose/.env.secrets` is the live source of truth for containers. You must update that file on the instance before restarting containers, or the old value will continue to be used.
+
+### Rotation Approaches
+
+**Option A — Manual update (recommended for routine rotation):**
+1. Update the secret in Infisical
+2. Update `/var/mnt/storage/ghost-compose/.env.secrets` on the running instance directly
+3. Restart affected containers
+
+**Option B — Instance recreation (for multiple secrets or a clean slate):**
+1. Update all secrets in Infisical
+2. Trigger instance recreation via `tofu apply` (e.g., bump a config value to change `instance_replacement_hash`)
+3. The new instance runs Ignition on first boot, `infisical-secrets-fetch.service` fetches all current Infisical values, and containers start with fresh secrets
 
 ### Which Restart Is Required?
 
 | Scenario | Action |
 |----------|--------|
 | `HEALTH_CHECK_TOKEN`, `mail__options__auth__pass`, `TINYBIRD_ADMIN_TOKEN` | Container restart only |
-| `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD` | MySQL ALTER USER + container restart |
+| `DATABASE_PASSWORD`, `DATABASE_ROOT_PASSWORD` | MySQL ALTER USER + `.env.secrets` update + container restart |
 
-### Container Restart Procedure
+### Updating `.env.secrets` on the Running Instance
 
-After updating a secret in Infisical:
+Use `read -s` + `sed -i` to replace the value in-place without leaking it into shell history. Replace `KEY_NAME` and the file path as appropriate:
 
 ```bash
 tailscale ssh core@ghost-dev-01
 
-# Restart the entire Ghost Compose stack
-sudo systemctl restart ghost-compose
+read -s NEW_VALUE
+sudo sed -i "s|^KEY_NAME=.*|KEY_NAME=${NEW_VALUE}|" \
+  /var/mnt/storage/ghost-compose/.env.secrets
+unset NEW_VALUE
+```
 
-# Or restart individual containers if only one service is affected
-# sudo docker restart ghost-compose-ghost-1   # Ghost only
-# sudo docker restart ghost-compose-caddy-1   # Caddy only
+Then restart the affected container(s):
+
+```bash
+# Restart individual container
+sudo docker restart ghost-compose-caddy-1   # Caddy
+sudo docker restart ghost-compose-ghost-1   # Ghost
+
+# Or restart the entire stack
+sudo systemctl restart ghost-compose
 ```
 
 ---
@@ -199,200 +226,31 @@ sudo systemctl restart ghost-compose
 
 ### `HEALTH_CHECK_TOKEN`
 
-**Purpose:** Caddy uses this token to authenticate health check requests from GitHub Actions and manual `curl` checks.
-
-**Impact:** Rotating this token invalidates all existing health check calls. Update the GitHub Secret `HEALTH_CHECK_TOKEN` (in both `dev` and `dev-ci` environments) at the same time.
-
-**Rotation steps:**
-
-1. Generate a new token (random, URL-safe):
-   ```bash
-   openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
-   ```
-
-2. Update Infisical:
-   ```bash
-   infisical secrets set HEALTH_CHECK_TOKEN="<new-token>" \
-     --projectId ghost-stack \
-     --env dev
-   ```
-
-3. Update GitHub Secrets (both environments):
-   - Go to `github.com/noahwhite/ghost-stack` → Settings → Environments → `dev`
-   - Update `HEALTH_CHECK_TOKEN`
-   - Repeat for Environments → `dev-ci`
-
-4. Restart Caddy:
-   ```bash
-   tailscale ssh core@ghost-dev-01
-   sudo docker restart ghost-compose-caddy-1
-   ```
-
-5. Verify health check works with the new token:
-   ```bash
-   curl -sI -H "X-Health-Check-Token: <new-token>" https://separationofconcerns.dev
-   # Should return HTTP 200
-   ```
+See [Token Rotation Runbook — HEALTH_CHECK_TOKEN](../token-rotation-runbook.md#health_check_token) for the full rotation procedure.
 
 ---
 
 ### `mail__options__auth__pass`
 
-**Purpose:** SMTP password for transactional email (password resets, staff invites).
-
-**Impact:** Rotating this breaks outbound email until the container is restarted with the new value.
-
-**Rotation steps:**
-
-1. Generate or retrieve the new SMTP password from your mail provider (Mailgun or similar).
-
-2. Update Infisical:
-   ```bash
-   infisical secrets set "mail__options__auth__pass"="<new-password>" \
-     --projectId ghost-stack \
-     --env dev
-   ```
-
-3. Restart Ghost:
-   ```bash
-   tailscale ssh core@ghost-dev-01
-   sudo docker restart ghost-compose-ghost-1
-   ```
-
-4. Verify email delivery:
-   - Go to Ghost Admin → Settings → Email → Send test email
-   - Confirm it is delivered
+See [Token Rotation Runbook — Ghost Mail SMTP Password](../token-rotation-runbook.md#ghost-mail-smtp-password) for the full rotation procedure.
 
 ---
 
 ### `TINYBIRD_ADMIN_TOKEN`
 
-**Purpose:** JWT signing for Ghost Stats dashboard queries. Ghost uses this token to sign JWTs that TinyBird validates for browser-side analytics API calls.
-
-**Critical:** Use the **Workspace admin token**, NOT the personal admin token. See [Token Rotation Runbook — TinyBird](../token-rotation-runbook.md#tinybird-credentials) for how to identify the correct token.
-
-**Impact:** Rotating this token invalidates Ghost Stats until the container is restarted. The TinyBird tracker token (auto-generated by `tinybird-provision.service`) is separate and does not need to be rotated here.
-
-**Rotation steps:**
-
-1. Get the new Workspace admin token from TinyBird:
-   - Log into TinyBird dashboard → Tokens
-   - Copy the token named exactly **"Workspace admin token"**
-
-2. Update Infisical:
-   ```bash
-   infisical secrets set TINYBIRD_ADMIN_TOKEN="<new-token>" \
-     --projectId ghost-stack \
-     --env dev
-   ```
-
-3. Restart Ghost:
-   ```bash
-   tailscale ssh core@ghost-dev-01
-   sudo docker restart ghost-compose-ghost-1
-   ```
-
-4. Verify Ghost Stats is functional:
-   - Go to Ghost Admin → Stats
-   - Confirm analytics data loads without 403 errors
+See [Token Rotation Runbook — TinyBird Workspace Admin Token](../token-rotation-runbook.md#tinybird-workspace-admin-token) for the full rotation procedure.
 
 ---
 
 ### `DATABASE_PASSWORD`
 
-**Purpose:** Password for the `ghost` MySQL user. Used by Ghost to connect to its database.
-
-**Impact:** This rotation requires coordinating a MySQL password change with an Infisical update. If they get out of sync, Ghost will fail to connect to the database.
-
-**Rotation steps:**
-
-1. Generate a new password:
-   ```bash
-   openssl rand -base64 24
-   ```
-
-2. Update the MySQL user password on the instance:
-   ```bash
-   tailscale ssh core@ghost-dev-01
-
-   # Connect to MySQL as root
-   sudo docker exec -it ghost-compose-db-1 mysql -u root -p
-   # Enter DATABASE_ROOT_PASSWORD when prompted
-
-   # Change the ghost user password
-   ALTER USER 'ghost'@'%' IDENTIFIED BY '<new-password>';
-   FLUSH PRIVILEGES;
-   EXIT;
-   ```
-
-3. Update Infisical with the new password:
-   ```bash
-   infisical secrets set DATABASE_PASSWORD="<new-password>" \
-     --projectId ghost-stack \
-     --env dev
-   ```
-
-4. Restart Ghost containers:
-   ```bash
-   sudo systemctl restart ghost-compose
-   ```
-
-5. Verify Ghost is running and can connect to the database:
-   ```bash
-   docker logs ghost-compose-ghost-1 2>&1 | tail -20
-   # Should show no database connection errors
-   ```
+See [Token Rotation Runbook — DATABASE\_PASSWORD](../token-rotation-runbook.md#database_password) for the full rotation procedure.
 
 ---
 
 ### `DATABASE_ROOT_PASSWORD`
 
-**Purpose:** MySQL root password. Used for administrative database operations.
-
-**Impact:** This only affects administrative access to MySQL, not Ghost's normal operation. Ghost uses `DATABASE_PASSWORD` (ghost user), not the root password.
-
-**Rotation steps:**
-
-1. Generate a new root password:
-   ```bash
-   openssl rand -base64 24
-   ```
-
-2. Update the MySQL root password on the instance:
-   ```bash
-   tailscale ssh core@ghost-dev-01
-
-   # Connect to MySQL as root (with current password)
-   sudo docker exec -it ghost-compose-db-1 mysql -u root -p
-   # Enter current DATABASE_ROOT_PASSWORD when prompted
-
-   # Change root password
-   ALTER USER 'root'@'%' IDENTIFIED BY '<new-password>';
-   ALTER USER 'root'@'localhost' IDENTIFIED BY '<new-password>';
-   FLUSH PRIVILEGES;
-   EXIT;
-   ```
-
-3. Update Infisical with the new password:
-   ```bash
-   infisical secrets set DATABASE_ROOT_PASSWORD="<new-password>" \
-     --projectId ghost-stack \
-     --env dev
-   ```
-
-4. Restart MySQL to pick up the new root password:
-   ```bash
-   sudo docker restart ghost-compose-db-1
-   # Wait for MySQL to be ready, then restart Ghost
-   sleep 15
-   sudo docker restart ghost-compose-ghost-1
-   ```
-
-5. Verify MySQL is healthy:
-   ```bash
-   docker logs ghost-compose-db-1 2>&1 | tail -10
-   docker logs ghost-compose-ghost-1 2>&1 | tail -10
-   ```
+See [Token Rotation Runbook — DATABASE\_ROOT\_PASSWORD](../token-rotation-runbook.md#database_root_password) for the full rotation procedure.
 
 ---
 
@@ -421,7 +279,142 @@ tailscale ssh core@ghost-dev-01 '
 
 ---
 
+## Post-Deploy: Verifying Boot-Time Secret Delivery
+
+After deploying a new instance, run these steps to confirm `infisical-secrets-fetch.service` ran successfully and all secrets are in place.
+
+### Step 1: Check Service Status
+
+```bash
+tailscale ssh core@ghost-dev-01 'systemctl status infisical-secrets-fetch.service'
+```
+
+Expected output: `Active: inactive (dead)` with result `exit-code=0`. The service is a oneshot unit — it runs once at boot and exits.
+
+### Step 2: Check Service Logs
+
+```bash
+tailscale ssh core@ghost-dev-01 'journalctl -u infisical-secrets-fetch.service'
+```
+
+**Success output looks like:**
+
+```
+[infisical-secrets] Fetching secrets from Infisical (project=<id> env=dev)...
+[infisical-secrets] Secrets written to /var/mnt/storage/ghost-compose/.env.secrets
+[infisical-secrets] Tailscale monitor .env written to /var/mnt/storage/sbin/tailscale_monitor/.env
+```
+
+**Token already spent (subsequent reboots — normal):**
+
+```
+[infisical-secrets] ERROR: Boot token missing or empty at /etc/infisical/access-token — skipping fetch
+```
+
+This is expected on all reboots after the first. The service exits 0 and the existing `.env.secrets` on block storage is used.
+
+### Step 3: Verify Ghost Secrets File
+
+```bash
+tailscale ssh core@ghost-dev-01 'ls -la /var/mnt/storage/ghost-compose/.env.secrets'
+```
+
+Expected output:
+```
+-rw------- 1 root root <size> <date> /var/mnt/storage/ghost-compose/.env.secrets
+```
+
+- Permissions must be `0600` (`-rw-------`)
+- File must be non-empty (size > 0)
+
+To verify all five expected keys are present (without revealing values):
+
+```bash
+tailscale ssh core@ghost-dev-01 'sudo grep -o "^[^=]*" /var/mnt/storage/ghost-compose/.env.secrets | sort'
+```
+
+Expected keys:
+
+```
+DATABASE_PASSWORD
+DATABASE_ROOT_PASSWORD
+HEALTH_CHECK_TOKEN
+TINYBIRD_ADMIN_TOKEN
+mail__options__auth__pass
+```
+
+### Step 4: Verify Tailscale Monitor Secrets File
+
+```bash
+tailscale ssh core@ghost-dev-01 'ls -la /var/mnt/storage/sbin/tailscale_monitor/.env'
+```
+
+Expected output:
+```
+-rw------- 1 root root <size> <date> /var/mnt/storage/sbin/tailscale_monitor/.env
+```
+
+- Permissions must be `0600` (`-rw-------`)
+
+To verify all expected keys are present:
+
+```bash
+tailscale ssh core@ghost-dev-01 'sudo grep -o "^[^=]*" /var/mnt/storage/sbin/tailscale_monitor/.env | sort'
+```
+
+Expected keys:
+
+```
+TAILSCALE_CLIENT_ID
+TAILSCALE_CLIENT_SECRET
+TAILSCALE_TAILNET
+```
+
+### Step 5: Verify Boot Token Was Consumed
+
+The boot token at `/etc/infisical/access-token` is shredded by the service on exit (whether successful or not). Confirm it is gone:
+
+```bash
+tailscale ssh core@ghost-dev-01 'ls -la /etc/infisical/access-token 2>&1 || echo "Token absent — consumed as expected"'
+```
+
+Expected: `No such file or directory` or the "Token absent" message.
+
+You can also confirm token consumption in the Infisical UI:
+1. Log into [app.infisical.com](https://app.infisical.com)
+2. Navigate to **Organization Settings → Machine Identities → ghost-dev**
+3. Under **Token Auth**, the issued token should show a `uses` count of `1` (consumed), or it may no longer appear if it was a single-use token that has been spent
+
+---
+
 ## Troubleshooting
+
+### Boot-Time Fetch Failed — Containers Have No Secrets
+
+**Symptom:** `journalctl -u infisical-secrets-fetch.service` shows `ERROR: Infisical API call failed` on first boot. Ghost containers fail to start because `.env.secrets` is missing or empty.
+
+**Cause:** The boot token was expired or already consumed before first boot. This can happen if `tofu apply` ran but instance startup was delayed past the token's TTL, or if the token was consumed by a previous failed boot attempt.
+
+**Fix:** Force instance replacement to regenerate a fresh token:
+```bash
+# Trigger instance replacement by changing a value in instance_replacement_hash,
+# or apply with -replace on the instance resource
+./opentofu/scripts/tofu.sh dev apply
+```
+
+> **Note:** The boot token is a single-use Token Auth token (`number_of_uses_limit = 1`). If the API call failed partway through, the token is spent and cannot be reused.
+
+---
+
+### Boot-Time Fetch Failed — Token File Missing
+
+**Symptom:** `journalctl -u infisical-secrets-fetch.service` shows `ERROR: Boot token missing or empty at /etc/infisical/access-token`.
+
+**On first boot:** This indicates the Ignition config did not deliver the token file. Verify the `terraform_data` snapshot resource ([GHO-85](https://linear.app/noahwhite/issue/GHO-85)) was applied correctly and the token path `/etc/infisical/access-token` is present in the Butane config.
+
+**On subsequent reboots:** This is expected and normal — the token was consumed and shredded on first boot. The existing `.env.secrets` on block storage is used.
+
+---
 
 ### Secret Not Found in Infisical
 
@@ -432,7 +425,7 @@ tailscale ssh core@ghost-dev-01 '
 infisical secrets list --projectId ghost-stack --env dev
 ```
 
-If the project does not exist, the Infisical infrastructure (GHO-74) has not been deployed. Run:
+If the project does not exist, the Infisical infrastructure ([GHO-74](https://linear.app/noahwhite/issue/GHO-74)) has not been deployed. Run:
 ```bash
 ./opentofu/scripts/tofu.sh dev apply
 ```
@@ -460,7 +453,7 @@ Ensure the ALTER USER step in the rotation procedure completed successfully befo
 **Symptom:** Health check requests fail with 403 after rotating `HEALTH_CHECK_TOKEN`.
 
 **Common causes:**
-1. GitHub Secret was not updated — check `HEALTH_CHECK_TOKEN` in both `dev` and `dev-ci` environments
+1. GitHub Secret was not updated — check `HEALTH_CHECK_TOKEN` in the `dev` environment
 2. Caddy container was not restarted after the secret changed
 3. New token has trailing whitespace or newline characters
 
