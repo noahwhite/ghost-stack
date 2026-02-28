@@ -1165,17 +1165,17 @@ After rotating any token, perform the following verifications:
 
 | Token | Recommended Rotation | Priority |
 |-------|---------------------|----------|
-| GHCR Token | Every 90 days | High |
-| Cloudflare API Tokens | Every 90 days | High |
-| Tailscale API Key | Before 90-day expiry | High |
-| Tailscale Auth Key | Before each instance provisioning | High |
-| Grafana Tokens | Every 30 days (expiry enforced) | High |
+| GHCR Token | Every 30 days | High |
+| Cloudflare API Tokens | Every 30 days | High |
 | BWS Access Tokens | Every 30 days (before expiry) | High |
-| R2 Credentials | Every 90 days | High |
+| R2 Credentials | Every 30 days | High |
 | Vultr API Key | Every 30 days (before expiry) | High |
-| PagerDuty Tokens | Annually | Low |
-| TinyBird Tokens | Annually | Low |
-| Linear API Token | Annually | Low |
+| Tailscale API Key | Every 30 days | High |
+| PagerDuty Tokens | Every 30 days | High |
+| Tailscale Auth Key | Before each instance provisioning | Medium |
+| Grafana Tokens | Every 30 days (expiry enforced) | Medium |
+| TinyBird Tokens | Every 60 days | Medium |
+| Linear API Token | Every 90 days | Low |
 
 ---
 
