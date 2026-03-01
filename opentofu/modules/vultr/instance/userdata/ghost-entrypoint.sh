@@ -14,6 +14,10 @@ TINYBIRD_TOKEN=""
 cat <<EOF > "$CONFIG_PATH"
 {
   "url": "${url:-http://localhost:2368}",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 2368
+  },
   "database": {
     "client": "mysql",
     "connection": {
