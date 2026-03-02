@@ -291,6 +291,19 @@ storage:
         source: "data:text/plain;charset=utf-8;base64,${ghost_backup_script}"
 
     # ==========================================================================
+    # Restore Script (GHO-64)
+    # ==========================================================================
+    # Deployed to /opt/bin/ (executable, root-owned). Run manually to restore
+    # /var/mnt/storage/ from R2 backup. Stops ghost-compose, restores from R2,
+    # then starts ghost-compose. Interactive confirmation prompt prevents
+    # accidental execution.
+    # ==========================================================================
+    - path: /opt/bin/ghost-restore.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_restore_script}"
+
+    # ==========================================================================
     # Tailscale Connection Monitor Script (GHO-83)
     # ==========================================================================
     # Delivered ephemerally via Ignition at /etc/ghost-compose/monitor_tailscale_conn.sh.
