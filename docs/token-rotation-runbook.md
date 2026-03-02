@@ -823,12 +823,14 @@ The tracker token is automatically extracted during provisioning:
 #### Rotation Steps
 
 1. **Create a new R2 API token in Cloudflare Dashboard:**
-   - Navigate to **R2 Object Storage** → **Manage R2 API Tokens** → **Create API Token**
+   - Navigate to **Storage & Databases** → **R2 Object Storage** → **Overview**
+   - Click **Manage** in the **Account Details** section
+   - Click **Create Account API token**
    - Name: `ghost-stack-backup-dev-YYYY-MM`
    - Permissions: **Object Read & Write** scoped to `ghost-backups-dev-separationofconcerns-dev` only
    - TTL: **90 days**
    - Click **Create API Token**
-   - Save the new Access Key ID and Secret Access Key — shown once only
+   - Cloudflare shows three values — save all three before leaving this page: Token value (not used by this integration but save for records), Access Key ID, and Secret Access Key
 
 2. **Update Infisical:**
    ```bash

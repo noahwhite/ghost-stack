@@ -51,21 +51,37 @@ Before the first backup can run, you must manually create the R2 bucket, create 
 ### Step 1: Create the R2 Bucket
 
 1. Log into [Cloudflare Dashboard](https://dash.cloudflare.com)
-2. Navigate to **R2 Object Storage** → **Create bucket**
-3. Name: `ghost-backups-dev-separationofconcerns-dev`
-4. Location: auto (or choose a region close to the Vultr dev instance)
-5. Click **Create bucket**
+2. Navigate to **Storage & Databases** → **R2 Object Storage** → **Overview**
+3. Click **Create bucket**
+4. Name: `ghost-backups-dev-separationofconcerns-dev`
+5. Location: auto (or choose a region close to the Vultr dev instance)
+6. Default Storage Class: **Standard**
+7. Click **Create bucket**
 
 ### Step 2: Create a Scoped R2 API Token
 
-1. In the Cloudflare Dashboard, navigate to **R2 Object Storage** → **Manage R2 API Tokens** → **Create API Token**
-2. Name: `ghost-stack-backup-dev`
-3. Permissions: **Object Read & Write** scoped to `ghost-backups-dev-separationofconcerns-dev` only
-4. TTL: **90 days** (matching the R2 backup credential rotation period)
-5. Click **Create API Token**
-6. **Save the Access Key ID and Secret Access Key** — shown once only
+1. In the Cloudflare Dashboard, navigate to **Storage & Databases** → **R2 Object Storage** → **Overview**
+2. Click **Manage** in the **Account Details** section
+3. Click **Create Account API token**
+4. Name: `ghost-stack-backup-dev`
+5. Permissions: **Object Read & Write** scoped to `ghost-backups-dev-separationofconcerns-dev` only
+6. TTL: **90 days** (matching the R2 backup credential rotation period)
+7. Click **Create API Token**
+8. Cloudflare shows three values — save all three somewhere secure before leaving this page:
+   - **Token value** — not used by this integration; store for your records
+   - **Access Key ID** — store in Infisical as `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID`
+   - **Secret Access Key** — store in Infisical as `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`
 
 ### Step 3: Add R2 Credentials to Infisical
+
+**Preferred — Infisical UI:**
+
+1. Log into [app.infisical.com](https://app.infisical.com)
+2. Navigate to the **Ghost Stack** project → **dev** environment → **Secrets**
+3. Add a new secret: key `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID`, value = the Access Key ID from Step 2
+4. Add a new secret: key `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`, value = the Secret Access Key from Step 2
+
+**Alternative — CLI:**
 
 ```bash
 # Authenticate if not already authenticated
