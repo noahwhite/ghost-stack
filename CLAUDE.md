@@ -463,6 +463,8 @@ Block Storage (manual) ────────────────→ /var/
 
 The Ghost Docker stack is based on [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker).
 
+Caddy, MySQL, and `ghost/traffic-analytics` image updates are automated via Renovate — see `docs/runbooks/renovate.md` for setup and operation. Ghost itself (`ghost:6-alpine`) is intentionally unpinned and not tracked by Renovate.
+
 ### Current Image Versions
 
 Check `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl` for current versions:
