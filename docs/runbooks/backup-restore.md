@@ -137,13 +137,7 @@ Expected output shows `ghost-backup.timer` with a future trigger time.
 ```bash
 tailscale ssh core@ghost-dev-01
 
-sudo systemctl start ghost-backup.service
-```
-
-Follow the logs:
-
-```bash
-journalctl -u ghost-backup -f
+sudo systemctl start ghost-backup.service & journalctl -u ghost-backup -f
 ```
 
 **Expected log output:**

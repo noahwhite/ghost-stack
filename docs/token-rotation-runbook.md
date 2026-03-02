@@ -875,8 +875,7 @@ The tracker token is automatically extracted during provisioning:
 
 5. **Verify the next backup succeeds:**
    ```bash
-   sudo systemctl start ghost-backup.service
-   journalctl -u ghost-backup -f
+   sudo systemctl start ghost-backup.service & journalctl -u ghost-backup -f
    # Expect: "Running rclone sync...", "Backup complete."
    ```
 
