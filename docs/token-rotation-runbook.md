@@ -833,6 +833,14 @@ The tracker token is automatically extracted during provisioning:
    - Cloudflare shows three values — save all three before leaving this page: Token value (not used by this integration but save for records), Access Key ID, and Secret Access Key
 
 2. **Update Infisical:**
+
+   **Preferred — UI:**
+   - Log into [app.infisical.com](https://app.infisical.com)
+   - Navigate to the **Ghost Stack** project → **All Environments**
+   - Update `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID` with the new Access Key ID (Environments = Development)
+   - Update `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY` with the new Secret Access Key (Environments = Development)
+
+   **Alternative — CLI:**
    ```bash
    read -s SECRET_VALUE; export SECRET_VALUE
    infisical secrets set GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID="$SECRET_VALUE" \
