@@ -75,6 +75,7 @@ docker run --rm \
     --exclude "ghost-compose/.env.secrets" \
     --exclude "ghost-compose/.env.generated" \
     --exclude "sbin/**" \
+    --create-empty-src-dirs \
     --log-level INFO
 
 log "Restore complete. Starting ghost-compose..."
