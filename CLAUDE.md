@@ -703,6 +703,69 @@ instance being named `ghost-dev-01-1`). See `docs/runbooks/tailscale-device-clea
 2. SSH to instance and check container logs
 3. Caddy logs show request details including headers
 
+### Backup and Restore
+
+Nightly backups of `/var/mnt/storage/` run via `ghost-backup.timer` → `ghost-backup.service`. The service stops ghost-compose, syncs to Cloudflare R2 using `rclone sync` (via `docker run rclone/rclone:1.69.1`), then restarts ghost-compose. Estimated downtime: ~2–3 minutes.
+
+**What is backed up:** `ghost/upload-data/`, `mysql/data/`, `caddy/certs/`, `ghost-compose/`
+**Excluded:** `ghost-compose/secrets/**`, `.env.secrets`, `.env.generated`, `sbin/**`
+
+```bash
+# Check timer status
+tailscale ssh core@ghost-dev-01
+sudo systemctl list-timers ghost-backup.timer
+
+# Manually trigger a backup
+sudo systemctl start ghost-backup.service
+journalctl -u ghost-backup -f
+
+# Verify stack recovered after backup
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+**Restore procedure** (after provisioning a new instance via `tofu apply`):
+
+```bash
+tailscale ssh core@ghost-dev-01
+
+# Stop ghost-compose
+sudo systemctl stop ghost-compose
+
+# Build rclone config from boot-time secrets
+R2_ACCESS_KEY_ID=$(sudo cat /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_access_key_id)
+R2_SECRET_ACCESS_KEY=$(sudo cat /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_secret_access_key)
+R2_ACCOUNT_ID=$(grep '^R2_ACCOUNT_ID=' /etc/ghost-compose/.env.config | cut -d= -f2)
+BUCKET=$(grep '^R2_DEV_BACKUPS_BUCKET=' /etc/ghost-compose/.env.config | cut -d= -f2)
+
+RCLONE_CONFIG=$(mktemp)
+cat > "${RCLONE_CONFIG}" <<EOF
+[r2]
+type = s3
+provider = Cloudflare
+access_key_id = ${R2_ACCESS_KEY_ID}
+secret_access_key = ${R2_SECRET_ACCESS_KEY}
+endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+EOF
+chmod 0600 "${RCLONE_CONFIG}"
+unset R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY
+
+# Restore from R2
+sudo docker run --rm \
+    --network host \
+    -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
+    -v "/var/mnt/storage:/data" \
+    rclone/rclone:1.69.1 sync "r2:${BUCKET}" /data \
+    --log-level INFO
+
+shred -u "${RCLONE_CONFIG}"
+
+# Restart ghost-compose
+sudo systemctl start ghost-compose
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+See `docs/runbooks/backup-restore.md` for full details including provisioning steps and troubleshooting.
+
 ## Domain
 - Production: `separationofconcerns.dev`
 - Admin: `admin.separationofconcerns.dev`
