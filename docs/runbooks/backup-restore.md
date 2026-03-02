@@ -237,6 +237,71 @@ curl -sI https://separationofconcerns.dev
 
 ---
 
+## Partial Restore
+
+Use this procedure to restore specific data from R2 without performing a full restore — for example, to recover individual images or the MySQL database only, without touching other files.
+
+**Stop ghost-compose first:**
+
+```bash
+sudo docker compose -f /etc/ghost-compose/compose.yml --project-directory /etc/ghost-compose down
+```
+
+**Restore specific paths using rclone directly.** Read the R2 credentials and account ID from the environment and secret files:
+
+```bash
+R2_ACCOUNT_ID=$(grep R2_ACCOUNT_ID /etc/ghost-compose/.env.config | cut -d= -f2)
+R2_BUCKET=$(grep R2_DEV_BACKUPS_BUCKET /etc/ghost-compose/.env.config | cut -d= -f2)
+R2_KEY=$(sudo cat /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_access_key_id)
+R2_SECRET=$(sudo cat /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_secret_access_key)
+```
+
+Write a temporary rclone config (shred when done):
+
+```bash
+sudo tee /run/rclone-partial.conf > /dev/null <<EOF
+[r2]
+type = s3
+provider = Cloudflare
+access_key_id = ${R2_KEY}
+secret_access_key = ${R2_SECRET}
+endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+EOF
+sudo chmod 0600 /run/rclone-partial.conf
+unset R2_KEY R2_SECRET
+```
+
+**Restore Ghost images only:**
+
+```bash
+sudo docker run --rm \
+    --network host \
+    -v /run/rclone-partial.conf:/config/rclone/rclone.conf:ro \
+    -v /var/mnt/storage:/data \
+    rclone/rclone:1.69.1 copy "r2:${R2_BUCKET}/ghost/upload-data/images" /data/ghost/upload-data/images \
+    --log-level INFO
+```
+
+**Restore MySQL data only:**
+
+```bash
+sudo docker run --rm \
+    --network host \
+    -v /run/rclone-partial.conf:/config/rclone/rclone.conf:ro \
+    -v /var/mnt/storage:/data \
+    rclone/rclone:1.69.1 sync "r2:${R2_BUCKET}/mysql/data" /data/mysql/data \
+    --log-level INFO
+```
+
+**Shred the rclone config and restart ghost-compose:**
+
+```bash
+sudo shred -u /run/rclone-partial.conf
+sudo docker compose -f /etc/ghost-compose/compose.yml --project-directory /etc/ghost-compose up -d
+```
+
+---
+
 ## Troubleshooting
 
 ### R2 secret files not found
