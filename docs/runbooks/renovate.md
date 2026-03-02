@@ -29,9 +29,10 @@ This is a one-time manual step required before Renovate will process the reposit
 1. Navigate to [github.com/apps/renovate](https://github.com/apps/renovate)
 2. Click **Configure**
 3. Under **Install**, select the **noahwhite** account
-4. Under **Repository access**, select **Only select repositories**
-5. Choose `ghost-stack` from the list
-6. Click **Install**
+4. When prompted to choose a mode, select **Scan and Alert** — this enables automated PR creation; "Scan Only" will not create PRs
+5. Under **Repository access**, select **Only select repositories**
+6. Choose `ghost-stack` from the list
+7. Click **Install**
 
 ### Step 2: Verify Renovate Scans the Repository
 
