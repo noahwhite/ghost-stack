@@ -71,6 +71,7 @@ Before the first backup can run, you must manually create the R2 bucket, create 
    - **Token value** — not used by this integration; store for your records
    - **Access Key ID** — store in Infisical as `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID`
    - **Secret Access Key** — store in Infisical as `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`
+9. Click **Finish**
 
 ### Step 3: Add R2 Credentials to Infisical
 
