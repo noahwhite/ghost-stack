@@ -279,6 +279,18 @@ storage:
         source: "data:text/plain;charset=utf-8;base64,${caddy_entrypoint_script}"
 
     # ==========================================================================
+    # Backup Script (GHO-63)
+    # ==========================================================================
+    # Deployed to /opt/bin/ (executable, root-owned). Runs nightly via
+    # ghost-backup.timer, takes ghost-compose down, syncs /var/mnt/storage to R2,
+    # then brings ghost-compose back up.
+    # ==========================================================================
+    - path: /opt/bin/ghost-backup.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_backup_script}"
+
+    # ==========================================================================
     # Tailscale Connection Monitor Script (GHO-83)
     # ==========================================================================
     # Delivered ephemerally via Ignition at /etc/ghost-compose/monitor_tailscale_conn.sh.
@@ -516,6 +528,37 @@ systemd:
 
     - name: ghost-compose.service
       enabled: true
+
+    # Ghost Stack Backup (GHO-63)
+    # ghost-backup.service is activated by the timer; not enabled directly
+    - name: ghost-backup.service
+      contents: |
+        [Unit]
+        Description=Ghost Stack Backup to Cloudflare R2
+        After=var-mnt-storage.mount docker.service
+        Requires=var-mnt-storage.mount docker.service
+
+        [Service]
+        Type=oneshot
+        ExecStart=/opt/bin/ghost-backup.sh
+        StandardOutput=journal
+        StandardError=journal
+        SyslogIdentifier=ghost-backup
+        TimeoutStartSec=1800
+
+    - name: ghost-backup.timer
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Daily Ghost Stack Backup to R2
+
+        [Timer]
+        OnCalendar=daily
+        Persistent=true
+        RandomizedDelaySec=1h
+
+        [Install]
+        WantedBy=timers.target
 
     # Alloy Enable Service
     # The alloy.service comes from the sysext image, which isn't merged until

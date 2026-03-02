@@ -27,6 +27,7 @@ This document provides step-by-step procedures for rotating all tokens and secre
 4. [Ghost Application Secrets (Infisical)](#ghost-application-secrets-infisical)
    - [TinyBird Workspace Admin Token](#tinybird-workspace-admin-token-tinybird_admin_token)
    - [TinyBird Tracker Token](#tinybird-tracker-token-tinybird_tracker_token)
+   - [R2 Backup Credentials](#r2-backup-credentials-ghost_dev_bckup_r2_access_key_id-and-ghost_dev_bckup_r2_secret_access_key)
    - [Health Check Token](#health-check-token)
    - [Ghost Mail SMTP Password](#ghost-mail-smtp-password)
    - [MySQL Database Credentials](#mysql-database-credentials)
@@ -88,6 +89,8 @@ GitHub secrets are scoped at two levels:
 | Grafana Cloud SA Token | Grafana | N/A | N/A | 30 days |
 | TinyBird Workspace Admin | TinyBird | N/A (instance) | N/A | Never |
 | TinyBird Tracker Token | TinyBird | N/A (instance) | N/A | Never |
+| R2 Backup Access Key | Cloudflare R2 / Infisical | N/A (instance) | N/A | 90 days |
+| R2 Backup Secret Access Key | Cloudflare R2 / Infisical | N/A (instance) | N/A | 90 days |
 | Health Check Token | Infisical | `HEALTH_CHECK_TOKEN` | Environment (dev) | N/A |
 | Admin IP | N/A | `ADMIN_IP` | Environment (dev) | N/A |
 | Cloudflare Zone ID | N/A | `CLOUDFLARE_ZONE_ID` | Environment (dev) | N/A |
@@ -805,6 +808,70 @@ The tracker token is automatically extracted during provisioning:
 
 ---
 
+### R2 Backup Credentials (`GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID` and `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`)
+
+**Purpose:** Cloudflare R2 API credentials used by `ghost-backup.service` for nightly block storage backups.
+
+**Storage:** Infisical (`ghost-stack`/`dev`); fetched to block storage at boot as 0600 root-only files:
+- `/var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_access_key_id`
+- `/var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_secret_access_key`
+
+**Expiration:** 90 days — set this TTL when creating the R2 API token in Cloudflare Dashboard.
+
+**Impact:** Rotating these credentials does not require restarting any containers. The backup script reads the secret files directly at runtime. No downtime — the next nightly backup will use the new credentials.
+
+#### Rotation Steps
+
+1. **Create a new R2 API token in Cloudflare Dashboard:**
+   - Navigate to **R2 Object Storage** → **Manage R2 API Tokens** → **Create API Token**
+   - Name: `ghost-stack-backup-dev-YYYY-MM`
+   - Permissions: **Object Read & Write** scoped to `ghost-backups-dev-separationofconcerns-dev` only
+   - TTL: **90 days**
+   - Click **Create API Token**
+   - Save the new Access Key ID and Secret Access Key — shown once only
+
+2. **Update Infisical:**
+   ```bash
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+
+   read -s SECRET_VALUE; export SECRET_VALUE
+   infisical secrets set GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY="$SECRET_VALUE" \
+     --projectId ghost-stack \
+     --env dev
+
+   unset SECRET_VALUE
+   ```
+
+3. **Update the secret files on the running instance:**
+   ```bash
+   tailscale ssh core@ghost-dev-01
+
+   read -s NEW_KEY
+   printf '%s' "$NEW_KEY" | sudo tee /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_access_key_id > /dev/null
+   unset NEW_KEY
+
+   read -s NEW_SECRET
+   printf '%s' "$NEW_SECRET" | sudo tee /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_secret_access_key > /dev/null
+   unset NEW_SECRET
+
+   sudo chmod 0600 /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_access_key_id
+   sudo chmod 0600 /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_secret_access_key
+   ```
+
+4. **Revoke the old R2 API token** in Cloudflare Dashboard.
+
+5. **Verify the next backup succeeds:**
+   ```bash
+   sudo systemctl start ghost-backup.service
+   journalctl -u ghost-backup -f
+   # Expect: "Running rclone sync...", "Backup complete."
+   ```
+
+---
+
 ### Health Check Token
 
 **Secret name:** `HEALTH_CHECK_TOKEN` (managed in Infisical)
@@ -1168,7 +1235,8 @@ After rotating any token, perform the following verifications:
 | GHCR Token | Every 30 days | High |
 | Cloudflare API Tokens | Every 30 days | High |
 | BWS Access Tokens | Every 30 days (before expiry) | High |
-| R2 Credentials | Every 30 days | High |
+| R2 Credentials (state/sysext) | Every 30 days | High |
+| R2 Backup Credentials | Every 90 days | High |
 | Vultr API Key | Every 30 days (before expiry) | High |
 | Tailscale API Key | Every 30 days | High |
 | PagerDuty Tokens | Every 30 days | High |

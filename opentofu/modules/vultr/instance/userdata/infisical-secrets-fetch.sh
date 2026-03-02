@@ -76,6 +76,8 @@ write_secret "DATABASE_ROOT_PASSWORD"    "db_root_password"
 write_secret "HEALTH_CHECK_TOKEN"        "health_check_token"
 write_secret "mail__options__auth__pass" "mail_smtp_password"
 write_secret "TINYBIRD_ADMIN_TOKEN"      "tinybird_admin_token"
+write_secret "GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID"     "ghost_dev_bckup_r2_access_key_id"
+write_secret "GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY" "ghost_dev_bckup_r2_secret_access_key"
 
 # Write .env.secrets with TINYBIRD_ADMIN_TOKEN only.
 # tinybird-provision.sh sources this file directly; no Docker service uses it via env_file any more.

@@ -131,6 +131,9 @@ locals {
     tinybird_api_url   = var.tinybird_api_url
     tailscale_tailnet  = var.tailscale_tailnet
 
+    cloudflare_account_id = var.cloudflare_account_id
+    r2_dev_backups_bucket = var.r2_dev_backups_bucket
+
     # Template and config file hashes (changes to these rebuild userdata)
     files = {
       ghost_bu                = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost.bu")
@@ -149,6 +152,7 @@ locals {
       monitor_tailscale       = filesha256("${path.module}/../../modules/vultr/instance/userdata/monitor_tailscale_conn.sh")
       ghost_entrypoint        = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-entrypoint.sh")
       caddy_entrypoint        = filesha256("${path.module}/../../modules/vultr/instance/userdata/caddy-entrypoint.sh")
+      ghost_backup            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-backup.sh")
     }
   }))
 }
@@ -213,6 +217,10 @@ module "vm" {
   infisical_boot_token  = terraform_data.boot_token_snapshot.output
   infisical_project_id  = module.infisical.project_id
   infisical_environment = "dev"
+
+  # Backup (GHO-63)
+  cloudflare_account_id = var.cloudflare_account_id
+  r2_dev_backups_bucket = var.r2_dev_backups_bucket
 }
 
 module "block_storage" {

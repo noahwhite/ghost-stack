@@ -65,6 +65,8 @@ These are the application secrets that must exist in Infisical before boot-time 
 | `HEALTH_CHECK_TOKEN` | Token for Caddy health check authentication | Caddy | Container restart |
 | `mail__options__auth__pass` | SMTP password for transactional email | Ghost | Container restart |
 | `TINYBIRD_ADMIN_TOKEN` | TinyBird workspace admin token for analytics | Ghost, tinybird-provision.service | Container restart |
+| `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID` | Cloudflare R2 access key for nightly backup | ghost-backup.service | Not applicable (read at backup runtime) |
+| `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY` | Cloudflare R2 secret key for nightly backup | ghost-backup.service | Not applicable (read at backup runtime) |
 
 > **Note:** `DATABASE_PASSWORD` and `DATABASE_ROOT_PASSWORD` require a MySQL ALTER USER step in addition to a container restart, because MySQL stores the password hash in its data directory — updating the secret in Infisical alone does not change the MySQL user's password.
 
@@ -137,6 +139,16 @@ infisical secrets set TINYBIRD_ADMIN_TOKEN="$SECRET_VALUE" \
   --projectId ghost-stack \
   --env dev
 
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID="$SECRET_VALUE" \
+  --projectId ghost-stack \
+  --env dev
+
+read -s SECRET_VALUE; export SECRET_VALUE
+infisical secrets set GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY="$SECRET_VALUE" \
+  --projectId ghost-stack \
+  --env dev
+
 unset SECRET_VALUE
 ```
 
@@ -146,13 +158,13 @@ After the last secret is set, `unset SECRET_VALUE` clears the variable from the 
 
 ### Step 4: Verify Secrets Are Stored
 
-Confirm all five secrets exist in the `dev` environment:
+Confirm all seven secrets exist in the `dev` environment:
 
 ```bash
 infisical secrets list --projectId ghost-stack --env dev
 ```
 
-Expected output should show all five secret names. Do not verify values here — validate them from the UI if needed.
+Expected output should show all seven secret names. Do not verify values here — validate them from the UI if needed.
 
 ### Step 5: Verify Secret Access via Machine Identity
 
@@ -239,6 +251,12 @@ See [Token Rotation Runbook — Ghost Mail SMTP Password](../token-rotation-runb
 ### `TINYBIRD_ADMIN_TOKEN`
 
 See [Token Rotation Runbook — TinyBird Workspace Admin Token](../token-rotation-runbook.md#tinybird-workspace-admin-token) for the full rotation procedure.
+
+---
+
+### `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID` and `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`
+
+See [Token Rotation Runbook — R2 Backup Credentials](../token-rotation-runbook.md#r2-backup-credentials-ghost_dev_bckup_r2_access_key_id-and-ghost_dev_bckup_r2_secret_access_key) for the full rotation procedure.
 
 ---
 
@@ -341,6 +359,24 @@ DATABASE_ROOT_PASSWORD
 HEALTH_CHECK_TOKEN
 TINYBIRD_ADMIN_TOKEN
 mail__options__auth__pass
+```
+
+To verify the individual secret files written to `/var/mnt/storage/ghost-compose/secrets/` (including R2 backup credentials):
+
+```bash
+tailscale ssh core@ghost-dev-01 'sudo ls -la /var/mnt/storage/ghost-compose/secrets/'
+```
+
+Expected files (all `0600`, root-owned):
+
+```
+db_password
+db_root_password
+ghost_dev_bckup_r2_access_key_id
+ghost_dev_bckup_r2_secret_access_key
+health_check_token
+mail_smtp_password
+tinybird_admin_token
 ```
 
 ### Step 4: Verify Tailscale Monitor Secrets File

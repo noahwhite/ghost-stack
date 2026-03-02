@@ -117,3 +117,13 @@ variable "tailscale_tailnet" {
   description = "Tailscale tailnet name for device status monitoring (e.g., example.com)"
   type        = string
 }
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare account ID (used to construct R2 S3-compatible endpoint)"
+  type        = string
+}
+
+variable "r2_dev_backups_bucket" {
+  description = "R2 bucket name for nightly backups"
+  type        = string
+}
