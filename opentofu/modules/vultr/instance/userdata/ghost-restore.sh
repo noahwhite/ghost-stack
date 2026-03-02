@@ -9,6 +9,10 @@
 # WARNING: This is a destructive operation — it overwrites /var/mnt/storage/ with
 # the contents of the R2 bucket. Run only on a freshly provisioned instance or after
 # confirming data loss has occurred.
+#
+# The following paths are excluded from the sync (same as backup) to protect
+# live credentials and generated files on the running instance:
+#   ghost-compose/secrets/**  ghost-compose/.env.secrets  ghost-compose/.env.generated  sbin/**
 set -euo pipefail
 
 CONFIG_FILE="/etc/ghost-compose/.env.config"
@@ -67,6 +71,11 @@ docker run --rm \
     -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
     -v "${STORAGE_DIR}:/data" \
     rclone/rclone:1.69.1 sync "r2:${R2_DEV_BACKUPS_BUCKET}" /data \
+    --exclude "ghost-compose/secrets/**" \
+    --exclude "ghost-compose/.env.secrets" \
+    --exclude "ghost-compose/.env.generated" \
+    --exclude "sbin/**" \
+    --create-empty-src-dirs \
     --log-level INFO
 
 log "Restore complete. Starting ghost-compose..."
