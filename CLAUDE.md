@@ -381,8 +381,8 @@ docker restart ghost-compose-caddy-1
 # Ghost compose directory (ephemeral config)
 cd /etc/ghost-compose
 
-# Secrets directory (persistent on block storage)
-ls -la /var/mnt/storage/ghost-compose/.env.secrets
+# Secrets directory (persistent on block storage, written by infisical-secrets-fetch.sh at boot)
+ls -la /var/mnt/storage/ghost-compose/secrets/
 ```
 
 ## Ghost Compose Architecture
@@ -407,7 +407,7 @@ These files persist across instance recreations on `/var/mnt/storage/`:
 
 | Path | Purpose |
 |------|---------|
-| `/var/mnt/storage/ghost-compose/.env.secrets` | Secrets only (passwords, tokens) |
+| `/var/mnt/storage/ghost-compose/secrets/` | Individual secret files (0600, written by `infisical-secrets-fetch.sh` at boot) |
 | `/var/mnt/storage/ghost/upload-data/` | Ghost content uploads |
 | `/var/mnt/storage/mysql/data/` | MySQL database files |
 | `/var/mnt/storage/caddy/certs/` | Cloudflare origin certificates |
@@ -417,26 +417,40 @@ These files persist across instance recreations on `/var/mnt/storage/`:
 ```
 OpenTofu Variables → env.config.tftpl → Ignition → /etc/ghost-compose/.env.config
                                                             ↓
-Block Storage (manual) ────────────────→ /var/mnt/storage/ghost-compose/.env.secrets
+Infisical (boot) → infisical-secrets-fetch.sh → /var/mnt/storage/ghost-compose/secrets/
                                                             ↓
-                                        Docker Compose sources both files
+                         Docker Compose sources .env.config; mounts individual secret files
 ```
+
+The Infisical single-use token is provisioned by OpenTofu per deployment and injected into
+Ignition. `infisical-secrets-fetch.sh` consumes it once at first boot, writes each secret as
+a 0600 file on persistent block storage, and the token is invalidated. Secrets survive reboots
+without requiring Infisical availability again. See `docs/runbooks/infisical-secrets.md`.
 
 ## Ghost Compose Secrets Management
 
 ### File Split Strategy
 
-**`.env.config` (ephemeral - safe for version control):**
+**`.env.config` (ephemeral — deployed via Ignition, safe for version control):**
 - Domain names (DOMAIN, ADMIN_DOMAIN)
 - Admin IP for Caddy ACL (ADMIN_IP)
-- Mail settings (host, user - not password)
+- Mail settings (host, user — not password)
 - Data paths (UPLOAD_LOCATION, MYSQL_DATA_LOCATION)
+- Backup config (R2_ACCOUNT_ID, R2_DEV_BACKUPS_BUCKET)
 
-**`.env.secrets` (persistent - manual management):**
-- DATABASE_PASSWORD
-- DATABASE_ROOT_PASSWORD
-- HEALTH_CHECK_TOKEN
-- mail__options__auth__pass
+**`secrets/` (persistent — individual 0600 files on block storage, written by `infisical-secrets-fetch.sh` at boot):**
+
+| File | Secret |
+|------|--------|
+| `db_password` | MySQL ghost user password |
+| `db_root_password` | MySQL root password |
+| `health_check_token` | Caddy health check token |
+| `mail_smtp_password` | SMTP password |
+| `tinybird_admin_token` | TinyBird workspace admin token |
+| `ghost_dev_bckup_r2_access_key_id` | R2 backup access key |
+| `ghost_dev_bckup_r2_secret_access_key` | R2 backup secret key |
+
+See `docs/runbooks/infisical-secrets.md` for the full inventory and rotation procedures.
 
 ### Security Model
 
@@ -445,19 +459,22 @@ Block Storage (manual) ────────────────→ /var/
 | Vultr userdata exposure | No secrets in Ignition - only `.env.config` |
 | OpenTofu state exposure | No secrets passed through OpenTofu variables |
 | Block storage access | File permissions (0600), Tailscale-only SSH |
-| Instance compromise | Secrets isolated to single file, easier to rotate |
+| Instance compromise | Secrets isolated to individual 0600 files, each rotatable independently |
 
 ### Modifying Configuration
 
 **Non-secret changes** (domains, paths, mail settings):
 1. Update OpenTofu variables in `opentofu/envs/dev/main.tofu`
-2. Run `tofu plan` and `tofu apply`
-3. Instance will be recreated with new config
+2. Create a PR to `develop` — plan CI runs automatically
+3. Merge and approve the deployment in GitHub Actions
+4. Instance will be recreated with new config
 
 **Secret changes** (passwords, tokens):
-1. SSH to instance: `tailscale ssh core@ghost-dev-01`
-2. Edit secrets file: `sudo vim /var/mnt/storage/ghost-compose/.env.secrets`
-3. Restart containers: `cd /etc/ghost-compose && sudo docker compose restart`
+
+Secrets are managed in Infisical and written to block storage at boot — there is no
+`.env.secrets` file to edit manually. See `docs/runbooks/infisical-secrets.md` for
+provisioning and rotation procedures (including how to update a running instance
+without reprovisioning).
 
 ## Updating Ghost Docker Images
 
@@ -484,11 +501,15 @@ Check `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl`
    - Edit `compose.yml.tftpl` with new image tags and SHA256 digests
    - Update Caddyfile or snippets if upstream changed them
 
-4. **Deploy**:
+4. **Deploy** via CI/CD:
    ```bash
-   ./opentofu/scripts/tofu.sh dev plan
-   ./opentofu/scripts/tofu.sh dev apply
+   git checkout -b feature/update-ghost-compose-images
+   git add opentofu/modules/vultr/instance/userdata/ghost-compose/
+   git commit -m "chore: update Ghost compose image versions"
+   git push -u origin feature/update-ghost-compose-images
    ```
+   Open a PR to `develop`. The plan CI will run automatically — review the plan output,
+   then merge and approve the deployment in GitHub Actions.
 
 ### Files to Monitor
 
