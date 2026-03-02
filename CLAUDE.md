@@ -718,8 +718,7 @@ tailscale ssh core@ghost-dev-01
 sudo systemctl list-timers ghost-backup.timer
 
 # Manually trigger a backup
-sudo systemctl start ghost-backup.service
-journalctl -u ghost-backup -f
+sudo systemctl start ghost-backup.service & journalctl -u ghost-backup -f
 
 # Verify stack recovered after backup
 docker ps --format "table {{.Names}}\t{{.Status}}"
