@@ -267,8 +267,10 @@ Ghost Stack is an infrastructure-as-code project for deploying a self-hosted Gho
 - **Docker Compose**: Container orchestration on the Ghost instance
 - **Caddy**: Reverse proxy with automatic HTTPS
 - **Ghost**: Blog platform
-- **Bitwarden Secrets Manager**: Secrets management via `bws` CLI
+- **Bitwarden Secrets Manager**: Infrastructure credentials via `bws` CLI (used by OpenTofu and `infra-shell.sh`)
+- **Infisical**: Application secrets management — secrets fetched at instance boot via single-use token auth and written to persistent block storage
 - **Tailscale**: Secure SSH access to instances
+- **Claude.ai**: AI force multiplier — used throughout the project for infrastructure design, implementation, code review, and documentation
 
 ## Repository Structure
 
