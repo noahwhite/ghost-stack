@@ -153,6 +153,7 @@ locals {
       ghost_entrypoint        = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-entrypoint.sh")
       caddy_entrypoint        = filesha256("${path.module}/../../modules/vultr/instance/userdata/caddy-entrypoint.sh")
       ghost_backup            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-backup.sh")
+      ghost_restore           = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-restore.sh")
     }
   }))
 }

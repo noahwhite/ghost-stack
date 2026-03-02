@@ -202,55 +202,29 @@ Use this procedure to restore the Ghost stack from an R2 backup — for example,
 - Block storage is attached and mounted at `/var/mnt/storage/`
 - SSH access via Tailscale is available
 
-### Step 1: Stop ghost-compose
+### Step 1: Run the restore script
+
+A restore script is deployed to `/opt/bin/ghost-restore.sh` on the instance. It handles stopping ghost-compose, restoring from R2, and restarting ghost-compose — with an interactive confirmation prompt to prevent accidental execution.
 
 ```bash
 tailscale ssh core@ghost-dev-01
-
-sudo systemctl stop ghost-compose
+sudo /opt/bin/ghost-restore.sh
 ```
 
-### Step 2: Restore from R2
+The script will prompt: `Type 'yes' to continue:` — enter `yes` to proceed.
 
-Pull the R2 credentials (written to block storage by `infisical-secrets-fetch.service` at first boot):
+**Expected log output:**
 
-```bash
-R2_ACCESS_KEY_ID=$(sudo cat /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_access_key_id)
-R2_SECRET_ACCESS_KEY=$(sudo cat /var/mnt/storage/ghost-compose/secrets/ghost_dev_bckup_r2_secret_access_key)
-# (Get CLOUDFLARE_ACCOUNT_ID from .env.config)
-R2_ACCOUNT_ID=$(grep '^R2_ACCOUNT_ID=' /etc/ghost-compose/.env.config | cut -d= -f2)
-BUCKET=$(grep '^R2_DEV_BACKUPS_BUCKET=' /etc/ghost-compose/.env.config | cut -d= -f2)
-
-# Write a temporary rclone config
-RCLONE_CONFIG=$(mktemp)
-cat > "${RCLONE_CONFIG}" <<EOF
-[r2]
-type = s3
-provider = Cloudflare
-access_key_id = ${R2_ACCESS_KEY_ID}
-secret_access_key = ${R2_SECRET_ACCESS_KEY}
-endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
-EOF
-chmod 0600 "${RCLONE_CONFIG}"
-unset R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY
-
-# Restore from R2 to block storage
-sudo docker run --rm \
-    --network host \
-    -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
-    -v "/var/mnt/storage:/data" \
-    rclone/rclone:1.69.1 sync "r2:${BUCKET}" /data \
-    --log-level INFO
-
-shred -u "${RCLONE_CONFIG}"
+```
+[ghost-restore] Stopping ghost-compose...
+[ghost-restore] Restoring from r2:ghost-backups-dev-separationofconcerns-dev to /var/mnt/storage...
+[ghost-restore] Restore complete. Starting ghost-compose...
+[ghost-restore] Done.
 ```
 
-### Step 3: Start ghost-compose
+### Step 2: Verify containers started
 
 ```bash
-sudo systemctl start ghost-compose
-
-# Verify containers started
 docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
 
