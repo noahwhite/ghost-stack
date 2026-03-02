@@ -78,9 +78,9 @@ Before the first backup can run, you must manually create the R2 bucket, create 
 **Preferred — Infisical UI:**
 
 1. Log into [app.infisical.com](https://app.infisical.com)
-2. Navigate to the **Ghost Stack** project → **dev** environment → **Secrets**
-3. Add a new secret: key `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID`, value = the Access Key ID from Step 2
-4. Add a new secret: key `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`, value = the Secret Access Key from Step 2
+2. Navigate to the **Ghost Stack** project → **All Environments**
+3. Click **Add Secret**: key `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID`, value = the Access Key ID from Step 2, Environments = Development
+4. Click **Add Secret**: key `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY`, value = the Secret Access Key from Step 2, Environments = Development
 
 **Alternative — CLI:**
 
