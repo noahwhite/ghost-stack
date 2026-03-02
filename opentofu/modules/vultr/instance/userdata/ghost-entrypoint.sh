@@ -38,6 +38,9 @@ cat <<EOF > "$CONFIG_PATH"
   },
   "tinybird": {
     "adminToken": "${TINYBIRD_TOKEN}"
+  },
+  "paths": {
+    "contentPath": "/var/lib/ghost/content/"
   }
 }
 EOF
