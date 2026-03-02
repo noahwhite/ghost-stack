@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "baseBranches": ["develop"],
+  "branchPrefix": "feature/renovate-",
+  "assignees": ["noahwhite"],
+  "docker-compose": {
+    "fileMatch": ["(^|/)compose\\.yml\\.tftpl$"]
+  },
+  "packageRules": [
+    {
+      "description": "Group Ghost stack Docker image updates into a single PR with digest pinning",
+      "matchManagers": ["docker-compose"],
+      "matchPackageNames": ["caddy", "mysql", "ghost/traffic-analytics"],
+      "groupName": "Ghost stack Docker images",
+      "pinDigests": true
+    }
+  ]
+}
