@@ -43,6 +43,10 @@ locals {
     infisical_project_id  = var.infisical_project_id
     infisical_environment = var.infisical_environment
     tailscale_tailnet     = var.tailscale_tailnet
+
+    # Backup configuration (GHO-63)
+    cloudflare_account_id = var.cloudflare_account_id
+    r2_dev_backups_bucket = var.r2_dev_backups_bucket
   }))
 
   # Static files - no variable interpolation needed
@@ -69,6 +73,9 @@ locals {
   # Docker Compose service entrypoint scripts (GHO-69)
   ghost_entrypoint_script = filebase64("${path.module}/userdata/ghost-entrypoint.sh")
   caddy_entrypoint_script = filebase64("${path.module}/userdata/caddy-entrypoint.sh")
+
+  # Backup (GHO-63)
+  ghost_backup_script = filebase64("${path.module}/userdata/ghost-backup.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -109,6 +116,9 @@ data "ct_config" "ghost" {
     # Docker Compose service entrypoint scripts (GHO-69)
     ghost_entrypoint_script = local.ghost_entrypoint_script
     caddy_entrypoint_script = local.caddy_entrypoint_script
+
+    # Backup (GHO-63)
+    ghost_backup_script = local.ghost_backup_script
   })
   strict = true
 }

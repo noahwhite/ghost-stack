@@ -164,3 +164,14 @@ variable "tailscale_tailnet" {
   description = "Tailscale tailnet name"
   type        = string
 }
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare account ID (used for R2 endpoint construction)"
+  type        = string
+}
+
+variable "r2_dev_backups_bucket" {
+  description = "R2 bucket name for nightly backups"
+  type        = string
+  default     = "ghost-backups-dev-separationofconcerns-dev"
+}

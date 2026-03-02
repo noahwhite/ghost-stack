@@ -92,10 +92,10 @@ The `ghost-dev` identity has `no-access` as its base project role, with a specif
 | `HEALTH_CHECK_TOKEN` | Caddy health check authentication |
 | `mail__options__auth__pass` | SMTP password for transactional email |
 | `TINYBIRD_ADMIN_TOKEN` | TinyBird workspace admin token |
+| `GHOST_DEV_BCKUP_R2_ACCESS_KEY_ID` | R2 access key for nightly backup |
+| `GHOST_DEV_BCKUP_R2_SECRET_ACCESS_KEY` | R2 secret key for nightly backup |
 
 For provisioning and rotation procedures see [Infisical Secrets Runbook](./runbooks/infisical-secrets.md).
-
-> **Status:** Infisical boot-time delivery is being deployed via GHO-74 through GHO-76. Until GHO-76 is deployed, application secrets are sourced from `/var/mnt/storage/ghost-compose/.env.secrets` on the instance.
 
 ---
 
