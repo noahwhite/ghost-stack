@@ -2,7 +2,7 @@
 # ghost-restore.sh — Restore Ghost stack data from Cloudflare R2 backup
 #
 # Usage:
-#   ghost-restore.sh [all|images|mysql]
+#   ghost-restore.sh [all|images|mysql|-h|--help]
 #
 #   all    (default) Full restore — syncs entire /var/mnt/storage/ from R2.
 #                    Ghost-compose is stopped for the duration.
@@ -10,6 +10,7 @@
 #                    Ghost-compose is stopped for the duration.
 #   mysql  MySQL only — syncs mysql/data/ from R2.
 #                    Ghost-compose is stopped for the duration.
+#   -h, --help       Show usage and exit.
 #
 # All modes use rclone sync (R2 → local) so the target path is made to match
 # R2 exactly — files present locally but absent in R2 are deleted.
