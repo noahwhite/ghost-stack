@@ -10384,7 +10384,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
     condition = "C"
     for       = "0s"
 
-    no_data_state  = "NoData"
+    no_data_state  = "OK"
     exec_err_state = "Error"
 
     annotations = {
@@ -10559,7 +10559,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
     condition = "C"
     for       = "15m"
 
-    no_data_state  = "NoData"
+    no_data_state  = "OK"
     exec_err_state = "Error"
 
     annotations = {
