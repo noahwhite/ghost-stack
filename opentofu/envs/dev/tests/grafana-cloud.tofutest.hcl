@@ -57,12 +57,6 @@ mock_provider "grafana" {
     }
   }
 
-  mock_resource "grafana_role_assignment" {
-    defaults = {
-      id = "test-role-assignment-id"
-    }
-  }
-
   mock_data "grafana_data_source" {
     defaults = {
       id   = "test-datasource-id"
@@ -401,10 +395,5 @@ run "grafana_cloud_module_tests" {
   assert {
     condition     = jsondecode(grafana_dashboard.ghost_stack_backup.config_json).title == "Ghost Stack Backup"
     error_message = "Backup dashboard title should be 'Ghost Stack Backup'"
-  }
-
-  assert {
-    condition     = grafana_role_assignment.terraform_sa_alerting_provisioning.role_uid == "fixed:alerting.provisioning:writer"
-    error_message = "Terraform SA should have alerting provisioning writer role assigned"
   }
 }

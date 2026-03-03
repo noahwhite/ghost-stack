@@ -29,19 +29,6 @@ resource "grafana_cloud_stack_service_account" "terraform_sa" {
   is_disabled = false
 }
 
-# Grant the terraform SA access to the alerting provisioning API (required by
-# grafana_rule_group, grafana_contact_point, grafana_notification_policy).
-# fixed:alerting:writer covers the regular alerting API but not /v1/provisioning/*.
-#
-# SA numeric ID (19) is hardcoded: grafana_cloud_stack_service_account does not
-# export a usable instance-level ID attribute, and the SA predates full IaC
-# management of its role assignments.
-resource "grafana_role_assignment" "terraform_sa_alerting_provisioning" {
-  provider         = grafana.soc_dev
-  role_uid         = "fixed:alerting.provisioning:writer"
-  service_accounts = ["19"]
-}
-
 resource "grafana_folder" "tailscale_folder" {
   provider = grafana.soc_dev
   title    = "tailscale"
