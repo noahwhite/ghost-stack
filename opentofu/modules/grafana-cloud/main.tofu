@@ -10497,7 +10497,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
           uid  = data.grafana_data_source.soc_dev_loki.uid
         }
         editorMode   = "code"
-        expr         = "count_over_time({job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"Backup complete.\" [26h])"
+        expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"Backup complete.\""
         queryType    = "range"
         refId        = "A"
         legendFormat = ""
@@ -10516,12 +10516,12 @@ resource "grafana_rule_group" "ghost_stack_backup" {
           evaluator = { params = [], type = "gt" }
           operator  = { type = "and" }
           query     = { params = ["A"] }
-          reducer   = { params = [], type = "last" }
+          reducer   = { params = [], type = "count" }
           type      = "query"
         }]
         datasource = { type = "__expr__", uid = "__expr__" }
         expression = "A"
-        reducer    = "last"
+        reducer    = "count"
         refId      = "B"
         type       = "reduce"
       })
