@@ -10373,7 +10373,7 @@ resource "grafana_notification_policy" "root" {
 # Alert rules — 3 rules covering failure, missed window, compose recovery
 resource "grafana_rule_group" "ghost_stack_backup" {
   provider         = grafana.soc_dev
-  org_id           = "0"
+  org_id           = "1"
   folder_uid       = grafana_folder.ghost_stack_folder.uid
   name             = "Ghost Stack Backup"
   interval_seconds = 300
