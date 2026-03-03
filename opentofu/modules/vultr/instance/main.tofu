@@ -75,7 +75,8 @@ locals {
   caddy_entrypoint_script = filebase64("${path.module}/userdata/caddy-entrypoint.sh")
 
   # Backup (GHO-63)
-  ghost_backup_script = filebase64("${path.module}/userdata/ghost-backup.sh")
+  ghost_backup_script  = filebase64("${path.module}/userdata/ghost-backup.sh")
+  ghost_restore_script = filebase64("${path.module}/userdata/ghost-restore.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -118,7 +119,8 @@ data "ct_config" "ghost" {
     caddy_entrypoint_script = local.caddy_entrypoint_script
 
     # Backup (GHO-63)
-    ghost_backup_script = local.ghost_backup_script
+    ghost_backup_script  = local.ghost_backup_script
+    ghost_restore_script = local.ghost_restore_script
   })
   strict = true
 }

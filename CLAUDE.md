@@ -482,6 +482,8 @@ without reprovisioning).
 
 The Ghost Docker stack is based on [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker).
 
+Caddy, MySQL, and `ghost/traffic-analytics` image updates are automated via Renovate — see `docs/runbooks/renovate.md` for setup and operation. Ghost itself (`ghost:6-alpine`) is intentionally unpinned and not tracked by Renovate.
+
 ### Current Image Versions
 
 Check `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl` for current versions:
@@ -725,6 +727,36 @@ instance being named `ghost-dev-01-1`). See `docs/runbooks/tailscale-device-clea
 1. Check GitHub Actions logs
 2. SSH to instance and check container logs
 3. Caddy logs show request details including headers
+
+### Backup and Restore
+
+Nightly backups of `/var/mnt/storage/` run via `ghost-backup.timer` → `ghost-backup.service`. The service stops ghost-compose, syncs to Cloudflare R2 using `rclone sync` (via `docker run rclone/rclone:1.69.1`), then restarts ghost-compose. Estimated downtime: ~2–3 minutes.
+
+**What is backed up:** `ghost/upload-data/`, `mysql/data/`, `caddy/certs/`, `ghost-compose/`
+**Excluded:** `ghost-compose/secrets/**`, `.env.secrets`, `.env.generated`, `sbin/**`
+
+```bash
+# Check timer status
+tailscale ssh core@ghost-dev-01
+sudo systemctl list-timers ghost-backup.timer
+
+# Manually trigger a backup
+sudo systemctl start ghost-backup.service & journalctl -u ghost-backup -f
+
+# Verify stack recovered after backup
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+**Restore procedure** (after provisioning a new instance via `tofu apply`):
+
+```bash
+tailscale ssh core@ghost-dev-01
+sudo /opt/bin/ghost-restore.sh
+```
+
+The script prompts for confirmation (`Type 'yes' to continue:`), stops ghost-compose, restores from R2, and restarts ghost-compose.
+
+See `docs/runbooks/backup-restore.md` for full details including provisioning steps and troubleshooting.
 
 ## Domain
 - Production: `separationofconcerns.dev`
