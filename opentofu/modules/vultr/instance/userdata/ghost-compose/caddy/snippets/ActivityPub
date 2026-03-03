@@ -4,10 +4,10 @@ handle /.ghost/activitypub/* {
     reverse_proxy {$ACTIVITYPUB_TARGET}
 }
 
-handle /.well-known/webfinger {
+handle /.well-known/webfinger* {
     reverse_proxy {$ACTIVITYPUB_TARGET}
 }
 
-handle /.well-known/nodeinfo {
+handle /.well-known/nodeinfo* {
     reverse_proxy {$ACTIVITYPUB_TARGET}
 }
