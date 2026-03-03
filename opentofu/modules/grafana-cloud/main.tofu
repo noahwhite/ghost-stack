@@ -10308,3 +10308,381 @@ data "grafana_dashboard" "soc_dev_grafana_cloud_incident_insights" {
   provider = grafana.soc_dev
   uid      = "009d62c5-179c-4dcf-9bbc-722d5cf8e2c8"
 }
+# =============================================================================
+# Ghost Stack Backup Alerting (GHO-98)
+# =============================================================================
+
+# Folder for backup alert rules and dashboard
+resource "grafana_folder" "ghost_stack_folder" {
+  provider = grafana.soc_dev
+  title    = "Ghost Stack"
+}
+
+resource "grafana_folder_permission" "ghost_stack_folder_permission" {
+  provider   = grafana.soc_dev
+  folder_uid = grafana_folder.ghost_stack_folder.uid
+  org_id     = "0"
+
+  permissions {
+    permission = "Edit"
+    role       = "Editor"
+  }
+  permissions {
+    permission = "View"
+    role       = "Viewer"
+  }
+}
+
+# PagerDuty contact point for backup alerts
+resource "grafana_contact_point" "pagerduty_backup" {
+  provider = grafana.soc_dev
+  name     = "PagerDuty - Ghost Stack Backup"
+
+  pagerduty {
+    integration_key         = var.pagerduty_backup_integration_key
+    severity                = "critical"
+    disable_resolve_message = false
+    class                   = "backup"
+    component               = "ghost-backup.service"
+    group                   = "ghost-stack-dev-01"
+  }
+}
+
+# Root notification policy — routes backup alerts to PagerDuty
+# NOTE: grafana_notification_policy is a singleton that replaces Grafana's entire
+# alert routing tree. Future alert groups must add policy blocks here.
+resource "grafana_notification_policy" "root" {
+  provider      = grafana.soc_dev
+  contact_point = grafana_contact_point.pagerduty_backup.name
+  group_by      = ["alertname", "grafana_folder", "service"]
+
+  policy {
+    matcher {
+      label = "service"
+      match = "="
+      value = "backup"
+    }
+    contact_point   = grafana_contact_point.pagerduty_backup.name
+    group_by        = ["alertname"]
+    group_wait      = "30s"
+    group_interval  = "5m"
+    repeat_interval = "4h"
+  }
+}
+
+# Alert rules — 3 rules covering failure, missed window, compose recovery
+resource "grafana_rule_group" "ghost_stack_backup" {
+  provider         = grafana.soc_dev
+  org_id           = "0"
+  folder_uid       = grafana_folder.ghost_stack_folder.uid
+  name             = "Ghost Stack Backup"
+  interval_seconds = 300
+
+  # Rule 1: Backup failure — ERROR log line seen in last 10 minutes
+  rule {
+    name      = "Backup Failure"
+    condition = "C"
+    for       = "0s"
+
+    no_data_state  = "NoData"
+    exec_err_state = "Error"
+
+    annotations = {
+      summary     = "Ghost backup failed"
+      description = "ghost-backup.service logged an ERROR in the last 10 minutes. Check: journalctl -u ghost-backup -n 50"
+      runbook_url = "https://github.com/noahwhite/ghost-stack/blob/main/docs/runbooks/backup-restore.md"
+    }
+
+    labels = {
+      service  = "backup"
+      severity = "critical"
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.soc_dev_loki.uid
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        datasource = {
+          type = "loki"
+          uid  = data.grafana_data_source.soc_dev_loki.uid
+        }
+        editorMode   = "code"
+        expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"ERROR:\""
+        queryType    = "range"
+        refId        = "A"
+        legendFormat = ""
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [], type = "gt" }
+          operator  = { type = "and" }
+          query     = { params = ["A"] }
+          reducer   = { params = [], type = "count" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "A"
+        reducer    = "count"
+        refId      = "B"
+        type       = "reduce"
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [0], type = "gt" }
+          operator  = { type = "and" }
+          query     = { params = ["B"] }
+          reducer   = { params = [], type = "last" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "B"
+        refId      = "C"
+        type       = "threshold"
+      })
+    }
+  }
+
+  # Rule 2: Missed backup window — no "Backup complete." seen in 26 hours
+  rule {
+    name      = "Missed Backup Window"
+    condition = "C"
+    for       = "1h"
+
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    annotations = {
+      summary     = "No successful backup in 26 hours"
+      description = "ghost-backup.service has not logged a successful completion in the past 26 hours. Check timer: systemctl list-timers ghost-backup.timer"
+      runbook_url = "https://github.com/noahwhite/ghost-stack/blob/main/docs/runbooks/backup-restore.md"
+    }
+
+    labels = {
+      service  = "backup"
+      severity = "critical"
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.soc_dev_loki.uid
+      relative_time_range {
+        from = 93600 # 26 hours
+        to   = 0
+      }
+      model = jsonencode({
+        datasource = {
+          type = "loki"
+          uid  = data.grafana_data_source.soc_dev_loki.uid
+        }
+        editorMode   = "code"
+        expr         = "count_over_time({job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"Backup complete.\" [26h])"
+        queryType    = "range"
+        refId        = "A"
+        legendFormat = ""
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [], type = "gt" }
+          operator  = { type = "and" }
+          query     = { params = ["A"] }
+          reducer   = { params = [], type = "last" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "A"
+        reducer    = "last"
+        refId      = "B"
+        type       = "reduce"
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [1], type = "lt" }
+          operator  = { type = "and" }
+          query     = { params = ["B"] }
+          reducer   = { params = [], type = "last" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "B"
+        refId      = "C"
+        type       = "threshold"
+      })
+    }
+  }
+
+  # Rule 3: Ghost-compose not running — ghost-compose.service inactive for >15 min
+  # 15-min `for` provides buffer beyond the ~3-5 min backup window
+  rule {
+    name      = "Ghost-Compose Down"
+    condition = "C"
+    for       = "15m"
+
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    annotations = {
+      summary     = "Ghost-compose is not running"
+      description = "ghost-compose.service has not been active for over 15 minutes. May indicate failure to restart after backup. Check: docker ps && journalctl -u ghost-compose -n 50"
+      runbook_url = "https://github.com/noahwhite/ghost-stack/blob/main/docs/runbooks/backup-restore.md"
+    }
+
+    labels = {
+      service  = "backup"
+      severity = "critical"
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.soc_dev_prometheus.uid
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        datasource = {
+          type = "prometheus"
+          uid  = data.grafana_data_source.soc_dev_prometheus.uid
+        }
+        editorMode   = "code"
+        expr         = "node_systemd_unit_state{job=~\"integrations/node_exporter|unix\", name=\"ghost-compose.service\", state=\"active\"}"
+        legendFormat = "{{instance}}"
+        refId        = "A"
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [], type = "gt" }
+          operator  = { type = "and" }
+          query     = { params = ["A"] }
+          reducer   = { params = [], type = "last" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "A"
+        reducer    = "last"
+        refId      = "B"
+        type       = "reduce"
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [1], type = "lt" }
+          operator  = { type = "and" }
+          query     = { params = ["B"] }
+          reducer   = { params = [], type = "last" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "B"
+        refId      = "C"
+        type       = "threshold"
+      })
+    }
+  }
+}
+
+# Backup history dashboard — Loki logs panel for ghost-backup.service
+resource "grafana_dashboard" "ghost_stack_backup" {
+  provider = grafana.soc_dev
+  folder   = grafana_folder.ghost_stack_folder.id
+
+  config_json = jsonencode({
+    title       = "Ghost Stack Backup"
+    description = "Backup job history for ghost-backup.service"
+    editable    = true
+    tags        = ["ghost-stack", "backup"]
+    time = {
+      from = "now-7d"
+      to   = "now"
+    }
+    panels = [
+      {
+        id      = 1
+        type    = "logs"
+        title   = "Backup Job Logs"
+        gridPos = { h = 20, w = 24, x = 0, y = 0 }
+        options = {
+          dedupStrategy      = "none"
+          enableLogDetails   = true
+          prettifyLogMessage = false
+          showLabels         = false
+          showTime           = true
+          sortOrder          = "Descending"
+          wrapLogMessage     = false
+        }
+        targets = [
+          {
+            datasource = {
+              type = "loki"
+              uid  = data.grafana_data_source.soc_dev_loki.uid
+            }
+            editorMode   = "code"
+            expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"}"
+            legendFormat = ""
+            refId        = "A"
+          }
+        ]
+        datasource = {
+          type = "loki"
+          uid  = data.grafana_data_source.soc_dev_loki.uid
+        }
+      }
+    ]
+  })
+}
