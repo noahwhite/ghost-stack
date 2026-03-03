@@ -22,6 +22,12 @@
         reverse_proxy ghost:2368
     }
 
+    # ActivityPub / Fediverse (GHO-100)
+    # WebFinger, nodeinfo, and activitypub routes proxied to Ghost.org hosted service
+    # Must be imported before @allowed_ip — ActivityPub endpoints are publicly reachable
+    # and must not be swallowed by the admin IP catch-all handler.
+    import snippets/ActivityPub
+
     # Allow traffic from admin workstation IP
     # IP is sourced from .env.config via Docker Compose env_file
     @allowed_ip {
@@ -31,10 +37,6 @@
     handle @allowed_ip {
         reverse_proxy ghost:2368
     }
-
-    # ActivityPub / Fediverse (GHO-100)
-    # WebFinger, nodeinfo, and activitypub routes proxied to Ghost.org hosted service
-    import snippets/ActivityPub
 
     handle {
         respond "Access Denied" 403
