@@ -38,6 +38,25 @@ mock_provider "grafana" {
     }
   }
 
+  mock_resource "grafana_contact_point" {
+    defaults = {
+      id   = "test-contact-point-id"
+      name = "PagerDuty - Ghost Stack Backup"
+    }
+  }
+
+  mock_resource "grafana_notification_policy" {
+    defaults = {
+      id = "test-notification-policy-id"
+    }
+  }
+
+  mock_resource "grafana_rule_group" {
+    defaults = {
+      id = "test-rule-group-id"
+    }
+  }
+
   mock_data "grafana_data_source" {
     defaults = {
       id   = "test-datasource-id"
@@ -63,7 +82,8 @@ run "grafana_cloud_module_tests" {
   }
 
   variables {
-    SOC_DEV_TERRAFORM_SA_TOK = "test-token"
+    SOC_DEV_TERRAFORM_SA_TOK         = "test-token"
+    pagerduty_backup_integration_key = "test-pd-integration-key"
   }
 
   # Override all data sources to prevent real API calls
@@ -339,5 +359,41 @@ run "grafana_cloud_module_tests" {
   assert {
     condition     = data.grafana_data_source.soc_dev_loki.uid == "grafanacloud-logs"
     error_message = "Loki data source should have correct UID"
+  }
+
+  # Test backup alerting resources (GHO-98)
+  assert {
+    condition     = grafana_contact_point.pagerduty_backup.name == "PagerDuty - Ghost Stack Backup"
+    error_message = "Backup contact point name should be 'PagerDuty - Ghost Stack Backup'"
+  }
+
+  assert {
+    condition     = grafana_rule_group.ghost_stack_backup.name == "Ghost Stack Backup"
+    error_message = "Alert rule group name should be 'Ghost Stack Backup'"
+  }
+
+  assert {
+    condition     = grafana_rule_group.ghost_stack_backup.interval_seconds == 300
+    error_message = "Alert rule group should evaluate every 300 seconds"
+  }
+
+  assert {
+    condition     = length(grafana_rule_group.ghost_stack_backup.rule) == 3
+    error_message = "Alert rule group should have 3 rules"
+  }
+
+  assert {
+    condition     = grafana_folder.ghost_stack_folder.title == "Ghost Stack"
+    error_message = "Ghost Stack folder title should be 'Ghost Stack'"
+  }
+
+  assert {
+    condition     = grafana_dashboard.ghost_stack_backup.config_json != null
+    error_message = "Backup dashboard config should not be null"
+  }
+
+  assert {
+    condition     = jsondecode(grafana_dashboard.ghost_stack_backup.config_json).title == "Ghost Stack Backup"
+    error_message = "Backup dashboard title should be 'Ghost Stack Backup'"
   }
 }

@@ -316,6 +316,47 @@ Note: `/run/` is tmpfs on Flatcar — it is cleared on reboot regardless.
 
 ---
 
+## Alerts
+
+Three Grafana alert rules monitor the backup service. All route to the
+`ghost-stack-dev-01-backup` PagerDuty service.
+
+| Alert | Condition | Fires after |
+|-------|-----------|-------------|
+| Backup Failure | ERROR log line seen in last 10 min | Immediately |
+| Missed Backup Window | No "Backup complete." in 26 hours | 1 hour |
+| Ghost-Compose Down | ghost-compose.service inactive | 15 minutes |
+
+### Silencing Alerts During Planned Maintenance
+
+To silence alerts before planned maintenance (e.g., intentional instance teardown):
+
+1. Log into [Grafana Cloud](https://separationofconcerns0dev.grafana.net)
+2. Navigate to **Alerting** → **Silences** → **Add Silence**
+3. Set matcher: `service = backup`
+4. Set duration to cover the maintenance window
+5. Click **Submit**
+
+Or use the Grafana API:
+```bash
+curl -X POST https://separationofconcerns0dev.grafana.net/api/alertmanager/grafana/api/v2/silences \
+  -H "Authorization: Bearer $GRAFANA_SA_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "matchers": [{"name": "service", "value": "backup", "isRegex": false}],
+    "startsAt": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+    "endsAt": "'"$(date -u -d '+4 hours' +%Y-%m-%dT%H:%M:%SZ)"'",
+    "comment": "Planned maintenance"
+  }'
+```
+
+### Acknowledging a PagerDuty Incident
+
+If paged: acknowledge in PagerDuty, SSH to the instance, and follow the
+Troubleshooting section above. The alerts auto-resolve when conditions clear.
+
+---
+
 ## Related Documentation
 
 - [Infisical Secrets Runbook](./infisical-secrets.md)
