@@ -10373,7 +10373,7 @@ resource "grafana_notification_policy" "root" {
 # Alert rules — 3 rules covering failure, missed window, compose recovery
 resource "grafana_rule_group" "ghost_stack_backup" {
   provider         = grafana.soc_dev
-  org_id           = "0"
+  org_id           = "1"
   folder_uid       = grafana_folder.ghost_stack_folder.uid
   name             = "Ghost Stack Backup"
   interval_seconds = 300
@@ -10402,7 +10402,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.soc_dev_loki.uid
       relative_time_range {
-        from = 600
+        from = 0
         to   = 0
       }
       model = jsonencode({
@@ -10411,8 +10411,8 @@ resource "grafana_rule_group" "ghost_stack_backup" {
           uid  = data.grafana_data_source.soc_dev_loki.uid
         }
         editorMode   = "code"
-        expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"ERROR:\""
-        queryType    = "range"
+        expr         = "count_over_time({job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"ERROR:\" [10m])"
+        queryType    = "instant"
         refId        = "A"
         legendFormat = ""
       })
@@ -10430,12 +10430,12 @@ resource "grafana_rule_group" "ghost_stack_backup" {
           evaluator = { params = [], type = "gt" }
           operator  = { type = "and" }
           query     = { params = ["A"] }
-          reducer   = { params = [], type = "count" }
+          reducer   = { params = [], type = "last" }
           type      = "query"
         }]
         datasource = { type = "__expr__", uid = "__expr__" }
         expression = "A"
-        reducer    = "count"
+        reducer    = "last"
         refId      = "B"
         type       = "reduce"
       })
@@ -10488,7 +10488,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.soc_dev_loki.uid
       relative_time_range {
-        from = 93600 # 26 hours
+        from = 0
         to   = 0
       }
       model = jsonencode({
@@ -10497,8 +10497,8 @@ resource "grafana_rule_group" "ghost_stack_backup" {
           uid  = data.grafana_data_source.soc_dev_loki.uid
         }
         editorMode   = "code"
-        expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"Backup complete.\""
-        queryType    = "range"
+        expr         = "count_over_time({job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"Backup complete.\" [26h])"
+        queryType    = "instant"
         refId        = "A"
         legendFormat = ""
       })
@@ -10550,19 +10550,21 @@ resource "grafana_rule_group" "ghost_stack_backup" {
     }
   }
 
-  # Rule 3: Ghost-compose not running — ghost-compose.service inactive for >15 min
-  # 15-min `for` provides buffer beyond the ~3-5 min backup window
+  # Rule 3: Ghost-compose service failed — ghost-compose.service entered failed state
+  # Checks for explicit systemd failure rather than active state absence.
+  # Avoids false alerts when ghost-compose is Type=oneshot (returns to inactive after
+  # starting containers, even though containers keep running).
   rule {
     name      = "Ghost-Compose Down"
     condition = "C"
     for       = "15m"
 
-    no_data_state  = "Alerting"
-    exec_err_state = "Alerting"
+    no_data_state  = "NoData"
+    exec_err_state = "Error"
 
     annotations = {
-      summary     = "Ghost-compose is not running"
-      description = "ghost-compose.service has not been active for over 15 minutes. May indicate failure to restart after backup. Check: docker ps && journalctl -u ghost-compose -n 50"
+      summary     = "Ghost-compose service has failed"
+      description = "ghost-compose.service entered a failed state. Check: docker ps && journalctl -u ghost-compose -n 50"
       runbook_url = "https://github.com/noahwhite/ghost-stack/blob/main/docs/runbooks/backup-restore.md"
     }
 
@@ -10584,7 +10586,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
           uid  = data.grafana_data_source.soc_dev_prometheus.uid
         }
         editorMode   = "code"
-        expr         = "node_systemd_unit_state{job=~\"integrations/node_exporter|unix\", name=\"ghost-compose.service\", state=\"active\"}"
+        expr         = "node_systemd_unit_state{job=~\"integrations/node_exporter|unix\", name=\"ghost-compose.service\", state=\"failed\"}"
         legendFormat = "{{instance}}"
         refId        = "A"
       })
@@ -10622,7 +10624,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
       }
       model = jsonencode({
         conditions = [{
-          evaluator = { params = [1], type = "lt" }
+          evaluator = { params = [0], type = "gt" }
           operator  = { type = "and" }
           query     = { params = ["B"] }
           reducer   = { params = [], type = "last" }
