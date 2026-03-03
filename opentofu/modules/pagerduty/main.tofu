@@ -212,37 +212,12 @@ resource "pagerduty_service_dependency" "gsd1ts-soc_blog-sd" {
 # =============================================================================
 # Ghost Stack Backup Alerting (GHO-98)
 # =============================================================================
-resource "pagerduty_escalation_policy" "ghost-stack-dev-01-backup-ep" {
-  name        = "ghost-stack-dev-01-backup-ep"
-  description = "Managed by Terraform"
-  num_loops   = 0
-  teams       = []
-
-  rule {
-    escalation_delay_in_minutes = 30
-
-    target {
-      type = "user_reference"
-      id   = pagerduty_user.noahwhite.id
-    }
-  }
-
-  rule {
-    escalation_delay_in_minutes = 30
-
-    target {
-      type = "user_reference"
-      id   = pagerduty_user.noahwhite.id
-    }
-  }
-}
-
 resource "pagerduty_service" "ghost-stack-dev-01-backup" {
   name                    = "ghost-stack-dev-01-backup"
   description             = "Ghost stack nightly backup on ghost-stack-dev-01"
   auto_resolve_timeout    = "null"
   acknowledgement_timeout = "600"
-  escalation_policy       = pagerduty_escalation_policy.ghost-stack-dev-01-backup-ep.id
+  escalation_policy       = pagerduty_escalation_policy.ghost-stack-dev-01-tailscale-ep.id
   alert_creation          = "create_alerts_and_incidents"
 
   auto_pause_notifications_parameters {
