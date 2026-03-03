@@ -22,7 +22,7 @@ services:
       DOMAIN: $${DOMAIN:?DOMAIN environment variable is required}
       ADMIN_DOMAIN: $${ADMIN_DOMAIN:-}
       ADMIN_IP: $${ADMIN_IP:-}
-      # ACTIVITYPUB_TARGET: $${ACTIVITYPUB_TARGET:-https://ap.ghost.org}
+      ACTIVITYPUB_TARGET: $${ACTIVITYPUB_TARGET:-https://ap.ghost.org}
     volumes:
       - /etc/ghost-compose/caddy-entrypoint.sh:/caddy-entrypoint.sh:ro
       - ./caddy:/etc/caddy

@@ -32,6 +32,10 @@
         reverse_proxy ghost:2368
     }
 
+    # ActivityPub / Fediverse (GHO-100)
+    # WebFinger, nodeinfo, and activitypub routes proxied to Ghost.org hosted service
+    import snippets/ActivityPub
+
     handle {
         respond "Access Denied" 403
     }
@@ -49,9 +53,6 @@
 
     # Traffic Analytics service (proxies /.ghost/analytics/* to traffic-analytics container)
     import snippets/TrafficAnalytics
-
-    # ActivityPub Service (uncomment when enabled)
-    #import snippets/ActivityPub
 
     # Allow traffic from admin workstation IP
     @allowed_ip {
