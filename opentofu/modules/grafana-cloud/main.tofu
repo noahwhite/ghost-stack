@@ -10402,7 +10402,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.soc_dev_loki.uid
       relative_time_range {
-        from = 0
+        from = 600
         to   = 0
       }
       model = jsonencode({
@@ -10488,7 +10488,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.soc_dev_loki.uid
       relative_time_range {
-        from = 0
+        from = 93600
         to   = 0
       }
       model = jsonencode({
