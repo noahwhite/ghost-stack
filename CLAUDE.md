@@ -528,7 +528,7 @@ Check `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl`
 
 **All feature branches must follow the `feature/**` pattern** (e.g., `feature/GHO-XX-description`).
 
-This naming convention is recommended for consistency and traceability.
+**All feature branches must be tied to a Linear story.** No branch should be created without a corresponding story.
 
 ### GitHub Environments
 - **`dev`**: Protected environment for actual deployments. Only `develop` branch can deploy. Used by `deploy-dev.yml`.
@@ -536,8 +536,8 @@ This naming convention is recommended for consistency and traceability.
 
 Examples of valid branch names:
 - `feature/GHO-42-add-token-rotation-runbook`
-- `feature/add-new-module`
-- `feature/fix-firewall-rules`
+- `feature/GHO-63-nightly-backup-to-r2`
+- `feature/GHO-64-restore-procedure`
 
 ## Common Tasks
 
