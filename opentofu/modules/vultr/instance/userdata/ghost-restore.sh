@@ -23,7 +23,28 @@
 #   ghost-compose/secrets/**  ghost-compose/.env.secrets  ghost-compose/.env.generated  sbin/**
 set -euo pipefail
 
+usage() {
+    cat <<EOF
+Usage: $0 [all|images|mysql|-h|--help]
+
+  all    (default) Full restore — syncs entire /var/mnt/storage/ from R2.
+  images Images only — syncs ghost/upload-data/images/ from R2.
+                   MySQL data and all other files are preserved.
+  mysql  MySQL only — syncs mysql/data/ from R2.
+                   Ghost images and all other files are preserved.
+  -h, --help       Show this help message and exit.
+
+All modes stop ghost-compose before restoring and restart it after.
+All modes use rclone sync so the target path is made to match R2 exactly —
+files present locally but absent in R2 are deleted within the restored scope.
+EOF
+}
+
 COMPONENT="${1:-all}"
+
+case "${COMPONENT}" in
+    -h|--help) usage; exit 0 ;;
+esac
 
 CONFIG_FILE="/etc/ghost-compose/.env.config"
 SECRETS_DIR="/var/mnt/storage/ghost-compose/secrets"
