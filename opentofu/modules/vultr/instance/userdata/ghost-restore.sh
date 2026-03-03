@@ -1,19 +1,29 @@
 #!/bin/bash
 # ghost-restore.sh — Restore Ghost stack data from Cloudflare R2 backup
 #
-# Restores /var/mnt/storage/ from the R2 backup bucket using rclone sync (R2 → local).
+# Usage:
+#   ghost-restore.sh [all|images|mysql]
+#
+#   all    (default) Full restore — syncs entire /var/mnt/storage/ from R2.
+#                    Ghost-compose is stopped for the duration.
+#   images Images only — syncs ghost/upload-data/images/ from R2.
+#                    Ghost-compose is stopped for the duration.
+#   mysql  MySQL only — syncs mysql/data/ from R2.
+#                    Ghost-compose is stopped for the duration.
+#
+# All modes use rclone sync (R2 → local) so the target path is made to match
+# R2 exactly — files present locally but absent in R2 are deleted.
+#
 # R2 credentials are read from secret files written by infisical-secrets-fetch.sh at boot.
 # The rclone config is written to tmpfs (/run/) and shredded on exit.
 # Credentials are NOT passed as -e env vars to docker run (would appear in docker inspect).
 #
-# WARNING: This is a destructive operation — it overwrites /var/mnt/storage/ with
-# the contents of the R2 bucket. Run only on a freshly provisioned instance or after
-# confirming data loss has occurred.
-#
-# The following paths are excluded from the sync (same as backup) to protect
+# The following paths are excluded from full restores (same as backup) to protect
 # live credentials and generated files on the running instance:
 #   ghost-compose/secrets/**  ghost-compose/.env.secrets  ghost-compose/.env.generated  sbin/**
 set -euo pipefail
+
+COMPONENT="${1:-all}"
 
 CONFIG_FILE="/etc/ghost-compose/.env.config"
 SECRETS_DIR="/var/mnt/storage/ghost-compose/secrets"
@@ -27,9 +37,21 @@ log_err() { logger -t ghost-restore -p err "ERROR: $*"; echo "[ghost-restore] ER
 # Shred the rclone config on exit (success or failure)
 trap 'shred -u "${RCLONE_CONFIG}" 2>/dev/null || true' EXIT
 
+case "${COMPONENT}" in
+    all|images|mysql) ;;
+    *)
+        log_err "Unknown component '${COMPONENT}'. Usage: $0 [all|images|mysql]"
+        exit 1
+        ;;
+esac
+
 # Confirmation prompt — restore is a destructive, manual operation
 echo ""
-echo "WARNING: This will overwrite /var/mnt/storage/ with the contents of the R2 backup."
+case "${COMPONENT}" in
+    all)    echo "WARNING: This will overwrite /var/mnt/storage/ with the contents of the R2 backup." ;;
+    images) echo "WARNING: This will overwrite ghost/upload-data/images/ with the contents of the R2 backup." ;;
+    mysql)  echo "WARNING: This will overwrite mysql/data/ with the contents of the R2 backup." ;;
+esac
 echo "Ghost-compose will be stopped during the restore and restarted when complete."
 echo ""
 read -r -p "Type 'yes' to continue: " CONFIRM
@@ -65,18 +87,42 @@ unset R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY
 log "Stopping ghost-compose..."
 docker compose -f "${COMPOSE_FILE}" --project-directory /etc/ghost-compose down
 
-log "Restoring from r2:${R2_DEV_BACKUPS_BUCKET} to ${STORAGE_DIR}..."
-docker run --rm \
-    --network host \
-    -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
-    -v "${STORAGE_DIR}:/data" \
-    rclone/rclone:1.69.1 sync "r2:${R2_DEV_BACKUPS_BUCKET}" /data \
-    --exclude "ghost-compose/secrets/**" \
-    --exclude "ghost-compose/.env.secrets" \
-    --exclude "ghost-compose/.env.generated" \
-    --exclude "sbin/**" \
-    --create-empty-src-dirs \
-    --log-level INFO
+case "${COMPONENT}" in
+    all)
+        log "Restoring all from r2:${R2_DEV_BACKUPS_BUCKET} to ${STORAGE_DIR}..."
+        docker run --rm \
+            --network host \
+            -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
+            -v "${STORAGE_DIR}:/data" \
+            rclone/rclone:1.69.1 sync "r2:${R2_DEV_BACKUPS_BUCKET}" /data \
+            --exclude "ghost-compose/secrets/**" \
+            --exclude "ghost-compose/.env.secrets" \
+            --exclude "ghost-compose/.env.generated" \
+            --exclude "sbin/**" \
+            --create-empty-src-dirs \
+            --log-level INFO
+        ;;
+    images)
+        log "Restoring images from r2:${R2_DEV_BACKUPS_BUCKET}/ghost/upload-data/images to ${STORAGE_DIR}/ghost/upload-data/images..."
+        docker run --rm \
+            --network host \
+            -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
+            -v "${STORAGE_DIR}:/data" \
+            rclone/rclone:1.69.1 sync "r2:${R2_DEV_BACKUPS_BUCKET}/ghost/upload-data/images" /data/ghost/upload-data/images \
+            --create-empty-src-dirs \
+            --log-level INFO
+        ;;
+    mysql)
+        log "Restoring MySQL from r2:${R2_DEV_BACKUPS_BUCKET}/mysql/data to ${STORAGE_DIR}/mysql/data..."
+        docker run --rm \
+            --network host \
+            -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
+            -v "${STORAGE_DIR}:/data" \
+            rclone/rclone:1.69.1 sync "r2:${R2_DEV_BACKUPS_BUCKET}/mysql/data" /data/mysql/data \
+            --create-empty-src-dirs \
+            --log-level INFO
+        ;;
+esac
 
 log "Restore complete. Starting ghost-compose..."
 docker compose -f "${COMPOSE_FILE}" --project-directory /etc/ghost-compose up -d
