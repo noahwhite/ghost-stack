@@ -67,9 +67,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      #activitypub:
-        #condition: service_started
-        #required: false
+      activitypub:
+        condition: service_started
+        required: false
     networks:
       - ghost_network
 
@@ -124,32 +124,37 @@ services:
     networks:
       - ghost_network
 
-  #activitypub:
-    #image: ghcr.io/tryghost/activitypub:1.1.0@sha256:39c212fe23603b182d68e67d555c6b9b04b1e57459dfc0bef26d6e4980eb04d1
-    #restart: always
-    #expose:
-      #- "8080"
-    #volumes:
-      #- $${UPLOAD_LOCATION:-./data/ghost}:/opt/activitypub/content
-    #environment:
-      #NODE_ENV: production
-      #PORT: 8080
-      #MYSQL_HOST: db
-      #MYSQL_USER: $${DATABASE_USER:-ghost}
-      #MYSQL_PASSWORD: $${DATABASE_PASSWORD:?DATABASE_PASSWORD environment variable is required}
-      #MYSQL_DATABASE: activitypub
-      #ALLOW_PRIVATE_ADDRESS: true
-      #USE_MQ: false
-      #LOCAL_STORAGE_PATH: /opt/activitypub/content/images/activitypub
-      #LOCAL_STORAGE_HOSTING_URL: https://$${DOMAIN}/content/images/activitypub
-    #depends_on:
-      #db:
-        #condition: service_healthy
-      #activitypub-migrate:
-        #condition: service_completed_successfully
-    #profiles: [activitypub]
-    #networks:
-      #- ghost_network
+  # ActivityPub / Fediverse self-hosted service (GHO-101)
+  # Activated via COMPOSE_PROFILES=activitypub (set in .env.config)
+  activitypub:
+    image: ghcr.io/tryghost/activitypub:1.1.0@sha256:39c212fe23603b182d68e67d555c6b9b04b1e57459dfc0bef26d6e4980eb04d1
+    restart: always
+    entrypoint: ["/activitypub-entrypoint.sh"]
+    expose:
+      - "8080"
+    volumes:
+      - /etc/ghost-compose/activitypub-entrypoint.sh:/activitypub-entrypoint.sh:ro
+      - $${UPLOAD_LOCATION:-./data/ghost}:/opt/activitypub/content
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      MYSQL_HOST: db
+      MYSQL_USER: $${DATABASE_USER:-ghost}
+      MYSQL_DATABASE: activitypub
+      ALLOW_PRIVATE_ADDRESS: "true"
+      USE_MQ: "false"
+      LOCAL_STORAGE_PATH: /opt/activitypub/content/images/activitypub
+      LOCAL_STORAGE_HOSTING_URL: https://$${DOMAIN}/content/images/activitypub
+    secrets:
+      - db_password
+    depends_on:
+      db:
+        condition: service_healthy
+      activitypub-migrate:
+        condition: service_completed_successfully
+    profiles: [activitypub]
+    networks:
+      - ghost_network
 
   # ==========================================================================
   # TinyBird Supporting Services
@@ -194,17 +199,27 @@ services:
       - ghost_network
     restart: "no"
 
-  #activitypub-migrate:
-    #image: ghcr.io/tryghost/activitypub-migrations:1.1.0@sha256:b3ab20f55d66eb79090130ff91b57fe93f8a4254b446c2c7fa4507535f503662
-    #environment:
-      #MYSQL_DB: mysql://$${DATABASE_USER:-ghost}:$${DATABASE_PASSWORD:?DATABASE_PASSWORD environment variable is required}@tcp(db:3306)/activitypub
-    #networks:
-      #- ghost_network
-    #depends_on:
-      #db:
-        #condition: service_healthy
-    #profiles: [activitypub]
-    #restart: no
+  # ActivityPub database migrations (GHO-101)
+  # Runs once at compose up to migrate the activitypub DB schema; exits 0 on success.
+  # activitypub service depends_on this completing successfully before starting.
+  activitypub-migrate:
+    image: ghcr.io/tryghost/activitypub-migrations:1.1.0@sha256:b3ab20f55d66eb79090130ff91b57fe93f8a4254b446c2c7fa4507535f503662
+    entrypoint: ["/activitypub-entrypoint.sh"]
+    volumes:
+      - /etc/ghost-compose/activitypub-entrypoint.sh:/activitypub-entrypoint.sh:ro
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: $${DATABASE_USER:-ghost}
+      MYSQL_DATABASE: activitypub
+    secrets:
+      - db_password
+    networks:
+      - ghost_network
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: [activitypub]
+    restart: "no"
 
 volumes:
   caddy_data:

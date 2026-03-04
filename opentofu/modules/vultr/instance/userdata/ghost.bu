@@ -278,6 +278,11 @@ storage:
       contents:
         source: "data:text/plain;charset=utf-8;base64,${caddy_entrypoint_script}"
 
+    - path: /etc/ghost-compose/activitypub-entrypoint.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${activitypub_entrypoint_script}"
+
     # ==========================================================================
     # Backup Script (GHO-63)
     # ==========================================================================

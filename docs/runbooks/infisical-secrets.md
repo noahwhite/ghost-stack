@@ -60,7 +60,7 @@ These are the application secrets that must exist in Infisical before boot-time 
 
 | Secret Name | Description | Service Impact | Restart Required |
 |-------------|-------------|----------------|-----------------|
-| `DATABASE_PASSWORD` | MySQL ghost user password | Ghost, MySQL | Container restart + MySQL ALTER USER |
+| `DATABASE_PASSWORD` | MySQL ghost user password | Ghost, MySQL, ActivityPub | Container restart + MySQL ALTER USER |
 | `DATABASE_ROOT_PASSWORD` | MySQL root password | MySQL | Container restart + MySQL ALTER USER |
 | `HEALTH_CHECK_TOKEN` | Token for Caddy health check authentication | Caddy | Container restart |
 | `mail__options__auth__pass` | SMTP password for transactional email | Ghost | Container restart |
@@ -499,6 +499,20 @@ Ensure the ALTER USER step in the rotation procedure completed successfully befo
 tailscale ssh core@ghost-dev-01 \
   'docker exec ghost-compose-caddy-1 env | grep HEALTH_CHECK_TOKEN'
 ```
+
+---
+
+## ActivityPub and db_password (GHO-101)
+
+`db_password` is consumed by both `ghost-entrypoint.sh` (for Ghost's database connection)
+and `activitypub-entrypoint.sh` (for the self-hosted ActivityPub container's `MYSQL_PASSWORD`
+env var and the `activitypub-migrate` DSN). Both containers mount `/run/secrets/db_password`
+via Docker Compose `secrets:` — no new secret entry is required in Infisical.
+
+**Migration note:** Followers accumulated while the Ghost.org-hosted ActivityPub service
+(`ap.ghost.org`) was active will **not** automatically migrate to the self-hosted container.
+Existing followers must re-follow `@index@separationofconcerns.dev` after the migration.
+This is expected — the self-hosted database starts fresh.
 
 ---
 

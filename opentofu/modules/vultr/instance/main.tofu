@@ -71,8 +71,9 @@ locals {
   monitor_tailscale_script = filebase64("${path.module}/userdata/monitor_tailscale_conn.sh")
 
   # Docker Compose service entrypoint scripts (GHO-69)
-  ghost_entrypoint_script = filebase64("${path.module}/userdata/ghost-entrypoint.sh")
-  caddy_entrypoint_script = filebase64("${path.module}/userdata/caddy-entrypoint.sh")
+  ghost_entrypoint_script       = filebase64("${path.module}/userdata/ghost-entrypoint.sh")
+  caddy_entrypoint_script       = filebase64("${path.module}/userdata/caddy-entrypoint.sh")
+  activitypub_entrypoint_script = filebase64("${path.module}/userdata/ghost-compose/activitypub-entrypoint.sh")
 
   # Backup (GHO-63)
   ghost_backup_script  = filebase64("${path.module}/userdata/ghost-backup.sh")
@@ -115,8 +116,9 @@ data "ct_config" "ghost" {
     monitor_tailscale_script = local.monitor_tailscale_script
 
     # Docker Compose service entrypoint scripts (GHO-69)
-    ghost_entrypoint_script = local.ghost_entrypoint_script
-    caddy_entrypoint_script = local.caddy_entrypoint_script
+    ghost_entrypoint_script       = local.ghost_entrypoint_script
+    caddy_entrypoint_script       = local.caddy_entrypoint_script
+    activitypub_entrypoint_script = local.activitypub_entrypoint_script
 
     # Backup (GHO-63)
     ghost_backup_script  = local.ghost_backup_script
