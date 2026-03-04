@@ -11,7 +11,7 @@
     {
       "description": "Group Ghost stack Docker image updates into a single PR with digest pinning",
       "matchManagers": ["docker-compose"],
-      "matchPackageNames": ["caddy", "mysql", "ghost/traffic-analytics"],
+      "matchPackageNames": ["caddy", "mysql", "ghost/traffic-analytics", "ghcr.io/tryghost/activitypub", "ghcr.io/tryghost/activitypub-migrations"],
       "groupName": "Ghost stack Docker images",
       "pinDigests": true
     }
