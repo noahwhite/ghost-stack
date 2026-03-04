@@ -28,6 +28,20 @@
     # and must not be swallowed by the admin IP catch-all handler.
     import snippets/ActivityPub
 
+    # Ghost JWKS endpoint — required by ap.ghost.org to verify JWTs during ActivityPub registration
+    # ap.ghost.org fetches {siteUrl}/ghost/.well-known/jwks.json to validate the Bearer JWT
+    # that Ghost sends when registering the site. Must be publicly reachable.
+    handle /ghost/.well-known/* {
+        reverse_proxy ghost:2368
+    }
+
+    # Ghost Admin site endpoint — ap.ghost.org calls back here during registration to read site
+    # metadata. Ghost redirects /ghost/api/admin/site/ from the main domain to the admin domain,
+    # so this handler catches the initial request before the redirect.
+    handle /ghost/api/admin/site* {
+        reverse_proxy ghost:2368
+    }
+
     # Allow traffic from admin workstation IP
     # IP is sourced from .env.config via Docker Compose env_file
     @allowed_ip {
@@ -55,6 +69,17 @@
 
     # Traffic Analytics service (proxies /.ghost/analytics/* to traffic-analytics container)
     import snippets/TrafficAnalytics
+
+    # Ghost JWKS and Admin site endpoints — must be publicly reachable for ActivityPub registration.
+    # ap.ghost.org follows Ghost's redirect from the main domain to here when fetching JWKS
+    # and site metadata during JWT verification and site registration.
+    handle /ghost/.well-known/* {
+        reverse_proxy ghost:2368
+    }
+
+    handle /ghost/api/admin/site* {
+        reverse_proxy ghost:2368
+    }
 
     # Allow traffic from admin workstation IP
     @allowed_ip {
