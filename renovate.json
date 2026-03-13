@@ -4,6 +4,7 @@
   "baseBranches": ["develop"],
   "branchPrefix": "feature/renovate-",
   "assignees": ["noahwhite"],
+  "ignorePaths": ["docker/**"],
   "customManagers": [
     {
       "customType": "regex",
