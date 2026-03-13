@@ -10,7 +10,7 @@
 #
 services:
   caddy:
-    image: caddy:2.10.2-alpine@sha256:953131cfea8e12bfe1c631a36308e9660e4389f0c3dfb3be957044d3ac92d446
+    image: caddy:2.11.2-alpine@sha256:fce4f15aad23222c0ac78a1220adf63bae7b94355d5ea28eee53910624acedfa
     restart: always
     entrypoint: ["/caddy-entrypoint.sh"]
     ports:
@@ -74,7 +74,7 @@ services:
       - ghost_network
 
   db:
-    image: mysql:8.0.44@sha256:f37951fc3753a6a22d6c7bf6978c5e5fefcf6f31814d98c582524f98eae52b21
+    image: mysql:8.4.8@sha256:a2d126916bc2ba79a890a4bf62d305eb8b68fcbdd35c6e582d529df18faf5ebb
     restart: always
     expose:
       - "3306"
@@ -104,7 +104,7 @@ services:
   # TinyBird Traffic Analytics Proxy
   # Activated via COMPOSE_PROFILES=analytics (set automatically by tinybird-provision.service)
   traffic-analytics:
-    image: ghost/traffic-analytics:1.0.12@sha256:13ce027954b25aba6b3018297e1ca048229d73b78cb5d2f483da3b04cc8d9e68
+    image: ghost/traffic-analytics:1.0.148@sha256:9d1f8013418c60d9c1cb14cc25903cf0495c21821e95178ddb0efafbe61491c4
     restart: always
     expose:
       - "3000"
