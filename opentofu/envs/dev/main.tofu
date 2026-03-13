@@ -16,7 +16,7 @@ terraform {
     }
     tailscale = {
       source  = "tailscale/tailscale"
-      version = "~> 0.22.0"
+      version = "~> 0.28.0"
     }
     pagerduty = {
       source  = "pagerduty/pagerduty"
