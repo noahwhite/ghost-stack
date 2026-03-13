@@ -3,7 +3,7 @@ terraform {
     vultr = { source = "vultr/vultr", version = "= 2.22.1" }
     ct = {
       source  = "poseidon/ct"
-      version = "0.13.0"
+      version = "0.14.0"
     }
   }
 }
