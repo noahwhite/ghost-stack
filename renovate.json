@@ -4,13 +4,20 @@
   "baseBranches": ["develop"],
   "branchPrefix": "feature/renovate-",
   "assignees": ["noahwhite"],
-  "docker-compose": {
-    "fileMatch": ["(^|/)compose\\.yml\\.tftpl$"]
-  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["(^|/)compose\\.yml\\.tftpl$"],
+      "matchStrings": [
+        "image: (?<depName>[^:\\s$]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
   "packageRules": [
     {
       "description": "Group Ghost stack Docker image updates into a single PR with digest pinning",
-      "matchManagers": ["docker-compose"],
+      "matchManagers": ["custom.regex"],
       "matchPackageNames": ["caddy", "mysql", "ghost/traffic-analytics", "ghcr.io/tryghost/activitypub", "ghcr.io/tryghost/activitypub-migrations"],
       "groupName": "Ghost stack Docker images",
       "pinDigests": true
