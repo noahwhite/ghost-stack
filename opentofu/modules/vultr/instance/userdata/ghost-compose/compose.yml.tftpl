@@ -130,6 +130,7 @@ services:
     image: ghcr.io/tryghost/activitypub:1.1.0@sha256:39c212fe23603b182d68e67d555c6b9b04b1e57459dfc0bef26d6e4980eb04d1
     restart: always
     entrypoint: ["/activitypub-entrypoint.sh"]
+    command: ["node", "dist/app.js"]
     expose:
       - "8080"
     volumes:
@@ -205,6 +206,7 @@ services:
   activitypub-migrate:
     image: ghcr.io/tryghost/activitypub-migrations:1.1.0@sha256:b3ab20f55d66eb79090130ff91b57fe93f8a4254b446c2c7fa4507535f503662
     entrypoint: ["/activitypub-entrypoint.sh"]
+    command: ["up"]
     volumes:
       - /etc/ghost-compose/activitypub-entrypoint.sh:/activitypub-entrypoint.sh:ro
     environment:
