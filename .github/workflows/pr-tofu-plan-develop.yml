@@ -19,7 +19,7 @@ jobs:
       infra: ${{ steps.filter.outputs.infra }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -63,7 +63,7 @@ jobs:
           bws --version
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
