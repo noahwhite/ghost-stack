@@ -37,8 +37,6 @@ jobs:
               - 'opentofu/**/*.sh'
               - 'opentofu/**/userdata/**'
               - 'docker/scripts/**'
-              - '.github/workflows/pr-tofu-*.yml'
-              - '.github/workflows/deploy-dev.yml'
 
   tofu-plan:
     needs: changes
