@@ -10401,6 +10401,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
     data {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.soc_dev_loki.uid
+      query_type     = "instant"
       relative_time_range {
         from = 600
         to   = 0
@@ -10487,6 +10488,7 @@ resource "grafana_rule_group" "ghost_stack_backup" {
     data {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.soc_dev_loki.uid
+      query_type     = "instant"
       relative_time_range {
         from = 93600
         to   = 0
