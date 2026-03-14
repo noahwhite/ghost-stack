@@ -64,7 +64,7 @@ jobs:
 
       - name: Download plan artifact from PR
         id: download-artifact
-        uses: dawidd6/action-download-artifact@v9
+        uses: dawidd6/action-download-artifact@v18
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: pr-tofu-plan-develop.yml
