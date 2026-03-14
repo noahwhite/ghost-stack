@@ -159,9 +159,10 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: feature/sync-tryghost-images
+          branch: feature/sync-tryghost-compose-images
           base: develop
           commit-message: "chore: sync Docker images from TryGhost/ghost-docker"
           title: "chore: sync Docker images from TryGhost/ghost-docker (closes #${{ steps.issue.outputs.issue_number }})"
           body-path: /tmp/pr-body.md
+          sign-commits: true
           assignees: noahwhite
