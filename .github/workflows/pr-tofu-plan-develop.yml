@@ -221,7 +221,7 @@ jobs:
             bash -c "git config --global --add safe.directory /home/devops/app && tofu -chdir=opentofu/envs/dev show -no-color tfplan > opentofu/envs/dev/plan-output.txt"
 
       - name: Upload plan as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tofu-plan-dev-${{ github.event.pull_request.number }}
           path: opentofu/envs/dev/plan-output.txt
