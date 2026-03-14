@@ -14,6 +14,29 @@ You are a staff-level infrastructure and application engineer/architect. Provide
 - **Always create PRs instead of committing directly to main or protected branches**
 - **Always assign PRs to Noah White**
 
+### Commit Signing — Use git CLI, Not MCP Push Tools
+
+This repo requires **verified signed commits** on all branches. The local environment has SSH commit signing configured:
+
+- `commit.gpgsign=true`
+- `gpg.format=ssh`
+- `user.signingkey=/home/claude/.ssh/id_ed25519.pub`
+- `user.name=Noah White`, `user.email=noah@noahwhite.net`
+
+**Always create commits via the Bash tool:**
+
+```bash
+git checkout feature/GHO-XXX-branch-name
+# edit files with Edit tool
+git add <files>
+git commit -m "message"
+git push origin feature/GHO-XXX-branch-name
+```
+
+**Never use** `mcp__github__push_files` or `mcp__github__create_or_update_file` for commits in this repo — they bypass local git config, produce unsigned commits, and fail with `422/409 Repository rule violations found: Commits must have verified signatures`.
+
+After pushing, open the PR with `mcp__github__create_pull_request`.
+
 ### PR Creation Checklist
 
 After creating a PR with `mcp__github__create_pull_request`, **immediately** assign it:
@@ -74,6 +97,8 @@ Move stories through statuses in this order — **never skip ahead**:
 2. All acceptance criteria have been verified in the deployed environment
 3. All test plan items are checked off
 
+**Critical:** Do NOT move to **In Progress** until the story has been fully triaged (all triage checklist items completed). A story may be created directly in `Backlog` or in `Triage` — either is fine. But regardless of the prior state, all triage checklist items must be complete before moving to `In Progress`.
+
 ### Story Triage Checklist
 
 When triaging a story (moving from Triage → Backlog):
@@ -81,15 +106,20 @@ When triaging a story (moving from Triage → Backlog):
 2. Set **priority** (1=Urgent, 2=High, 3=Normal, 4=Low)
 3. Set **estimate** (story points)
 4. Set **assignee** to Noah White
+5. Check off all DoR checkboxes in the issue description (`[ ]` → `[X]`)
 
 ### User Story Creation Checklist
 
-When creating a user story in Linear with `mcp__linear__create_issue`:
+When creating a user story in Linear with `mcp__linear__save_issue`:
 
 1. **Title must be prefixed with `[User Story]`** (e.g., `[User Story] Configure Tailscale to use one-time auth keys`)
 2. Use `team: "ghost-stack"`
-3. Apply the `User Story` label: `labels: ["User Story"]`
+3. Apply the `User Story` label plus any applicable type label: `labels: ["User Story"]`
+   - Also add `RTB` (Run the Business) for operational/maintenance work: CI fixes, dependency upgrades, config corrections, observability improvements
+   - Also add `Bug` for defect fixes, `Feature` for new capabilities, `Improvement` for enhancements to existing features
 4. Follow the User Story Template format below for the description
+5. Create with `state: "Triage"` or `state: "Backlog"` — do NOT set to In Progress on creation
+6. Before moving to In Progress (from any state), run through the Story Triage Checklist in full
 
 Do NOT proceed until the title prefix is verified.
 
