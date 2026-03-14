@@ -512,38 +512,45 @@ without reprovisioning).
 
 The Ghost Docker stack is based on [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker).
 
-Caddy, MySQL, and `ghost/traffic-analytics` image updates are automated via Renovate — see `docs/runbooks/renovate.md` for setup and operation. Ghost itself (`ghost:6-alpine`) is intentionally unpinned and not tracked by Renovate.
+Docker image updates are automated via the **TryGhost Compose Sync** workflow (`.github/workflows/sync-tryghost-compose.yml`), which runs daily at 06:30 UTC and syncs directly from TryGhost/ghost-docker's `main` branch. Ghost itself (`ghost:6-alpine`) is intentionally unpinned and not tracked. See `docs/runbooks/renovate.md` for Renovate configuration (GitHub Actions and OpenTofu provider updates only).
 
 ### Current Image Versions
 
-Check `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl` for current versions:
-- Caddy: `caddy:2.10.2-alpine@sha256:...`
-- MySQL: `mysql:8.0.44@sha256:...`
+From `opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl`:
+- `caddy:2.11.2-alpine`
+- `mysql:8.4.8`
+- `ghost/traffic-analytics:1.0.148`
+- `ghcr.io/tryghost/activitypub:1.1.0`
+- `ghcr.io/tryghost/activitypub-migrations:1.1.0`
 - Ghost: `ghost:6-alpine` (unpinned, uses latest 6.x)
 
-### Upstream Sync Workflow
+### Automated Sync (Primary)
 
-1. **Watch for updates**: Star/watch [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker) for Renovate PRs
+The sync workflow runs daily and:
+1. Fetches `compose.yml` from TryGhost/ghost-docker `main`
+2. Compares each tracked image to the local `compose.yml.tftpl`
+3. If differences exist, opens (or updates) a PR to `develop` with the changes
 
-2. **Check for updates**:
+Trigger manually via **Actions → Sync TryGhost Compose Images → Run workflow**.
+
+### Manual Upstream Sync (Fallback)
+
+1. **Check for updates**:
    ```bash
-   # Compare with upstream
    curl -sL https://raw.githubusercontent.com/TryGhost/ghost-docker/main/compose.yml | diff - opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl
    ```
 
-3. **Update templates**:
+2. **Update templates**:
    - Edit `compose.yml.tftpl` with new image tags and SHA256 digests
-   - Update Caddyfile or snippets if upstream changed them
 
-4. **Deploy** via CI/CD:
+3. **Deploy** via CI/CD:
    ```bash
    git checkout -b feature/update-ghost-compose-images
    git add opentofu/modules/vultr/instance/userdata/ghost-compose/
    git commit -m "chore: update Ghost compose image versions"
    git push -u origin feature/update-ghost-compose-images
    ```
-   Open a PR to `develop`. The plan CI will run automatically — review the plan output,
-   then merge and approve the deployment in GitHub Actions.
+   Open a PR to `develop`.
 
 ### Files to Monitor
 
