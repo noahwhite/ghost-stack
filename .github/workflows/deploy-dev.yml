@@ -12,7 +12,34 @@ permissions:
   packages: read
 
 jobs:
+  # Detect which files changed to determine if we need to deploy
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for infrastructure file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: ${{ github.event.before }}
+          filters: |
+            infra:
+              - 'opentofu/**/*.tofu'
+              - 'opentofu/**/*.bu'
+              - 'opentofu/**/*.tftpl'
+              - 'opentofu/**/*.sh'
+              - 'opentofu/**/userdata/**'
+              - 'docker/scripts/**'
+
   deploy:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
     runs-on: ubuntu-latest
     environment: dev
 
