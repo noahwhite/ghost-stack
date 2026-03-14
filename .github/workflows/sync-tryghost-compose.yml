@@ -1,0 +1,168 @@
+name: Sync TryGhost Compose Images
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v6
+        with:
+          ref: develop
+
+      - name: Fetch upstream compose.yml
+        run: |
+          curl -fsSL \
+            https://raw.githubusercontent.com/TryGhost/ghost-docker/main/compose.yml \
+            -o /tmp/upstream-compose.yml
+
+      - name: Extract and compare images
+        id: compare
+        run: |
+          TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
+
+          # Extract upstream images
+          UP_CADDY=$(grep -m1 "image: caddy:" /tmp/upstream-compose.yml | sed 's/.*image: //' | tr -d ' \r')
+          UP_MYSQL=$(grep -m1 "image: mysql:" /tmp/upstream-compose.yml | sed 's/.*image: //' | tr -d ' \r')
+          UP_TRAFFIC=$(grep -m1 "image: ghost/traffic-analytics:" /tmp/upstream-compose.yml | sed 's/.*image: //' | tr -d ' \r')
+          UP_AP=$(grep "image: ghcr.io/tryghost/activitypub:" /tmp/upstream-compose.yml | grep -v "migrations" | sed 's/.*image: //' | tr -d ' \r')
+          UP_MIG=$(grep -m1 "image: ghcr.io/tryghost/activitypub-migrations:" /tmp/upstream-compose.yml | sed 's/.*image: //' | tr -d ' \r')
+
+          # Validate all upstream images were found
+          MISSING=0
+          [ -z "$UP_CADDY"   ] && echo "::error::Upstream image not found for prefix: caddy:"                              && MISSING=1
+          [ -z "$UP_MYSQL"   ] && echo "::error::Upstream image not found for prefix: mysql:"                              && MISSING=1
+          [ -z "$UP_TRAFFIC" ] && echo "::error::Upstream image not found for prefix: ghost/traffic-analytics:"            && MISSING=1
+          [ -z "$UP_AP"      ] && echo "::error::Upstream image not found for prefix: ghcr.io/tryghost/activitypub:"       && MISSING=1
+          [ -z "$UP_MIG"     ] && echo "::error::Upstream image not found for prefix: ghcr.io/tryghost/activitypub-migrations:" && MISSING=1
+          [ "$MISSING" -eq 1 ] && exit 1
+
+          # Detect new untracked upstream images (warn only)
+          while IFS= read -r img; do
+            case "$img" in
+              caddy:*|mysql:*|ghost/traffic-analytics:*|ghcr.io/tryghost/activitypub:*|ghcr.io/tryghost/activitypub-migrations:*|ghost:*) ;;
+              *) echo "::warning::Untracked upstream image detected: $img" ;;
+            esac
+          done < <(grep -E "^\s+image: " /tmp/upstream-compose.yml | sed 's/.*image: //' | tr -d ' \r')
+
+          # Extract local images
+          LC_CADDY=$(grep -m1 "image: caddy:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
+          LC_MYSQL=$(grep -m1 "image: mysql:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
+          LC_TRAFFIC=$(grep -m1 "image: ghost/traffic-analytics:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
+          LC_AP=$(grep "image: ghcr.io/tryghost/activitypub:" "$TFTPL" | grep -v "migrations" | sed 's/.*image: //' | tr -d ' \r')
+          LC_MIG=$(grep -m1 "image: ghcr.io/tryghost/activitypub-migrations:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
+
+          # Compare images and build table rows
+          HAS_CHANGES=false
+
+          check_image() {
+            local name="$1" lv="$2" uv="$3"
+            if [ "$lv" != "$uv" ]; then
+              echo "| \`${name}\` | \`${lv}\` | \`${uv}\` | updated |"
+              HAS_CHANGES=true
+            else
+              echo "| \`${name}\` | \`${lv}\` | — | unchanged |"
+            fi
+          }
+
+          ROW_CADDY=$(check_image   "caddy"                                   "$LC_CADDY"   "$UP_CADDY")
+          ROW_MYSQL=$(check_image   "mysql"                                   "$LC_MYSQL"   "$UP_MYSQL")
+          ROW_TRAFFIC=$(check_image "ghost/traffic-analytics"                 "$LC_TRAFFIC" "$UP_TRAFFIC")
+          ROW_AP=$(check_image      "ghcr.io/tryghost/activitypub"            "$LC_AP"      "$UP_AP")
+          ROW_MIG=$(check_image     "ghcr.io/tryghost/activitypub-migrations" "$LC_MIG"     "$UP_MIG")
+
+          # NOTE: check_image runs in a subshell via $(), so we re-derive HAS_CHANGES here
+          HAS_CHANGES=false
+          [ "$LC_CADDY"   != "$UP_CADDY"   ] && HAS_CHANGES=true
+          [ "$LC_MYSQL"   != "$UP_MYSQL"   ] && HAS_CHANGES=true
+          [ "$LC_TRAFFIC" != "$UP_TRAFFIC" ] && HAS_CHANGES=true
+          [ "$LC_AP"      != "$UP_AP"      ] && HAS_CHANGES=true
+          [ "$LC_MIG"     != "$UP_MIG"     ] && HAS_CHANGES=true
+
+          # Write PR body to file
+          {
+            echo "Automated sync from [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker) \`main\` branch."
+            echo ""
+            echo "| Image | Current | Upstream | Status |"
+            echo "|-------|---------|----------|--------|"
+            echo "$ROW_CADDY"
+            echo "$ROW_MYSQL"
+            echo "$ROW_TRAFFIC"
+            echo "$ROW_AP"
+            echo "$ROW_MIG"
+          } > /tmp/pr-body.md
+
+          # Export upstream values and change flag
+          {
+            echo "up_caddy=$UP_CADDY"
+            echo "up_mysql=$UP_MYSQL"
+            echo "up_traffic=$UP_TRAFFIC"
+            echo "up_ap=$UP_AP"
+            echo "up_mig=$UP_MIG"
+            echo "has_changes=$HAS_CHANGES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Apply image updates to compose.yml.tftpl
+        if: steps.compare.outputs.has_changes == 'true'
+        run: |
+          TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
+
+          # Use | as sed delimiter (safe: image names never contain |)
+          # activitypub: anchor on digit after colon to avoid matching activitypub-migrations
+          sed -i "s|image: caddy:[^[:space:]]*|image: ${{ steps.compare.outputs.up_caddy }}|" "$TFTPL"
+          sed -i "s|image: mysql:[^[:space:]]*|image: ${{ steps.compare.outputs.up_mysql }}|" "$TFTPL"
+          sed -i "s|image: ghost/traffic-analytics:[^[:space:]]*|image: ${{ steps.compare.outputs.up_traffic }}|" "$TFTPL"
+          sed -i "s|image: ghcr.io/tryghost/activitypub:[0-9][^[:space:]]*|image: ${{ steps.compare.outputs.up_ap }}|" "$TFTPL"
+          sed -i "s|image: ghcr.io/tryghost/activitypub-migrations:[^[:space:]]*|image: ${{ steps.compare.outputs.up_mig }}|" "$TFTPL"
+
+      - name: Find or create tracking issue
+        if: steps.compare.outputs.has_changes == 'true'
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_TITLE="[Sync] Docker images from TryGhost/ghost-docker"
+
+          ISSUE_NUMBER=$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --search "$ISSUE_TITLE" \
+            --json number,title \
+            --jq ".[] | select(.title | startswith(\"$ISSUE_TITLE\")) | .number" \
+            | head -1)
+
+          if [ -z "$ISSUE_NUMBER" ]; then
+            ISSUE_NUMBER=$(gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$ISSUE_TITLE" \
+              --body "Tracking issue for automated Docker image syncs from [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker). Closed automatically when sync PRs are merged." \
+              --assignee noahwhite \
+              --json number \
+              --jq '.number')
+            echo "Created tracking issue #$ISSUE_NUMBER"
+          else
+            echo "Reusing existing tracking issue #$ISSUE_NUMBER"
+          fi
+
+          echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update sync PR
+        if: steps.compare.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: feature/sync-tryghost-images
+          base: develop
+          commit-message: "chore: sync Docker images from TryGhost/ghost-docker"
+          title: "chore: sync Docker images from TryGhost/ghost-docker (closes #${{ steps.issue.outputs.issue_number }})"
+          body-path: /tmp/pr-body.md
+          assignees: noahwhite
