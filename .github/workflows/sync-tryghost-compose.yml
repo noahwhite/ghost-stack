@@ -141,13 +141,12 @@ jobs:
             | head -1)
 
           if [ -z "$ISSUE_NUMBER" ]; then
-            ISSUE_NUMBER=$(gh issue create \
+            ISSUE_URL=$(gh issue create \
               --repo "$GITHUB_REPOSITORY" \
               --title "$ISSUE_TITLE" \
               --body "Tracking issue for automated Docker image syncs from [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker). Closed automatically when sync PRs are merged." \
-              --assignee noahwhite \
-              --json number \
-              --jq '.number')
+              --assignee noahwhite)
+            ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
             echo "Created tracking issue #$ISSUE_NUMBER"
           else
             echo "Reusing existing tracking issue #$ISSUE_NUMBER"
