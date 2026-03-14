@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check for infrastructure file changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: filter
         with:
           # For new branches, compare against develop (the branch features are created from)
