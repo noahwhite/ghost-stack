@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    vultr = { source = "vultr/vultr", version = "= 2.22.1" }
+    vultr = { source = "vultr/vultr", version = "= 2.28.1" }
     ct = {
       source  = "poseidon/ct"
       version = "0.14.0"
