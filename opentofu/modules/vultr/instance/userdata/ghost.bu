@@ -301,12 +301,26 @@ storage:
     # Deployed to /opt/bin/ (executable, root-owned). Run manually to restore
     # /var/mnt/storage/ from R2 backup. Stops ghost-compose, restores from R2,
     # then starts ghost-compose. Interactive confirmation prompt prevents
-    # accidental execution.
+    # accidental execution. Supports --tier and --date flags for tiered restores.
     # ==========================================================================
     - path: /opt/bin/ghost-restore.sh
       mode: 0755
       contents:
         source: "data:text/plain;charset=utf-8;base64,${ghost_restore_script}"
+
+    # ==========================================================================
+    # Retention Script (tiered GFS backup retention)
+    # ==========================================================================
+    # Deployed to /opt/bin/ (executable, root-owned). Called by
+    # ghost-backup.service (ExecStartPost) after each successful backup.
+    # Promotes daily snapshots to weekly/monthly/quarterly tiers and prunes
+    # old snapshots to enforce retention limits (7 daily / 4 weekly / 3 monthly
+    # / 4 quarterly).
+    # ==========================================================================
+    - path: /opt/bin/ghost-retention.sh
+      mode: 0755
+      contents:
+        source: "data:text/plain;charset=utf-8;base64,${ghost_retention_script}"
 
     # ==========================================================================
     # Tailscale Connection Monitor Script (GHO-83)
@@ -559,10 +573,11 @@ systemd:
         [Service]
         Type=oneshot
         ExecStart=/opt/bin/ghost-backup.sh
+        ExecStartPost=/opt/bin/ghost-retention.sh
         StandardOutput=journal
         StandardError=journal
         SyslogIdentifier=ghost-backup
-        TimeoutStartSec=1800
+        TimeoutStartSec=3600
 
     - name: ghost-backup.timer
       enabled: true

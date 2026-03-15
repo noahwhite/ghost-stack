@@ -76,8 +76,9 @@ locals {
   activitypub_entrypoint_script = filebase64("${path.module}/userdata/ghost-compose/activitypub-entrypoint.sh")
 
   # Backup (GHO-63)
-  ghost_backup_script  = filebase64("${path.module}/userdata/ghost-backup.sh")
-  ghost_restore_script = filebase64("${path.module}/userdata/ghost-restore.sh")
+  ghost_backup_script    = filebase64("${path.module}/userdata/ghost-backup.sh")
+  ghost_restore_script   = filebase64("${path.module}/userdata/ghost-restore.sh")
+  ghost_retention_script = filebase64("${path.module}/userdata/ghost-retention.sh")
 }
 
 # (The data source will fail if not exists; so we just create the resource unconditionally.)
@@ -121,8 +122,9 @@ data "ct_config" "ghost" {
     activitypub_entrypoint_script = local.activitypub_entrypoint_script
 
     # Backup (GHO-63)
-    ghost_backup_script  = local.ghost_backup_script
-    ghost_restore_script = local.ghost_restore_script
+    ghost_backup_script    = local.ghost_backup_script
+    ghost_restore_script   = local.ghost_restore_script
+    ghost_retention_script = local.ghost_retention_script
   })
   strict = true
 }

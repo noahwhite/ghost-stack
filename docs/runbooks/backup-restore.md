@@ -1,6 +1,6 @@
 # Backup and Restore Runbook
 
-This runbook covers the nightly backup of Ghost stack data to Cloudflare R2, and how to restore from a backup if needed.
+This runbook covers the nightly backup of Ghost stack data to Cloudflare R2, the tiered retention policy, and how to restore from any backup tier.
 
 ---
 
@@ -35,10 +35,59 @@ The following paths are excluded from the backup:
 - **Implemented by:** `ghost-backup.timer` (systemd timer) → `ghost-backup.service` (oneshot)
 - **Estimated downtime:** ~2–3 minutes while ghost-compose is stopped
 
-### Security Model
+---
+
+## Retention Policy (GFS Tiered Rotation)
+
+Each nightly backup writes to a dated snapshot directory in R2. After the backup completes, `ghost-retention.sh` runs automatically (via `ExecStartPost`) to promote snapshots up the retention tiers and prune old ones.
+
+### Tiers
+
+| Tier | R2 Path | Retention | Promoted when |
+|------|---------|-----------|---------------|
+| **Daily** | `daily/YYYY-MM-DD/` | 7 snapshots | Every night |
+| **Weekly** | `weekly/YYYY-WXX/` | 4 snapshots | Every Sunday |
+| **Monthly** | `monthly/YYYY-MM/` | 3 snapshots | Last day of each month |
+| **Quarterly** | `quarterly/YYYY-QX/` | 4 snapshots | Last day of Mar / Jun / Sep / Dec |
+
+At steady state the bucket holds **18 snapshots** (7 + 4 + 3 + 4).
+
+### Rollup Schedule
+
+| Event | Trigger | Action |
+|-------|---------|--------|
+| Weekly rollup | Every Sunday after backup | Copies `daily/TODAY` → `weekly/YYYY-WXX`; prunes weekly tier to 4 |
+| Monthly rollup | Last day of month after backup | Copies latest weekly → `monthly/YYYY-MM`; prunes monthly tier to 3 |
+| Quarterly rollup | Last day of Q1/Q2/Q3/Q4 after backup | Copies latest monthly → `quarterly/YYYY-QX`; prunes quarterly tier to 4 |
+| Daily prune | Every night after backup | Prunes daily tier to 7 |
+
+### R2 Bucket Structure
+
+```
+r2:ghost-backups-dev-separationofconcerns-dev/
+├── daily/
+│   ├── 2026-03-09/        ← ghost/, mysql/, caddy/, ghost-compose/ subtrees
+│   ├── 2026-03-10/
+│   └── ... (7 entries max)
+├── weekly/
+│   ├── 2026-W10/
+│   └── ... (4 entries max)
+├── monthly/
+│   ├── 2026-01/
+│   └── ... (3 entries max)
+└── quarterly/
+    ├── 2025-Q4/
+    └── ... (4 entries max)
+```
+
+> **Note — migration:** The bucket may still contain legacy flat backup data at the root (`ghost/`, `mysql/`, `caddy/` directories). These can be manually deleted after confirming the first tiered backup succeeds.
+
+---
+
+## Security Model
 
 - R2 credentials are fetched from Infisical at boot by `infisical-secrets-fetch.service` and written to `/var/mnt/storage/ghost-compose/secrets/` (0600, root-only, persistent block storage)
-- At backup runtime, credentials are written to `/run/rclone-backup.conf` (tmpfs, 0600) and shredded via EXIT trap after the backup completes — they exist only during the backup window
+- At backup/retention runtime, credentials are written to tmpfs (`/run/rclone-backup.conf`, `/run/rclone-retention.conf`) and shredded via EXIT trap after completion — they exist only during the backup window
 - R2 credentials are **never** passed as `-e` env vars to `docker run` (which would expose them in `docker inspect`)
 - See [Token Rotation Runbook — R2 Backup Credentials](../token-rotation-runbook.md#r2-backup-credentials-ghost_dev_bckup_r2_access_key_id-and-ghost_dev_bckup_r2_secret_access_key) for rotation procedures
 
@@ -143,31 +192,46 @@ sudo systemctl start ghost-backup.service & journalctl -u ghost-backup -f
 **Expected log output:**
 
 ```
-[ghost-backup] Stopping ghost-compose...
-[ghost-backup] Running rclone sync to r2:ghost-backups-dev-separationofconcerns-dev...
-[ghost-backup] Backup complete.
-[ghost-backup] Restarting ghost-compose...
+[ghost-backup]    Stopping ghost-compose...
+[ghost-backup]    Running rclone sync to r2:ghost-backups-dev-separationofconcerns-dev/daily/2026-03-15...
+[ghost-backup]    Backup complete.
+[ghost-backup]    Restarting ghost-compose...
+[ghost-retention] Pruning daily/2026-03-08
+[ghost-retention] Retention complete.
 ```
 
 ---
 
-## Checking Backup Logs
+## Checking Backup and Retention Logs
 
 ```bash
-# View last backup run
+# View last backup + retention run
 journalctl -u ghost-backup --since "yesterday"
 
-# Or filter by the syslog identifier
+# Or filter by syslog identifier
 journalctl -t ghost-backup
+journalctl -t ghost-retention
 ```
 
 ---
 
 ## Verifying R2 Bucket Contents
 
+```bash
+tailscale ssh core@ghost-dev-01
+
+# List available snapshots in each tier
+sudo /opt/bin/ghost-restore.sh list
+sudo /opt/bin/ghost-restore.sh list --tier weekly
+sudo /opt/bin/ghost-restore.sh list --tier monthly
+sudo /opt/bin/ghost-restore.sh list --tier quarterly
+```
+
+Or via the Cloudflare Dashboard:
+
 1. Log into [Cloudflare Dashboard](https://dash.cloudflare.com)
 2. Navigate to **R2 Object Storage** → `ghost-backups-dev-separationofconcerns-dev`
-3. Confirm the bucket contains `ghost/`, `mysql/`, and `caddy/` directories with recent modification timestamps
+3. Confirm `daily/`, `weekly/`, `monthly/`, `quarterly/` directories exist with recent entries
 
 ---
 
@@ -196,13 +260,44 @@ Use this procedure to restore the Ghost stack from an R2 backup — for example,
 - Block storage is attached and mounted at `/var/mnt/storage/`
 - SSH access via Tailscale is available
 
-### Step 1: Run the restore script
-
-A restore script is deployed to `/opt/bin/ghost-restore.sh` on the instance. It handles stopping ghost-compose, restoring from R2, and restarting ghost-compose — with an interactive confirmation prompt to prevent accidental execution.
+### Step 1: Find the backup to restore from
 
 ```bash
 tailscale ssh core@ghost-dev-01
+
+# List all available daily snapshots (default)
+sudo /opt/bin/ghost-restore.sh list
+
+# List other tiers
+sudo /opt/bin/ghost-restore.sh list --tier weekly
+sudo /opt/bin/ghost-restore.sh list --tier monthly
+sudo /opt/bin/ghost-restore.sh list --tier quarterly
+```
+
+### Step 2: Run the restore script
+
+A restore script is deployed to `/opt/bin/ghost-restore.sh`. It handles stopping ghost-compose, restoring from R2, and restarting ghost-compose — with an interactive confirmation prompt to prevent accidental execution.
+
+**Restore from latest daily backup (default):**
+
+```bash
 sudo /opt/bin/ghost-restore.sh
+```
+
+**Restore from a specific snapshot:**
+
+```bash
+# Restore all from a specific daily snapshot
+sudo /opt/bin/ghost-restore.sh --tier daily --date 2026-03-14
+
+# Restore all from a weekly snapshot
+sudo /opt/bin/ghost-restore.sh --tier weekly --date 2026-W11
+
+# Restore all from a monthly snapshot
+sudo /opt/bin/ghost-restore.sh --tier monthly --date 2026-03
+
+# Restore all from a quarterly snapshot
+sudo /opt/bin/ghost-restore.sh --tier quarterly --date 2026-Q1
 ```
 
 The script will prompt: `Type 'yes' to continue:` — enter `yes` to proceed.
@@ -210,13 +305,14 @@ The script will prompt: `Type 'yes' to continue:` — enter `yes` to proceed.
 **Expected log output:**
 
 ```
+[ghost-restore] Using latest daily snapshot: 2026-03-15
 [ghost-restore] Stopping ghost-compose...
-[ghost-restore] Restoring from r2:ghost-backups-dev-separationofconcerns-dev to /var/mnt/storage...
+[ghost-restore] Restoring all from r2:ghost-backups-dev-separationofconcerns-dev/daily/2026-03-15 to /var/mnt/storage/...
 [ghost-restore] Restore complete. Starting ghost-compose...
 [ghost-restore] Done.
 ```
 
-### Step 2: Verify containers started
+### Step 3: Verify containers started
 
 ```bash
 docker ps --format "table {{.Names}}\t{{.Status}}"
@@ -235,28 +331,29 @@ curl -sI https://separationofconcerns.dev
 
 Use this procedure to restore specific data from R2 without affecting the rest of the stack — for example, to recover lost images while leaving the database untouched, or to roll back the database while keeping newer uploads.
 
-`ghost-restore.sh` accepts an optional component argument:
+`ghost-restore.sh` accepts an optional component argument alongside `--tier` and `--date`:
 
 | Command | What is restored | What is preserved |
 |---|---|---|
-| `sudo /opt/bin/ghost-restore.sh` | Everything (default) | — |
-| `sudo /opt/bin/ghost-restore.sh images` | `ghost/upload-data/images/` only | MySQL data, all other files |
-| `sudo /opt/bin/ghost-restore.sh mysql` | `mysql/data/` only | Ghost images, all other files |
+| `sudo /opt/bin/ghost-restore.sh` | Everything from latest daily | — |
+| `sudo /opt/bin/ghost-restore.sh images` | `ghost/upload-data/images/` from latest daily | MySQL data, all other files |
+| `sudo /opt/bin/ghost-restore.sh mysql` | `mysql/data/` from latest daily | Ghost images, all other files |
 
 All modes stop ghost-compose before restoring and restart it after. All modes use `rclone sync` so the target path is made to match R2 exactly — files present locally but absent in R2 are deleted within the restored scope.
 
-**Example — recover lost images:**
+**Example — recover lost images from latest daily:**
 
 ```bash
 tailscale ssh core@ghost-dev-01
 sudo /opt/bin/ghost-restore.sh images
 ```
 
-**Example — roll back the database:**
+**Example — roll back the database to last week's snapshot:**
 
 ```bash
 tailscale ssh core@ghost-dev-01
-sudo /opt/bin/ghost-restore.sh mysql
+sudo /opt/bin/ghost-restore.sh list --tier weekly
+sudo /opt/bin/ghost-restore.sh --tier weekly --date 2026-W10 mysql
 ```
 
 ---
@@ -286,6 +383,14 @@ journalctl -u infisical-secrets-fetch.service
 
 **Resolution:** Follow the [R2 Backup Credentials rotation procedure](../token-rotation-runbook.md#r2-backup-credentials-ghost_dev_bckup_r2_access_key_id-and-ghost_dev_bckup_r2_secret_access_key).
 
+### Retention skipped no weekly backup found
+
+**Symptom:** `ghost-retention` logs `ERROR: No weekly backup found for monthly rollup — skipping`
+
+**Diagnosis:** This occurs on the first end-of-month run before the first weekly rollup has happened (e.g., if the service was deployed after the last Sunday of the month).
+
+**Resolution:** This is self-healing — the next Sunday will create a weekly snapshot, and the following end-of-month will succeed. No action required.
+
 ### ghost-compose not recovering after backup
 
 **Symptom:** Ghost containers are not running after a backup
@@ -304,12 +409,13 @@ sudo systemctl start ghost-compose
 
 ### Rclone config not shredded
 
-**Symptom:** `/run/rclone-backup.conf` still exists after backup
+**Symptom:** `/run/rclone-backup.conf` or `/run/rclone-retention.conf` still exists after backup
 
 **Diagnosis:** This should not happen (EXIT trap runs on any exit). If it does:
 
 ```bash
 sudo shred -u /run/rclone-backup.conf
+sudo shred -u /run/rclone-retention.conf
 ```
 
 Note: `/run/` is tmpfs on Flatcar — it is cleared on reboot regardless.
