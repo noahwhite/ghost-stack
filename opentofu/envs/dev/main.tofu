@@ -155,6 +155,7 @@ locals {
       activitypub_entrypoint  = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-compose/activitypub-entrypoint.sh")
       ghost_backup            = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-backup.sh")
       ghost_restore           = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-restore.sh")
+      ghost_retention         = filesha256("${path.module}/../../modules/vultr/instance/userdata/ghost-retention.sh")
     }
   }))
 }

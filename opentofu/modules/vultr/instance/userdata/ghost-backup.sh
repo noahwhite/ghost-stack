@@ -49,12 +49,13 @@ unset R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY
 log "Stopping ghost-compose..."
 docker compose -f "${COMPOSE_FILE}" --project-directory /etc/ghost-compose down
 
-log "Running rclone sync to r2:${R2_DEV_BACKUPS_BUCKET}..."
+BACKUP_DATE=$(date +%Y-%m-%d)
+log "Running rclone sync to r2:${R2_DEV_BACKUPS_BUCKET}/daily/${BACKUP_DATE}..."
 docker run --rm \
     --network host \
     -v "${RCLONE_CONFIG}:/config/rclone/rclone.conf:ro" \
     -v "${STORAGE_DIR}:/data:ro" \
-    rclone/rclone:1.69.1 sync /data "r2:${R2_DEV_BACKUPS_BUCKET}" \
+    rclone/rclone:1.69.1 sync /data "r2:${R2_DEV_BACKUPS_BUCKET}/daily/${BACKUP_DATE}" \
     --exclude "ghost-compose/secrets/**" \
     --exclude "ghost-compose/.env.secrets" \
     --exclude "ghost-compose/.env.generated" \

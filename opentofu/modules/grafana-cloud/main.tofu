@@ -10639,6 +10639,95 @@ resource "grafana_rule_group" "ghost_stack_backup" {
       })
     }
   }
+
+  # Rule 4: Missed retention window — no "Retention complete." seen in 26 hours.
+  # ghost-retention.sh runs as ExecStartPost under ghost-backup.service, so logs appear
+  # in the same unit. Fires if retention did not complete (error, skip, or timer miss).
+  rule {
+    name      = "Missed Retention Window"
+    condition = "C"
+    for       = "1h"
+
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    annotations = {
+      summary     = "No successful retention run in 26 hours"
+      description = "ghost-retention.sh has not logged a successful completion in the past 26 hours. Check: journalctl -u ghost-backup -n 100 -t ghost-retention"
+      runbook_url = "https://github.com/noahwhite/ghost-stack/blob/main/docs/runbooks/backup-restore.md"
+    }
+
+    labels = {
+      service  = "backup"
+      severity = "critical"
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.soc_dev_loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 93600
+        to   = 0
+      }
+      model = jsonencode({
+        datasource = {
+          type = "loki"
+          uid  = data.grafana_data_source.soc_dev_loki.uid
+        }
+        editorMode   = "code"
+        expr         = "count_over_time({job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"[ghost-retention] Retention complete.\" [26h])"
+        queryType    = "instant"
+        refId        = "A"
+        legendFormat = ""
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [], type = "gt" }
+          operator  = { type = "and" }
+          query     = { params = ["A"] }
+          reducer   = { params = [], type = "count" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "A"
+        reducer    = "count"
+        refId      = "B"
+        type       = "reduce"
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        conditions = [{
+          evaluator = { params = [1], type = "lt" }
+          operator  = { type = "and" }
+          query     = { params = ["B"] }
+          reducer   = { params = [], type = "last" }
+          type      = "query"
+        }]
+        datasource = { type = "__expr__", uid = "__expr__" }
+        expression = "B"
+        refId      = "C"
+        type       = "threshold"
+      })
+    }
+  }
 }
 
 # Backup history dashboard — Loki logs panel for ghost-backup.service
@@ -10648,7 +10737,7 @@ resource "grafana_dashboard" "ghost_stack_backup" {
 
   config_json = jsonencode({
     title       = "Ghost Stack Backup"
-    description = "Backup job history for ghost-backup.service"
+    description = "Backup and retention job history for ghost-backup.service (daily backup + GFS tiered retention)"
     editable    = true
     tags        = ["ghost-stack", "backup"]
     time = {
@@ -10659,8 +10748,8 @@ resource "grafana_dashboard" "ghost_stack_backup" {
       {
         id      = 1
         type    = "logs"
-        title   = "Backup Job Logs"
-        gridPos = { h = 20, w = 24, x = 0, y = 0 }
+        title   = "Backup & Retention Logs (All)"
+        gridPos = { h = 12, w = 24, x = 0, y = 0 }
         options = {
           dedupStrategy      = "none"
           enableLogDetails   = true
@@ -10678,6 +10767,37 @@ resource "grafana_dashboard" "ghost_stack_backup" {
             }
             editorMode   = "code"
             expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"}"
+            legendFormat = ""
+            refId        = "A"
+          }
+        ]
+        datasource = {
+          type = "loki"
+          uid  = data.grafana_data_source.soc_dev_loki.uid
+        }
+      },
+      {
+        id      = 2
+        type    = "logs"
+        title   = "Retention Rollup Events"
+        gridPos = { h = 12, w = 24, x = 0, y = 12 }
+        options = {
+          dedupStrategy      = "none"
+          enableLogDetails   = true
+          prettifyLogMessage = false
+          showLabels         = false
+          showTime           = true
+          sortOrder          = "Descending"
+          wrapLogMessage     = false
+        }
+        targets = [
+          {
+            datasource = {
+              type = "loki"
+              uid  = data.grafana_data_source.soc_dev_loki.uid
+            }
+            editorMode   = "code"
+            expr         = "{job=~\"integrations/(node_exporter|unix)\", unit=\"ghost-backup.service\"} |= \"[ghost-retention]\""
             legendFormat = ""
             refId        = "A"
           }

@@ -378,8 +378,8 @@ run "grafana_cloud_module_tests" {
   }
 
   assert {
-    condition     = length(grafana_rule_group.ghost_stack_backup.rule) == 3
-    error_message = "Alert rule group should have 3 rules"
+    condition     = length(grafana_rule_group.ghost_stack_backup.rule) == 4
+    error_message = "Alert rule group should have 4 rules"
   }
 
   assert {
