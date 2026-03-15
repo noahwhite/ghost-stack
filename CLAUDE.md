@@ -35,6 +35,8 @@ git push origin feature/GHO-XXX-branch-name
 
 **Never use** `mcp__github__push_files` or `mcp__github__create_or_update_file` for commits in this repo — they bypass local git config, produce unsigned commits, and fail with `422/409 Repository rule violations found: Commits must have verified signatures`.
 
+**Never use `git stash` to carry changes across branches.** Auto-merge during `git stash pop` silently drops hunks when branches have diverged, causing changes to disappear without error. Instead, use a temp commit on the current branch, then cherry-pick or reset after switching, or use `git diff > patch.diff` / `git apply patch.diff`.
+
 After pushing, open the PR with `mcp__github__create_pull_request`.
 
 ### PR Creation Checklist
