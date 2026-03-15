@@ -164,11 +164,20 @@ jobs:
 
           echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
 
+      - name: Generate GitHub App token
+        if: steps.compare.outputs.has_changes == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GHOST_STACK_APP_ID }}
+          private-key: ${{ secrets.GHOST_STACK_APP_PRIVATE_KEY }}
+          repositories: ghost-stack
+
       - name: Create or update sync PR
         if: steps.compare.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           branch: feature/sync-tryghost-compose-images
           base: develop
           commit-message: "chore: sync Docker images from TryGhost/ghost-docker"
