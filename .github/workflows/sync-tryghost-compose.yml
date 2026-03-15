@@ -61,6 +61,16 @@ jobs:
           LC_AP=$(grep "image: ghcr.io/tryghost/activitypub:" "$TFTPL" | grep -v "migrations" | sed 's/.*image: //' | tr -d ' \r')
           LC_MIG=$(grep -m1 "image: ghcr.io/tryghost/activitypub-migrations:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
 
+          # MySQL downgrade guard: only update if upstream version > 8.4.8
+          # (running instance has 8.4.x data; MySQL cannot read data files from a newer major/minor)
+          MYSQL_FLOOR="8.4.8"
+          UP_MYSQL_VER=$(echo "$UP_MYSQL" | sed 's/mysql:\([^@]*\).*/\1/')
+          MYSQL_FLOOR_WINNER=$(printf '%s\n' "$UP_MYSQL_VER" "$MYSQL_FLOOR" | sort -V | tail -1)
+          if [ "$MYSQL_FLOOR_WINNER" != "$UP_MYSQL_VER" ] || [ "$UP_MYSQL_VER" = "$MYSQL_FLOOR" ]; then
+            echo "::notice::MySQL downgrade guard: upstream $UP_MYSQL_VER <= $MYSQL_FLOOR — skipping MySQL update"
+            UP_MYSQL="$LC_MYSQL"
+          fi
+
           # Compare images and build table rows
           HAS_CHANGES=false
 
@@ -154,11 +164,20 @@ jobs:
 
           echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
 
+      - name: Generate GitHub App token
+        if: steps.compare.outputs.has_changes == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GHOST_STACK_APP_ID }}
+          private-key: ${{ secrets.GHOST_STACK_APP_PRIVATE_KEY }}
+          repositories: ghost-stack
+
       - name: Create or update sync PR
         if: steps.compare.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           branch: feature/sync-tryghost-compose-images
           base: develop
           commit-message: "chore: sync Docker images from TryGhost/ghost-docker"
