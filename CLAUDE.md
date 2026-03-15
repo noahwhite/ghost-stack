@@ -767,6 +767,50 @@ instance being named `ghost-dev-01-1`). See `docs/runbooks/tailscale-device-clea
 2. SSH to instance and check container logs
 3. Caddy logs show request details including headers
 
+### Ghost Instance Debugging
+
+**Container names:**
+- Ghost: `ghost-compose-ghost-1`
+- Caddy: `ghost-compose-caddy-1`
+- MySQL: `ghost-compose-db-1`
+
+**Ghost logs** are inside the container at `/var/lib/ghost/content/logs/` — not on the host or block storage.
+
+File naming: `{protocol}___{domain}_production.log` (colons/slashes → underscores)
+
+```bash
+# Tail current log
+docker exec ghost-compose-ghost-1 tail -f /var/lib/ghost/content/logs/https___separationofconcerns_dev_production.log
+
+# Search logs
+docker exec ghost-compose-ghost-1 tail -100 /var/lib/ghost/content/logs/https___separationofconcerns_dev_production.log | grep -i "keyword"
+
+# Check errors
+docker exec ghost-compose-ghost-1 tail -50 /var/lib/ghost/content/logs/https___separationofconcerns_dev_production.error.log
+```
+
+### Grafana / Loki Alert Rules
+
+Hard-won patterns from GHO-98 — deviating from these causes silent failures:
+
+- **Use `count_over_time([window])` with `queryType = "instant"`** — plain log stream queries return "long" format frames, which the SSE Reduce expression rejects with "input data must be a wide series". Instant metric queries return "wide" format.
+- **`relative_time_range` on data source steps must be non-zero** — `from = 0, to = 0` is only valid for expression steps (B, C). Data source queries need a non-zero `from` (e.g. `from = 600` for 10 minutes).
+- **`org_id` must be `"1"`, not `"0"`** — using `"0"` in `grafana_rule_group` causes perpetual forced replacement on every plan.
+- **`no_data_state` guidance:**
+  - Intermittent services (e.g. nightly backup): `"OK"` — no logs in short window = healthy
+  - Absence-of-success rules (e.g. missed backup window): `"Alerting"` — no data = bad
+  - Prometheus state metrics that only appear when active: `"OK"` — no series = not in that state
+- **Ghost-Compose Down alert:** `node_systemd_unit_state{state="active"}` fires false positives for `Type=oneshot` services. Use `state="failed"` to detect only explicit systemd failures.
+
+### Docker Compose: Entrypoint + CMD Gotcha
+
+When `entrypoint:` is set in a Compose service without `command:`, Docker Compose clears the image's CMD. Any entrypoint script using `exec "$@"` receives no arguments, exits 0 immediately with no output — manifests as a silent crash loop (`Restarting (0)`, empty `docker logs`).
+
+**Always add `command:` alongside `entrypoint:`.** Get the image's original CMD with:
+```bash
+docker inspect <image> --format '{{.Config.Cmd}} {{.Config.Entrypoint}}'
+```
+
 ### Backup and Restore
 
 Nightly backups of `/var/mnt/storage/` run via `ghost-backup.timer` → `ghost-backup.service`. The service stops ghost-compose, syncs to Cloudflare R2 using `rclone sync` (via `docker run rclone/rclone:1.69.1`), then restarts ghost-compose. Estimated downtime: ~2–3 minutes.
