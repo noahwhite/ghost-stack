@@ -1,3 +1,4 @@
+# GHO-109: trigger rebuild to verify block storage attachment with native provider support
 [Unit]
 Description=Docker-Compose Ghost CMS Container
 After=docker.service var-mnt-storage.mount tinybird-provision.service infisical-secrets.service
