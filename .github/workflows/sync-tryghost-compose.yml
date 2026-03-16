@@ -19,13 +19,29 @@ jobs:
         with:
           ref: develop
 
+      - name: Guard — skip gracefully if not on develop
+        id: verify
+        run: |
+          TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
+          if [ "$GITHUB_REF_NAME" != "develop" ]; then
+            echo "::notice::Triggered from '$GITHUB_REF_NAME', not 'develop' — skipping sync"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          elif [ ! -f "$TFTPL" ]; then
+            echo "::error::compose.yml.tftpl not found on develop — this file is required"
+            exit 1
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Fetch upstream compose.yml
+        if: steps.verify.outputs.skip != 'true'
         run: |
           curl -fsSL \
             https://raw.githubusercontent.com/TryGhost/ghost-docker/main/compose.yml \
             -o /tmp/upstream-compose.yml
 
       - name: Extract and compare images
+        if: steps.verify.outputs.skip != 'true'
         id: compare
         run: |
           TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
@@ -122,7 +138,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Apply image updates to compose.yml.tftpl
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         run: |
           TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
 
@@ -135,7 +151,7 @@ jobs:
           sed -i "s|image: ghcr.io/tryghost/activitypub-migrations:[^[:space:]]*|image: ${{ steps.compare.outputs.up_mig }}|" "$TFTPL"
 
       - name: Find or create tracking issue
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         id: issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -165,7 +181,7 @@ jobs:
           echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Generate GitHub App token
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
@@ -174,7 +190,7 @@ jobs:
           repositories: ghost-stack
 
       - name: Create or update sync PR
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.app-token.outputs.token }}
