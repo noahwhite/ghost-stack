@@ -7,6 +7,7 @@
 set -euo pipefail
 
 CONFIG_FILE="/etc/ghost-compose/.env.config"
+GENERATED_FILE="/var/mnt/storage/ghost-compose/.env.generated"
 SECRETS_DIR="/var/mnt/storage/ghost-compose/secrets"
 STORAGE_DIR="/var/mnt/storage"
 COMPOSE_FILE="/etc/ghost-compose/compose.yml"
@@ -22,7 +23,7 @@ trap '
   shred -u "${RCLONE_CONFIG}" 2>/dev/null || true
 ' EXIT
 
-set -a; source "${CONFIG_FILE}"; set +a
+set -a; source "${CONFIG_FILE}"; [ -f "${GENERATED_FILE}" ] && source "${GENERATED_FILE}"; set +a
 
 if [ ! -f "${SECRETS_DIR}/ghost_dev_bckup_r2_access_key_id" ] || \
    [ ! -f "${SECRETS_DIR}/ghost_dev_bckup_r2_secret_access_key" ]; then
