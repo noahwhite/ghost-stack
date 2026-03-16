@@ -30,6 +30,7 @@ jobs:
           filters: |
             infra:
               - 'opentofu/**/*.tofu'
+              - 'opentofu/**/*.tfvars'
               - 'opentofu/**/*.bu'
               - 'opentofu/**/*.tftpl'
               - 'opentofu/**/*.sh'
