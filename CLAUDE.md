@@ -57,7 +57,14 @@ Do NOT proceed with other tasks until the PR is assigned.
 
 ## OpenTofu Formatting
 
-`tofu fmt` is not available in this environment. When editing `.tofu` files, manually verify alignment before committing:
+`tofu fmt` IS available in this environment. Always run it on any changed `.tofu` or `.tfvars` files before committing — `tofu fmt` checks both:
+
+```bash
+tofu fmt /workspace/ghost-stack/opentofu/envs/dev/dev.auto.tfvars
+tofu fmt -check -recursive /workspace/ghost-stack/opentofu/
+```
+
+When editing `.tofu` or `.tfvars` files, verify alignment manually as a backup:
 
 - Within each contiguous group of key-value assignments (separated by blank lines or comments), all `=` signs must align to the **longest key + 1 space**.
 - When **adding** a new key, check whether it changes the longest key in its group. If not, the existing alignment is unchanged and the new key must be padded to match.
@@ -605,12 +612,12 @@ from state first or the plan CI will fail:
 ./opentofu/scripts/tofu.sh dev state rm module.vm.vultr_instance.this
 ```
 
-**To retrigger with a plan**, open a PR with a trivial infra file change:
+**To retrigger with a plan**, open a PR with a trivial infra file change. Always use a `.tofu` file change — it is guaranteed to be in all three CI path filters (fmt-check, plan, deploy):
 
 ```bash
 git checkout develop && git pull origin develop
 git checkout -b feature/retrigger-deployment-YYYY-MM-DD
-# Edit the drift recovery comment in opentofu/envs/dev/main.tofu
+# Bump the date comment in opentofu/envs/dev/main.tofu
 git add opentofu/envs/dev/main.tofu
 git commit -m "chore: retrigger deployment to recover from drift"
 git push -u origin feature/retrigger-deployment-YYYY-MM-DD
@@ -618,6 +625,8 @@ git push -u origin feature/retrigger-deployment-YYYY-MM-DD
 
 Open a PR to `develop`. The plan CI will run, produce a plan showing the drift, and
 the deploy will apply after you merge and approve.
+
+**CI path filter parity:** All three workflows (`pr-tofu-fmt-check.yml`, `pr-tofu-plan-develop.yml`, `deploy-dev.yml`) must have identical path filter patterns. When adding new file types to one, add to all three. Currently tracked: `*.tofu`, `*.tfvars`, `*.bu`, `*.tftpl`, `*.sh`, `userdata/**`, `docker/scripts/**`.
 
 See `docs/runbooks/retrigger-deployment.md` for full details and recovery scenarios.
 
