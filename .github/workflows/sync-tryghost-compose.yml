@@ -19,13 +19,29 @@ jobs:
         with:
           ref: develop
 
+      - name: Guard — skip gracefully if not on develop
+        id: verify
+        run: |
+          TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
+          if [ "$GITHUB_REF_NAME" != "develop" ]; then
+            echo "::notice::Triggered from '$GITHUB_REF_NAME', not 'develop' — skipping sync"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          elif [ ! -f "$TFTPL" ]; then
+            echo "::error::compose.yml.tftpl not found on develop — this file is required"
+            exit 1
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Fetch upstream compose.yml
+        if: steps.verify.outputs.skip != 'true'
         run: |
           curl -fsSL \
             https://raw.githubusercontent.com/TryGhost/ghost-docker/main/compose.yml \
             -o /tmp/upstream-compose.yml
 
       - name: Extract and compare images
+        if: steps.verify.outputs.skip != 'true'
         id: compare
         run: |
           TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
@@ -60,6 +76,16 @@ jobs:
           LC_TRAFFIC=$(grep -m1 "image: ghost/traffic-analytics:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
           LC_AP=$(grep "image: ghcr.io/tryghost/activitypub:" "$TFTPL" | grep -v "migrations" | sed 's/.*image: //' | tr -d ' \r')
           LC_MIG=$(grep -m1 "image: ghcr.io/tryghost/activitypub-migrations:" "$TFTPL" | sed 's/.*image: //' | tr -d ' \r')
+
+          # MySQL downgrade guard: only update if upstream version > 8.4.8
+          # (running instance has 8.4.x data; MySQL cannot read data files from a newer major/minor)
+          MYSQL_FLOOR="8.4.8"
+          UP_MYSQL_VER=$(echo "$UP_MYSQL" | sed 's/mysql:\([^@]*\).*/\1/')
+          MYSQL_FLOOR_WINNER=$(printf '%s\n' "$UP_MYSQL_VER" "$MYSQL_FLOOR" | sort -V | tail -1)
+          if [ "$MYSQL_FLOOR_WINNER" != "$UP_MYSQL_VER" ] || [ "$UP_MYSQL_VER" = "$MYSQL_FLOOR" ]; then
+            echo "::notice::MySQL downgrade guard: upstream $UP_MYSQL_VER <= $MYSQL_FLOOR — skipping MySQL update"
+            UP_MYSQL="$LC_MYSQL"
+          fi
 
           # Compare images and build table rows
           HAS_CHANGES=false
@@ -112,7 +138,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Apply image updates to compose.yml.tftpl
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         run: |
           TFTPL="opentofu/modules/vultr/instance/userdata/ghost-compose/compose.yml.tftpl"
 
@@ -125,7 +151,7 @@ jobs:
           sed -i "s|image: ghcr.io/tryghost/activitypub-migrations:[^[:space:]]*|image: ${{ steps.compare.outputs.up_mig }}|" "$TFTPL"
 
       - name: Find or create tracking issue
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         id: issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -141,13 +167,12 @@ jobs:
             | head -1)
 
           if [ -z "$ISSUE_NUMBER" ]; then
-            ISSUE_NUMBER=$(gh issue create \
+            ISSUE_URL=$(gh issue create \
               --repo "$GITHUB_REPOSITORY" \
               --title "$ISSUE_TITLE" \
               --body "Tracking issue for automated Docker image syncs from [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker). Closed automatically when sync PRs are merged." \
-              --assignee noahwhite \
-              --json number \
-              --jq '.number')
+              --assignee noahwhite)
+            ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
             echo "Created tracking issue #$ISSUE_NUMBER"
           else
             echo "Reusing existing tracking issue #$ISSUE_NUMBER"
@@ -155,14 +180,24 @@ jobs:
 
           echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
 
+      - name: Generate GitHub App token
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GHOST_STACK_APP_ID }}
+          private-key: ${{ secrets.GHOST_STACK_APP_PRIVATE_KEY }}
+          repositories: ghost-stack
+
       - name: Create or update sync PR
-        if: steps.compare.outputs.has_changes == 'true'
+        if: steps.verify.outputs.skip != 'true' && steps.compare.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: feature/sync-tryghost-images
+          token: ${{ steps.app-token.outputs.token }}
+          branch: feature/sync-tryghost-compose-images
           base: develop
           commit-message: "chore: sync Docker images from TryGhost/ghost-docker"
           title: "chore: sync Docker images from TryGhost/ghost-docker (closes #${{ steps.issue.outputs.issue_number }})"
           body-path: /tmp/pr-body.md
+          sign-commits: true
           assignees: noahwhite
