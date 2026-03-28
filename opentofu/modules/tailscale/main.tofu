@@ -64,6 +64,11 @@ resource "tailscale_acl" "soc_tailnet_acl" {
           "udp:21119",
           "udp:43178",
         "tcp:21119"]
+      },
+      {
+        "src" : ["tag:infisical-ci"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["*"]
       }
     ],
     "ssh" = [
