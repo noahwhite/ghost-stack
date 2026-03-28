@@ -86,7 +86,8 @@ resource "tailscale_acl" "soc_tailnet_acl" {
     },
     "tagOwners" = {
       "tag:ghost-dev"             = ["group:devs"],
-      "tag:ghost-dev-workstation" = ["group:devs"]
+      "tag:ghost-dev-workstation" = ["group:devs"],
+      "tag:infisical"             = ["group:devs"]
     },
   })
 }
