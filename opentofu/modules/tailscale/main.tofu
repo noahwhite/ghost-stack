@@ -64,6 +64,26 @@ resource "tailscale_acl" "soc_tailnet_acl" {
           "udp:21119",
           "udp:43178",
         "tcp:21119"]
+      },
+      {
+        "src" : ["tag:infisical-ci"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["*"]
+      },
+      {
+        "src" : ["noah@noahwhite.net"],
+        "dst" : ["tag:officina-instance"],
+        "ip" : ["22"]
+      },
+      {
+        "src" : ["tag:officina-ci"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["443"]
+      },
+      {
+        "src" : ["tag:officina-instance"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["443"]
       }
     ],
     "ssh" = [
@@ -79,14 +99,37 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "src"    = ["noah@noahwhite.net"],
         "dst"    = ["tag:ghost-dev-workstation"],
         "users"  = ["noah"],
-      }
+      },
+      {
+        "action" = "check",
+        "src"    = ["noah@noahwhite.net"],
+        "dst"    = ["tag:infisical"],
+        "users"  = ["core"],
+      },
+      # CI runner (tag:infisical-ci) can SSH to infisical host without interactive re-auth
+      {
+        "action" = "accept",
+        "src"    = ["tag:infisical-ci"],
+        "dst"    = ["tag:infisical"],
+        "users"  = ["core"],
+      },
+      {
+        "action" = "check",
+        "src"    = ["noah@noahwhite.net"],
+        "dst"    = ["tag:officina-instance"],
+        "users"  = ["core"],
+      },
     ],
     "groups" = {
       "group:devs" = ["noah@noahwhite.net"],
     },
     "tagOwners" = {
       "tag:ghost-dev"             = ["group:devs"],
-      "tag:ghost-dev-workstation" = ["group:devs"]
+      "tag:ghost-dev-workstation" = ["group:devs"],
+      "tag:infisical"             = ["group:devs"],
+      "tag:infisical-ci"          = ["group:devs"],
+      "tag:officina-ci"           = ["group:devs"],
+      "tag:officina-instance"     = ["group:devs"],
     },
   })
 }
