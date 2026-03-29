@@ -69,6 +69,16 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "src" : ["tag:infisical-ci"],
         "dst" : ["tag:infisical"],
         "ip" : ["*"]
+      },
+      {
+        "src" : ["tag:officina-ci"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["443"]
+      },
+      {
+        "src" : ["tag:officina-instance"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["443"]
       }
     ],
     "ssh" = [
@@ -107,6 +117,8 @@ resource "tailscale_acl" "soc_tailnet_acl" {
       "tag:ghost-dev-workstation" = ["group:devs"],
       "tag:infisical"             = ["group:devs"],
       "tag:infisical-ci"          = ["group:devs"],
+      "tag:officina-ci"           = ["group:devs"],
+      "tag:officina-instance"     = ["group:devs"],
     },
   })
 }
