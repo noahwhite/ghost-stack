@@ -69,6 +69,21 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "src" : ["tag:infisical-ci"],
         "dst" : ["tag:infisical"],
         "ip" : ["*"]
+      },
+      {
+        "src" : ["noah@noahwhite.net"],
+        "dst" : ["tag:officina-instance"],
+        "ip" : ["22"]
+      },
+      {
+        "src" : ["tag:officina-ci"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["443"]
+      },
+      {
+        "src" : ["tag:officina-instance"],
+        "dst" : ["tag:infisical"],
+        "ip" : ["443"]
       }
     ],
     "ssh" = [
@@ -98,6 +113,12 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "dst"    = ["tag:infisical"],
         "users"  = ["core"],
       },
+      {
+        "action" = "check",
+        "src"    = ["noah@noahwhite.net"],
+        "dst"    = ["tag:officina-instance"],
+        "users"  = ["core"],
+      },
     ],
     "groups" = {
       "group:devs" = ["noah@noahwhite.net"],
@@ -107,6 +128,8 @@ resource "tailscale_acl" "soc_tailnet_acl" {
       "tag:ghost-dev-workstation" = ["group:devs"],
       "tag:infisical"             = ["group:devs"],
       "tag:infisical-ci"          = ["group:devs"],
+      "tag:officina-ci"           = ["group:devs"],
+      "tag:officina-instance"     = ["group:devs"],
     },
   })
 }
