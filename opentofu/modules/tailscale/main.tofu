@@ -71,6 +71,11 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "ip" : ["*"]
       },
       {
+        "src" : ["noah@noahwhite.net"],
+        "dst" : ["tag:officina-instance"],
+        "ip" : ["22"]
+      },
+      {
         "src" : ["tag:officina-ci"],
         "dst" : ["tag:infisical"],
         "ip" : ["443"]
@@ -106,6 +111,12 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "action" = "accept",
         "src"    = ["tag:infisical-ci"],
         "dst"    = ["tag:infisical"],
+        "users"  = ["core"],
+      },
+      {
+        "action" = "check",
+        "src"    = ["noah@noahwhite.net"],
+        "dst"    = ["tag:officina-instance"],
         "users"  = ["core"],
       },
     ],
