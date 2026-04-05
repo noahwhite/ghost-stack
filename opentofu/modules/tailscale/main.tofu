@@ -128,7 +128,7 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "action" = "accept",
         "src"    = ["tag:officina-ci"],
         "dst"    = ["tag:officina-instance"],
-        "users"  = ["root"],
+        "users"  = ["core"],
       },
     ],
     "groups" = {
