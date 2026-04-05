@@ -84,6 +84,11 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "src" : ["tag:officina-instance"],
         "dst" : ["tag:infisical"],
         "ip" : ["443"]
+      },
+      {
+        "src" : ["tag:officina-ci"],
+        "dst" : ["tag:officina-instance"],
+        "ip" : ["22"]
       }
     ],
     "ssh" = [
@@ -118,6 +123,12 @@ resource "tailscale_acl" "soc_tailnet_acl" {
         "src"    = ["noah@noahwhite.net"],
         "dst"    = ["tag:officina-instance"],
         "users"  = ["core"],
+      },
+      {
+        "action" = "accept",
+        "src"    = ["tag:officina-ci"],
+        "dst"    = ["tag:officina-instance"],
+        "users"  = ["root"],
       },
     ],
     "groups" = {
