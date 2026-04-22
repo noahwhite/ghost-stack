@@ -4,7 +4,7 @@ terraform {
   required_providers {
     vultr = {
       source  = "vultr/vultr"
-      version = "= 2.30.0"
+      version = "= 2.29.0"
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
