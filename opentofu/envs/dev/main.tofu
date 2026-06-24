@@ -165,8 +165,12 @@ module "grafana-cloud" {
   providers = {
     grafana = grafana.cloud
   }
-  pagerduty_backup_integration_key = module.pagerduty.backup_integration_key
-  SOC_DEV_TERRAFORM_SA_TOK         = var.SOC_DEV_TERRAFORM_SA_TOK
+  pagerduty_backup_integration_key       = module.pagerduty.backup_integration_key
+  pagerduty_health_check_integration_key = module.pagerduty.health_check_integration_key
+  SOC_DEV_TERRAFORM_SA_TOK               = var.SOC_DEV_TERRAFORM_SA_TOK
+  metrics_publisher_key                  = var.GC_ACCESS_TOK
+  health_check_token                     = var.health_check_token
+  tenant_domain                          = var.ghost_domain
 }
 
 module "pagerduty" {

@@ -256,6 +256,68 @@ output "backup_integration_key" {
   sensitive   = true
 }
 
+# =============================================================================
+# Ghost Stack Health Check Alerting (OFF-178)
+# =============================================================================
+resource "pagerduty_service" "ghost-stack-dev-01-health-check" {
+  name                    = "ghost-stack-dev-01-health-check"
+  description             = "Synthetic health check probes for tenant sites on ghost-stack-dev-01"
+  auto_resolve_timeout    = "null"
+  acknowledgement_timeout = "600"
+  escalation_policy       = pagerduty_escalation_policy.ghost-stack-dev-01-tailscale-ep.id
+  alert_creation          = "create_alerts_and_incidents"
+
+  auto_pause_notifications_parameters {
+    enabled = true
+    timeout = 300
+  }
+
+  incident_urgency_rule {
+    type    = "constant"
+    urgency = "high"
+  }
+}
+
+resource "pagerduty_service_integration" "ghost-stack-dev-01-health-check_apiv2" {
+  name    = "Events API V2"
+  type    = "events_api_v2_inbound_integration"
+  service = pagerduty_service.ghost-stack-dev-01-health-check.id
+}
+
+resource "pagerduty_service_dependency" "health-check-flatcar-sd" {
+  dependency {
+    dependent_service {
+      id   = pagerduty_service.ghost-stack-dev-01-health-check.id
+      type = "service"
+    }
+    supporting_service {
+      id   = pagerduty_service.flatcar_instance.id
+      type = "service"
+    }
+  }
+}
+
+resource "pagerduty_service_dependency" "health-check-soc_blog-sd" {
+  dependency {
+    type = "service_dependency"
+
+    dependent_service {
+      id   = pagerduty_business_service.soc_blog.id
+      type = "business_service"
+    }
+    supporting_service {
+      id   = pagerduty_service.ghost-stack-dev-01-health-check.id
+      type = "service"
+    }
+  }
+}
+
+output "health_check_integration_key" {
+  description = "PagerDuty Events API V2 integration key for the health check service"
+  value       = pagerduty_service_integration.ghost-stack-dev-01-health-check_apiv2.integration_key
+  sensitive   = true
+}
+
 resource "pagerduty_schedule" "ghost-stack_dev" {
   name        = "ghost-stack dev"
   time_zone   = "America/New_York"
