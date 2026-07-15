@@ -6,7 +6,7 @@ instance_plan   = "vhf-2c-4gb" # pick a plan slug
 
 ssh_key_name = "ghost-dev-admin"
 
-ghost_url = "http://separationofconverns.dev"
+ghost_url = "https://separationofconcerns.dev"
 
 block_storage_size_gb = 25
 block_storage_label   = "ghost-block"
