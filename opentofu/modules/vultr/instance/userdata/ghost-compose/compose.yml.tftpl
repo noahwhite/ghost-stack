@@ -104,7 +104,7 @@ services:
   # TinyBird Traffic Analytics Proxy
   # Activated via COMPOSE_PROFILES=analytics (set automatically by tinybird-provision.service)
   traffic-analytics:
-    image: ghost/traffic-analytics:1.0.148@sha256:9d1f8013418c60d9c1cb14cc25903cf0495c21821e95178ddb0efafbe61491c4
+    image: ghost/traffic-analytics:1.0.354@sha256:e539e992b938c5f77bd842d2aec635e9eb6b7c3e99abc638820f68dfd7b6f3ee
     restart: always
     expose:
       - "3000"
@@ -127,7 +127,7 @@ services:
   # ActivityPub / Fediverse self-hosted service (GHO-101)
   # Activated via COMPOSE_PROFILES=activitypub (set in .env.config)
   activitypub:
-    image: ghcr.io/tryghost/activitypub:1.1.0@sha256:39c212fe23603b182d68e67d555c6b9b04b1e57459dfc0bef26d6e4980eb04d1
+    image: ghcr.io/tryghost/activitypub:1.2.7@sha256:f677e8af8df41418c3bfd63b4ec76b9bf2bbd85bde7da0aa9ecd86e41a230835
     restart: always
     entrypoint: ["/activitypub-entrypoint.sh"]
     command: ["node", "dist/app.js"]
@@ -204,7 +204,7 @@ services:
   # Runs once at compose up to migrate the activitypub DB schema; exits 0 on success.
   # activitypub service depends_on this completing successfully before starting.
   activitypub-migrate:
-    image: ghcr.io/tryghost/activitypub-migrations:1.1.0@sha256:b3ab20f55d66eb79090130ff91b57fe93f8a4254b446c2c7fa4507535f503662
+    image: ghcr.io/tryghost/activitypub-migrations:1.2.7@sha256:19724eca7b7669b01047c746738bf34c46dfa587e2be5b8641067d9ab707a7bb
     entrypoint: ["/activitypub-entrypoint.sh"]
     command: ["up"]
     volumes:
