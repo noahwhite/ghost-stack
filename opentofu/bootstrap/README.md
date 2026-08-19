@@ -19,30 +19,29 @@ These are required to enable remote state locking and DNS delegation in the MVP 
 ```
 bootstrap/
 ├── README.md
-├── main.tf
-├── outputs.tf
-├── variables.tf
+├── main.tofu
+├── outputs.tofu
+├── variables.tofu
 ├── envs/
 │   └── dev/
 │       └── dev.tfvars
 ├── modules/
 │   ├── cloudflare_zone/
-│   │   ├── main.tf
-|		|		├── outputs.tf
-│   │   └── variables.tf
+│   │   ├── main.tofu
+│   │   ├── outputs.tofu
+│   │   └── variables.tofu
 │   ├── email_routing/
-│   │   ├── main.tf
-|		|		├── outputs.tf
-│   │   └── variables.tf
+│   │   ├── main.tofu
+│   │   ├── outputs.tofu
+│   │   └── variables.tofu
 │   └── r2/
 │       ├── README.md
-│       ├── main.tf
-│       └── variables.tf
-├── scripts/
-│   ├── bootstrap-dev.sh
-│   ├── generate-bootstrap-token.sh
-│   ├── list-permission-groups.sh
-│   └── set-cloudflare-env.sh
+│       ├── main.tofu
+│       └── variables.tofu
+└── scripts/
+    ├── bootstrap-env.sh
+    ├── generate-bootstrap-token.sh
+    └── list-permission-groups.sh
 ```
 
 ---
@@ -53,17 +52,18 @@ bootstrap/
 
 Before starting, you must create a Cloudflare API token with permission to generate other tokens. This is referred to as the **dev-token-creator**.
 
-Follow the instructions in [`docs/secrets-management.md`](../../docs/secrets-management.md#manual-creation-instructions) to:
+See [`docs/secrets-management.md`](../../docs/secrets-management.md) for how this repo manages
+secrets. Create this token as follows:
 
-- Create this token with the `User: API Tokens - Edit` permission
-- Store it securely (e.g., in 1Password)
+- Create the token with the `User: API Tokens - Edit` permission
+- Store it securely in your secrets manager
 - Paste it into the prompt when running the bootstrap token generator script in Step 1
 
 You will also need your Cloudflare Account ID. The easiest way to obtain it is to simply copy it from the Cloudflare dashboard URL after you have created the bootstrap API token. The account ID is the long string of characters in the URL directly between dash.cloudflare.com/ and /api-tokens. For example:
 
 https://dash.cloudflare.com/<CLOUDFLARE ACCOUNT ID>/api-tokens
 
-- Store it securely (e.g., in 1Password)
+- Store it securely in your secrets manager
 - Paste it into the prompt when running the bootstrap token generator script in Step 1
 
 ### Step 1: Enable R2 In Your Cloudflare Account
@@ -78,10 +78,10 @@ Before you are able to use R2 you must first enable billing on it.
 Once you have your bootstrap token, you can use it to generate a Cloudflare API token with the correct scopes:
 
 ```bash
-./opentofu/bootstrap/scripts/generate-cloudflare-token.sh
+./opentofu/bootstrap/scripts/generate-bootstrap-token.sh
 ```
 
-This will securely prompt you for your Cloudflare Account ID and Bootstrap Token, generate a signed JWT with R2 + DNS scopes, and copy it to your clipboard. Paste it into your secrets manager (e.g., 1Password).
+This will securely prompt you for your Cloudflare Account ID and Bootstrap Token, generate a signed JWT with R2 + DNS scopes, and copy it to your clipboard. Paste it into your secrets manager.
 
 ### Step 3: Export Secrets in Your Host Shell & Launch Docker Shell with Secrets Injected
 
@@ -161,4 +161,4 @@ This would render your infrastructure **unusable**.
 
 ---
 
-Ready to deploy the main infrastructure stack? Head over to `opentofu/main/` once bootstrap is complete.
+Ready to deploy the main infrastructure stack? Head over to `opentofu/envs/dev/` once bootstrap is complete.

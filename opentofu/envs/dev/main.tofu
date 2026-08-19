@@ -16,15 +16,15 @@ terraform {
     }
     tailscale = {
       source  = "tailscale/tailscale"
-      version = "~> 0.28.0"
+      version = "~> 0.29.0"
     }
     pagerduty = {
       source  = "pagerduty/pagerduty"
-      version = "~> 3.32.0" # Mind the supported Provider version
+      version = "~> 3.35.0" # Mind the supported Provider version
     }
     grafana = {
       source  = "grafana/grafana"
-      version = "~> 4.33.0"
+      version = "~> 4.45.0"
     }
     infisical = {
       source  = "infisical/infisical"
