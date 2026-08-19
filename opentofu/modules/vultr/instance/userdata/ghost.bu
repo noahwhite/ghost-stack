@@ -33,12 +33,12 @@ storage:
     # Quick hash retrieval:
     #   curl -s https://ghost-sysext-images.separationofconcerns.dev/alloy-{VERSION}-amd64.raw.sha256
     # ==========================================================================
-    - path: /opt/extensions/alloy/alloy-1.14.2-amd64.raw
+    - path: /opt/extensions/alloy/alloy-1.17.0-amd64.raw
       mode: 0644
       contents:
-        source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.14.2-amd64.raw
+        source: https://ghost-sysext-images.separationofconcerns.dev/alloy-1.17.0-amd64.raw
         verification:
-          hash: sha256-268db7a95a807cfb1c9544fce8a0845db8d7b74354c9ab0e5a1959e4093b7fa7
+          hash: sha256-09d6dbdcc37a3c9e00b1b16ff6fd06243aa2e59dd004005096ffdb70489f66c4
 
     # Alloy sysupdate configuration for automatic updates
     # GPG signature verification is enabled - signatures are created by
@@ -397,7 +397,7 @@ storage:
       hard: false
 
     # Symlink must be updated when changing Alloy version (path above)
-    - target: /opt/extensions/alloy/alloy-1.14.2-amd64.raw
+    - target: /opt/extensions/alloy/alloy-1.17.0-amd64.raw
       path: /etc/extensions/alloy.raw
       hard: false
 
