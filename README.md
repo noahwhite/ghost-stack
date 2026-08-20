@@ -12,6 +12,14 @@ deployments, secrets automation, observability, backups, and ActivityPub federat
 > **Scope:** a single-tenant, single-environment (`dev`) deployment. The multi-tenant SaaS
 > evolution lives in a separate project; this repo is the single-tenant foundation.
 
+> **⚠️ Retired — compute layer removed.** The Vultr instance, firewall, block storage and
+> the Tailscale policy resources have been destroyed and their OpenTofu definitions removed
+> from this repo, so they cannot be redeployed. The `separationofconcerns.dev` blog is now
+> served by the multi-tenant Officina platform, which owns the apex/`www`/`admin` DNS records
+> and the tailnet ACL. What remains here is Cloudflare (Mailgun DNS + `www`), Grafana Cloud,
+> PagerDuty, and Infisical. The sections below describe the stack as it was built and are
+> kept for the blog series; treat them as history, not as deploy instructions.
+
 ---
 
 ## Architecture at a glance
@@ -50,25 +58,23 @@ ghost-stack/
 │       ├── infra-shell.sh        # Interactive shell with secrets injected from Bitwarden
 │       └── bootstrap-infra-shell.sh
 ├── opentofu/
-│   ├── envs/dev/                 # Dev environment root module (main.tofu, *.auto.tfvars, tests/)
+│   ├── envs/dev/                 # Dev environment root module (main.tofu, tests/)
 │   ├── modules/
-│   │   ├── vultr/                # instance, firewall, block_storage
 │   │   ├── cloudflare/dns_records/
-│   │   ├── tailscale/
 │   │   ├── grafana-cloud/
 │   │   ├── infisical/
 │   │   └── pagerduty/
 │   ├── bootstrap/                # One-time R2 state bucket + Cloudflare zone provisioning
 │   └── scripts/
-│       ├── tofu.sh               # Wrapper: ./tofu.sh <env> <plan|apply|fmt|test>
-│       └── build-ignition.sh     # Transpile Butane (.bu) → Ignition JSON
+│       └── tofu.sh               # Wrapper: ./tofu.sh <env> <plan|apply|fmt|test>
 ├── docs/                         # Runbooks and workflow documentation
 ├── keys/                         # Public SSH key(s) only
 └── soc-cms/                      # CMS content redirects
 ```
 
-The Ghost host's Docker Compose stack, Caddy config, and boot scripts live under
-`opentofu/modules/vultr/instance/userdata/`.
+The Ghost host's Docker Compose stack, Caddy config, and boot scripts lived under
+`opentofu/modules/vultr/instance/userdata/`, removed with the compute layer. See the git
+history if you need them.
 
 ---
 
@@ -137,7 +143,8 @@ are pointers into Bitwarden, not the secrets themselves.
 ## CI/CD
 
 Three GitHub Actions workflows drive infrastructure changes (plus `claude-review.yml` for
-automated PR review and `sync-tryghost-compose.yml` for tracking upstream Ghost images):
+automated PR review). `sync-tryghost-compose.yml` was removed with the compute layer — it
+existed only to track upstream Ghost images into the host's compose template:
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
