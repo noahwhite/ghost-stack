@@ -521,7 +521,12 @@ without reprovisioning).
 
 The Ghost Docker stack is based on [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker).
 
-Docker image updates are automated via the **TryGhost Compose Sync** workflow (`.github/workflows/sync-tryghost-compose.yml`), which runs daily at 06:30 UTC and syncs directly from TryGhost/ghost-docker's `main` branch. Ghost itself (`ghost:6-alpine`) is intentionally unpinned and not tracked. See `docs/runbooks/renovate.md` for Renovate configuration (GitHub Actions and OpenTofu provider updates only).
+> **Retired.** The compute layer (Vultr instance, firewall, block storage) and the Tailscale
+> policy resources were destroyed and removed from this repo, along with the host's compose
+> templates under `opentofu/modules/vultr/instance/userdata/` and the **TryGhost Compose Sync**
+> workflow. This section is kept for history — the paths and workflow it refers to no longer
+> exist. See `docs/runbooks/renovate.md` for Renovate configuration (GitHub Actions and
+> OpenTofu provider updates only), which is still live.
 
 ### Current Image Versions
 

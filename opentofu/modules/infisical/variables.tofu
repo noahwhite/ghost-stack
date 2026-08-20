@@ -13,9 +13,3 @@ variable "admin_email" {
   description = "Email of the human admin user to add as project administrator"
   type        = string
 }
-
-variable "instance_replacement_hash" {
-  type        = string
-  description = "Hash of all inputs that would cause instance replacement, triggering boot token regeneration"
-  default     = ""
-}

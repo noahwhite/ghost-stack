@@ -1,25 +1,28 @@
-# Git Workflow: MVP / Dev-Only Stage
+# Git Workflow
 
-This project currently operates in a single-environment setup: **`dev` only**. As the infrastructure evolves, we'll adopt additional environments (staging, production), but this document describes the initial development workflow for the MVP phase.
+This project runs a single environment (`dev`) with a pull-request-based workflow and an
+automated GitHub Actions deployment pipeline. This document describes the branching model;
+for the deployment pipeline itself, see [`automated-deployment-workflow.md`](automated-deployment-workflow.md).
 
-## Goals of the MVP Git Workflow
+## Goals
 
-- Support **solo or small-team iteration**
+- Support solo or small-team iteration with GitHub as the source of truth
 - Ensure reproducibility of infrastructure using OpenTofu
-- Leverage a clean branch model with GitHub as the source of truth
-- Provide a foundation for future CI/CD and environment promotion
-- Secrets stored in **1Password GUI** (or your tool of choice), injected at runtime
+- Keep `develop` deployable at all times behind a gated pipeline
+- Manage secrets outside of git via Bitwarden Secrets Manager, injected at runtime
 
 ---
 
 ## Branch Structure
 
-| Branch    | Purpose                                       |
-|-----------|-----------------------------------------------|
-| `develop` | Primary working branch for infrastructure code |
-| `feature/*` | Optional short-lived branches for new resources or blog content |
+| Branch      | Purpose                                                          |
+|-------------|-----------------------------------------------------------------|
+| `main`      | Protected base branch; long-lived                               |
+| `develop`   | Integration branch — merges here trigger the gated dev deploy   |
+| `feature/*` | Short-lived branches (`feature/GHO-XX-short-description`)        |
 
-> There is **no `main` branch used yet** in this phase. All deployments come from `develop`.
+Both `main` and `develop` are protected: changes land via pull request, and commits must be
+verified (signed). See [`branch-protection-rules.md`](branch-protection-rules.md).
 
 ---
 
@@ -28,75 +31,85 @@ This project currently operates in a single-environment setup: **`dev` only**. A
 1. **Clone the repo**:
 
    ```bash
-   git clone https://github.com/noahwhite/ghost-stack-part1.git
-   cd ghost-stack-part1
+   git clone https://github.com/noahwhite/ghost-stack.git
+   cd ghost-stack
    ```
 
-2. **Create a feature branch** (optional):
+2. **Create a feature branch**:
 
    ```bash
-   git checkout -b feature/setup-vultr-vm
+   git checkout -b feature/GHO-XX-short-description
    ```
 
-3. **Make changes** to OpenTofu/Terraform modules or blog content.
+3. **Make changes** to OpenTofu modules or documentation.
 
-4. **Commit and push** to `develop`:
+4. **Commit and push** the feature branch, then open a PR against `develop`:
 
    ```bash
    git add .
    git commit -m "Add Vultr VM for Ghost app server"
-   git push origin develop
+   git push origin feature/GHO-XX-short-description
    ```
+
+   Do not push directly to `develop` or `main` — both are protected and require a PR with a
+   verified (signed) commit.
 
 ---
 
 ## Deployment
 
-Infrastructure is managed manually using the Docker-based development shell.
+Infrastructure changes are validated and deployed automatically:
+
+- Opening a PR against `develop` runs `tofu fmt` and `tofu plan`, uploading the plan as an
+  artifact (infrastructure paths only).
+- Merging to `develop` triggers `deploy-dev.yml`, which replays the PR plan, checks for
+  drift, applies behind a manual approval gate, and runs post-deploy health checks.
+
+See [`automated-deployment-workflow.md`](automated-deployment-workflow.md) for the full
+pipeline.
+
+---
+
+## Running OpenTofu Locally
+
+Infrastructure tooling runs inside the `ghost-stack-shell` container so the host stays clean
+and secrets are injected at runtime.
 
 ### Run the Dev Shell
 
 ```bash
+# Full shell — secrets injected from Bitwarden Secrets Manager
 ./docker/scripts/infra-shell.sh
+
+# No-credentials shell — for fmt and tests only
+./docker/scripts/infra-shell.sh --no-secrets
 ```
 
-This shell provides:
+The container provides OpenTofu 1.11.1 plus standard CLI tooling.
 
-- OpenTofu (1.10.5)
-- Ubuntu base image
-- Standard CLI tools (`curl`, `git`, etc.)
+### Plan and Apply
 
----
-
-## Secrets Management
-
-Before applying the infrastructure read [`Secrets Management`](secrets-management.md) for setting up and managing the required secrets.
-
----
-
-## Apply Infrastructure
-
-Once secrets are loaded in the current shell session:
+Use the wrapper script, which selects the environment (there is no `-var-file` to pass;
+`dev.auto.tfvars` was removed with the compute layer — all remaining inputs come from
+`TF_VAR_*` supplied by `infra-shell.sh` or CI):
 
 ```bash
-cd opentofu/envs/dev
-tofu init
-tofu plan -var-file=dev.tfvars
-tofu apply -var-file=dev.tfvars
+./opentofu/scripts/tofu.sh dev fmt      # Format check (no credentials)
+./opentofu/scripts/tofu.sh dev test     # Unit tests with mock providers (no credentials)
+./opentofu/scripts/tofu.sh dev plan     # Plan against dev
+./opentofu/scripts/tofu.sh dev apply    # Apply to dev
 ```
+
+Before planning or applying against real infrastructure, read
+[`secrets-management.md`](secrets-management.md) to set up the required secrets.
 
 ---
 
 ## Future Evolution
 
-Once staging and production environments are introduced, this workflow will evolve to include:
-
-- Additional branches (`staging`, `main`)
-- CI/CD pipelines with GitHub Actions
-- Promotion logic via pull requests
-- Secrets managed via automation or external vaulting tools
-
-Stay tuned in future parts of the series.
+Additional environments (staging, production) and promotion logic would introduce further
+branches and workflows. The multi-environment, multi-tenant evolution of this platform is
+tracked in a separate project.
 
 ---
 

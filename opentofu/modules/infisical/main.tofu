@@ -4,10 +4,6 @@ terraform {
       source  = "infisical/infisical"
       version = "~> 0.16"
     }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2"
-    }
   }
 }
 
@@ -39,25 +35,6 @@ resource "infisical_identity_token_auth" "ghost_dev" {
   access_token_num_uses_limit = 1   # single-use — token consumed on first use
   access_token_ttl            = 900 # 15 minutes — covers tofu apply + instance boot window
   access_token_max_ttl        = 900 # cap max TTL at method level
-}
-
-resource "null_resource" "instance_replacement_trigger" {
-  triggers = {
-    replacement_hash = var.instance_replacement_hash
-  }
-}
-
-resource "infisical_identity_token_auth_token" "ghost_dev_boot" {
-  identity_id = infisical_identity.ghost_dev.id
-  name        = "ghost-dev-boot"
-
-  depends_on = [infisical_identity_token_auth.ghost_dev]
-
-  lifecycle {
-    # Regenerate token only when the instance is being replaced.
-    # Mirrors the pattern used in modules/tailscale for the auth key.
-    replace_triggered_by = [null_resource.instance_replacement_trigger]
-  }
 }
 
 # Link identity to project with no-access project role.

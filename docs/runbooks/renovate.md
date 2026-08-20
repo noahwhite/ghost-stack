@@ -8,7 +8,7 @@ This runbook covers the initial setup of the Renovate GitHub App for automated d
 
 Renovate monitors GitHub Actions workflow files and OpenTofu providers for version updates, and automatically opens PRs to `develop` when updates are available.
 
-**Docker image updates are handled separately** by the TryGhost Compose Sync workflow (`.github/workflows/sync-tryghost-compose.yml`), which syncs directly from [TryGhost/ghost-docker](https://github.com/TryGhost/ghost-docker) `main`. See [Updating Ghost Docker Images](../../CLAUDE.md#updating-ghost-docker-images) for details.
+**Docker image updates** were handled separately by the TryGhost Compose Sync workflow, removed along with the compute layer it served. Renovate below (GitHub Actions + OpenTofu providers) is unaffected.
 
 `ghost:6-alpine` is intentionally excluded from all automated tracking — it is unpinned by design.
 
