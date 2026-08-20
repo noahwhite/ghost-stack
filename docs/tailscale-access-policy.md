@@ -1,5 +1,11 @@
 # Tailscale Access Policy
 
+> **⚠️ No longer managed here.** The `tailscale_acl` resource was removed from this repo and
+> from ghost-stack OpenTofu state. The tailnet policy — including the `tag:officina-ci`,
+> `tag:officina-instance` and `tag:infisical` grants — is owned by the Officina platform now.
+> Editing `opentofu/modules/tailscale/main.tofu` is not possible (the module is deleted), and
+> re-adding it here would overwrite the live policy. This document is kept for history.
+
 This document defines the access control policy for Tailscale-based SSH access to ghost-stack infrastructure.
 
 ---

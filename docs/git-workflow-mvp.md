@@ -89,8 +89,9 @@ The container provides OpenTofu 1.11.1 plus standard CLI tooling.
 
 ### Plan and Apply
 
-Use the wrapper script, which selects the environment and auto-loads `dev.auto.tfvars`
-(there is no `-var-file` to pass):
+Use the wrapper script, which selects the environment (there is no `-var-file` to pass;
+`dev.auto.tfvars` was removed with the compute layer — all remaining inputs come from
+`TF_VAR_*` supplied by `infra-shell.sh` or CI):
 
 ```bash
 ./opentofu/scripts/tofu.sh dev fmt      # Format check (no credentials)
