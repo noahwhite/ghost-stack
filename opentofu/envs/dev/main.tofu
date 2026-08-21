@@ -71,8 +71,7 @@ module "grafana-cloud" {
   providers = {
     grafana = grafana.cloud
   }
-  pagerduty_backup_integration_key = module.pagerduty.backup_integration_key
-  SOC_DEV_TERRAFORM_SA_TOK         = var.SOC_DEV_TERRAFORM_SA_TOK
+  SOC_DEV_TERRAFORM_SA_TOK = var.SOC_DEV_TERRAFORM_SA_TOK
 }
 
 module "pagerduty" {
