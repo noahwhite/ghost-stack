@@ -234,6 +234,7 @@ prompt_if_empty "TF_VAR_pd_subdomain" "Enter your PagerDuty subdomain: " false
 prompt_if_empty "TF_VAR_pd_user_tok" "Enter your PagerDuty user API token: " true
 prompt_if_empty "TF_VAR_GC_ACCESS_TOK" "Enter your Grafana Cloud access token: " true
 prompt_if_empty "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "Enter your Grafana Cloud SOC DEV Terraform access token: " true
+prompt_if_empty "TF_VAR_health_check_token" "Enter your health check token (X-Health-Check-Token): " true
 prompt_if_empty "TF_VAR_infisical_client_id" "Enter your Infisical management identity client ID: " false
 prompt_if_empty "TF_VAR_infisical_client_secret" "Enter your Infisical management identity client secret: " true
 prompt_if_empty "TF_VAR_infisical_org_id" "Enter your Infisical organization ID: " false
@@ -267,6 +268,7 @@ export_var "TF_VAR_pd_subdomain" "${TF_VAR_pd_subdomain}"
 export_var "TF_VAR_pd_user_tok" "${TF_VAR_pd_user_tok}"
 export_var "TF_VAR_GC_ACCESS_TOK" "${TF_VAR_GC_ACCESS_TOK}"
 export_var "TF_VAR_SOC_DEV_TERRAFORM_SA_TOK" "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK}"
+export_var "TF_VAR_health_check_token" "${TF_VAR_health_check_token}"
 export_var "TF_VAR_infisical_client_id" "${TF_VAR_infisical_client_id}"
 export_var "TF_VAR_infisical_client_secret" "${TF_VAR_infisical_client_secret}"
 export_var "TF_VAR_infisical_org_id" "${TF_VAR_infisical_org_id}"
@@ -287,6 +289,16 @@ if [[ "$CI_MODE" == "true" ]]; then
     TF_VAR_cloudflare_zone_id="${CLOUDFLARE_ZONE_ID_DEV}"
     export_var "TF_VAR_cloudflare_zone_id" "${TF_VAR_cloudflare_zone_id}"
     echo "Using Cloudflare Zone ID from GitHub repository secret"
+  fi
+fi
+
+# Set health check token in CI mode (from GitHub secrets, used by Grafana synthetic monitoring)
+if [[ "$CI_MODE" == "true" ]]; then
+  if [[ -n "${HEALTH_CHECK_TOKEN:-}" ]]; then
+    TF_VAR_health_check_token="${HEALTH_CHECK_TOKEN}"
+    mask_value "$TF_VAR_health_check_token"
+    export_var "TF_VAR_health_check_token" "${TF_VAR_health_check_token}"
+    echo "Using health check token from GitHub secret"
   fi
 fi
 
@@ -353,6 +365,7 @@ echo "Using SSH public key: $PUBKEY_PATH"
 : "${TF_VAR_pd_user_tok:?Environment variable not set}"
 : "${TF_VAR_GC_ACCESS_TOK:?Environment variable not set}"
 : "${TF_VAR_SOC_DEV_TERRAFORM_SA_TOK:?Environment variable not set}"
+: "${TF_VAR_health_check_token:?Environment variable not set}"
 : "${TF_VAR_infisical_client_id:?Environment variable not set}"
 : "${TF_VAR_infisical_client_secret:?Environment variable not set}"
 : "${TF_VAR_infisical_org_id:?Environment variable not set}"
@@ -398,6 +411,7 @@ if [[ "$RUN_CONTAINER" == "true" ]]; then
       -e TF_VAR_pd_user_tok \
       -e TF_VAR_GC_ACCESS_TOK \
       -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+      -e TF_VAR_health_check_token \
       -e TF_VAR_infisical_client_id \
       -e TF_VAR_infisical_client_secret \
       -e TF_VAR_infisical_org_id \

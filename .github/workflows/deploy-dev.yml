@@ -136,6 +136,7 @@ jobs:
           BOOTSTRAP_R2_BUCKET: ${{ vars.BOOTSTRAP_R2_BUCKET }}
           ADMIN_IP: ${{ secrets.ADMIN_IP }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          HEALTH_CHECK_TOKEN: ${{ secrets.HEALTH_CHECK_TOKEN }}
         run: |
           ./docker/scripts/infra-shell.sh --ci --secrets-only --export-github-env
 
@@ -161,6 +162,7 @@ jobs:
           TF_VAR_pd_user_tok: ${{ env.TF_VAR_pd_user_tok }}
           TF_VAR_GC_ACCESS_TOK: ${{ env.TF_VAR_GC_ACCESS_TOK }}
           TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
+          TF_VAR_health_check_token: ${{ env.TF_VAR_health_check_token }}
           TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
         run: |
           docker run --rm \
@@ -180,6 +182,7 @@ jobs:
             -e TF_VAR_pd_user_tok \
             -e TF_VAR_GC_ACCESS_TOK \
             -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+            -e TF_VAR_health_check_token \
             -e TF_BACKEND_BUCKET \
             ghcr.io/noahwhite/ghost-stack-shell:latest \
             bash -c "git config --global --add safe.directory /home/devops/app && ./opentofu/scripts/tofu.sh dev init"
@@ -201,6 +204,7 @@ jobs:
           TF_VAR_pd_user_tok: ${{ env.TF_VAR_pd_user_tok }}
           TF_VAR_GC_ACCESS_TOK: ${{ env.TF_VAR_GC_ACCESS_TOK }}
           TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
+          TF_VAR_health_check_token: ${{ env.TF_VAR_health_check_token }}
           TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
           TF_VAR_admin_subnets: ${{ env.TF_VAR_admin_subnets }}
           TF_VAR_admin_ip: ${{ env.TF_VAR_admin_ip }}
@@ -227,6 +231,7 @@ jobs:
             -e TF_VAR_pd_user_tok \
             -e TF_VAR_GC_ACCESS_TOK \
             -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+            -e TF_VAR_health_check_token \
             -e TF_BACKEND_BUCKET \
             -e TF_VAR_admin_subnets \
             -e TF_VAR_admin_ip \
@@ -290,6 +295,7 @@ jobs:
           TF_VAR_pd_user_tok: ${{ env.TF_VAR_pd_user_tok }}
           TF_VAR_GC_ACCESS_TOK: ${{ env.TF_VAR_GC_ACCESS_TOK }}
           TF_VAR_SOC_DEV_TERRAFORM_SA_TOK: ${{ env.TF_VAR_SOC_DEV_TERRAFORM_SA_TOK }}
+          TF_VAR_health_check_token: ${{ env.TF_VAR_health_check_token }}
           TF_BACKEND_BUCKET: ${{ env.TF_BACKEND_BUCKET }}
           TF_VAR_admin_subnets: ${{ env.TF_VAR_admin_subnets }}
           TF_VAR_admin_ip: ${{ env.TF_VAR_admin_ip }}
@@ -316,6 +322,7 @@ jobs:
             -e TF_VAR_pd_user_tok \
             -e TF_VAR_GC_ACCESS_TOK \
             -e TF_VAR_SOC_DEV_TERRAFORM_SA_TOK \
+            -e TF_VAR_health_check_token \
             -e TF_BACKEND_BUCKET \
             -e TF_VAR_admin_subnets \
             -e TF_VAR_admin_ip \

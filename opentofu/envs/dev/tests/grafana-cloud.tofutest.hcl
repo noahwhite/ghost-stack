@@ -57,6 +57,30 @@ mock_provider "grafana" {
     }
   }
 
+  mock_resource "grafana_synthetic_monitoring_installation" {
+    defaults = {
+      id               = "test-sm-installation-id"
+      sm_access_token  = "test-sm-access-token"
+      stack_sm_api_url = "https://synthetic-monitoring-api-test.grafana.net"
+    }
+  }
+
+  mock_resource "grafana_synthetic_monitoring_check" {
+    defaults = {
+      id = "test-sm-check-id"
+    }
+  }
+
+  mock_data "grafana_synthetic_monitoring_probes" {
+    defaults = {
+      probes = {
+        Atlanta      = 1
+        NewYork      = 22
+        SanFrancisco = 23
+      }
+    }
+  }
+
   mock_data "grafana_data_source" {
     defaults = {
       id   = "test-datasource-id"
@@ -82,8 +106,12 @@ run "grafana_cloud_module_tests" {
   }
 
   variables {
-    SOC_DEV_TERRAFORM_SA_TOK         = "test-token"
-    pagerduty_backup_integration_key = "test-pd-integration-key"
+    SOC_DEV_TERRAFORM_SA_TOK               = "test-token"
+    pagerduty_backup_integration_key       = "test-pd-integration-key"
+    pagerduty_health_check_integration_key = "test-pd-health-check-key"
+    metrics_publisher_key                  = "test-metrics-publisher-key"
+    health_check_token                     = "test-health-check-token"
+    tenant_domain                          = "separationofconcerns.dev"
   }
 
   # Override all data sources to prevent real API calls
@@ -209,6 +237,17 @@ run "grafana_cloud_module_tests" {
     values = {
       id          = "test-dashboard-13"
       config_json = "{}"
+    }
+  }
+
+  override_data {
+    target = data.grafana_synthetic_monitoring_probes.main
+    values = {
+      probes = {
+        Atlanta      = 1
+        NewYork      = 22
+        SanFrancisco = 23
+      }
     }
   }
 
@@ -395,5 +434,46 @@ run "grafana_cloud_module_tests" {
   assert {
     condition     = jsondecode(grafana_dashboard.ghost_stack_backup.config_json).title == "Ghost Stack Backup"
     error_message = "Backup dashboard title should be 'Ghost Stack Backup'"
+  }
+
+  # Test synthetic monitoring resources (OFF-178)
+  assert {
+    condition     = grafana_synthetic_monitoring_check.tenant_health.job == "tenant-health-separationofconcerns.dev"
+    error_message = "SM check job should be 'tenant-health-separationofconcerns.dev'"
+  }
+
+  assert {
+    condition     = grafana_synthetic_monitoring_check.tenant_health.target == "https://separationofconcerns.dev/"
+    error_message = "SM check target should be 'https://separationofconcerns.dev/'"
+  }
+
+  assert {
+    condition     = grafana_synthetic_monitoring_check.tenant_health.enabled == true
+    error_message = "SM check should be enabled"
+  }
+
+  assert {
+    condition     = grafana_synthetic_monitoring_check.tenant_health.frequency == 120000
+    error_message = "SM check frequency should be 120000ms (2 minutes)"
+  }
+
+  assert {
+    condition     = grafana_synthetic_monitoring_check.tenant_health.timeout == 10000
+    error_message = "SM check timeout should be 10000ms (10 seconds)"
+  }
+
+  assert {
+    condition     = grafana_synthetic_monitoring_check.tenant_health.alert_sensitivity == "medium"
+    error_message = "SM check alert sensitivity should be 'medium'"
+  }
+
+  assert {
+    condition     = length(grafana_synthetic_monitoring_check.tenant_health.probes) == 3
+    error_message = "SM check should have 3 probes"
+  }
+
+  assert {
+    condition     = grafana_contact_point.pagerduty_health_check.name == "PagerDuty - Ghost Stack Health Check"
+    error_message = "Health check contact point name should be 'PagerDuty - Ghost Stack Health Check'"
   }
 }
