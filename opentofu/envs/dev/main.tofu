@@ -8,7 +8,7 @@ terraform {
     }
     pagerduty = {
       source  = "pagerduty/pagerduty"
-      version = "~> 3.35.0" # Mind the supported Provider version
+      version = "~> 3.36.0" # Mind the supported Provider version
     }
     grafana = {
       source  = "grafana/grafana"
