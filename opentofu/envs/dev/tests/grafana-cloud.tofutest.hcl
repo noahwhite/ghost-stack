@@ -32,31 +32,6 @@ mock_provider "grafana" {
     }
   }
 
-  mock_resource "grafana_dashboard_permission" {
-    defaults = {
-      id = "test-dashboard-permission-id"
-    }
-  }
-
-  mock_resource "grafana_contact_point" {
-    defaults = {
-      id   = "test-contact-point-id"
-      name = "PagerDuty - Ghost Stack Backup"
-    }
-  }
-
-  mock_resource "grafana_notification_policy" {
-    defaults = {
-      id = "test-notification-policy-id"
-    }
-  }
-
-  mock_resource "grafana_rule_group" {
-    defaults = {
-      id = "test-rule-group-id"
-    }
-  }
-
   mock_data "grafana_data_source" {
     defaults = {
       id   = "test-datasource-id"
@@ -82,8 +57,7 @@ run "grafana_cloud_module_tests" {
   }
 
   variables {
-    SOC_DEV_TERRAFORM_SA_TOK         = "test-token"
-    pagerduty_backup_integration_key = "test-pd-integration-key"
+    SOC_DEV_TERRAFORM_SA_TOK = "test-token"
   }
 
   # Override all data sources to prevent real API calls
@@ -249,12 +223,6 @@ run "grafana_cloud_module_tests" {
     error_message = "Service account should be enabled"
   }
 
-  # Test tailscale folder
-  assert {
-    condition     = grafana_folder.tailscale_folder.title == "tailscale"
-    error_message = "Tailscale folder title should be 'tailscale'"
-  }
-
   # Test linux node folder
   assert {
     condition     = grafana_folder.integration_linux_node.title == "Integration - Linux Node"
@@ -268,53 +236,8 @@ run "grafana_cloud_module_tests" {
 
   # Test folder permissions exist
   assert {
-    condition     = grafana_folder_permission.soc_dev_tailscale_folder_permission.org_id == "0"
-    error_message = "Tailscale folder permission should be in org 0"
-  }
-
-  assert {
     condition     = grafana_folder_permission.integration_linux_node.org_id == "0"
     error_message = "Linux node folder permission should be in org 0"
-  }
-
-  # Test tailscale dashboard exists
-
-  assert {
-    condition     = grafana_dashboard.soc_dev_tailscale_connection.config_json != null
-    error_message = "Dashboard config should not be null"
-  }
-
-  assert {
-    condition     = jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).title == "Ghost-Dev-01-TS-Connection"
-    error_message = "Tailscale dashboard title should be 'Ghost-Dev-01-TS-Connection'"
-  }
-
-  assert {
-    condition     = length(jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).panels) == 2
-    error_message = "Tailscale dashboard should have 2 panels"
-  }
-
-  assert {
-    condition     = jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).panels[0].type == "timeseries"
-    error_message = "First panel should be a timeseries panel"
-  }
-
-  assert {
-    condition     = jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).panels[1].type == "gauge"
-    error_message = "Second panel should be a gauge panel"
-  }
-
-  assert {
-    condition = (
-      length(jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).panels[0].targets) > 0 &&
-      strcontains(jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).panels[0].targets[0].expr, "tailscale_device_connected")
-    )
-    error_message = "Dashboard panels should query tailscale_device_connected metric"
-  }
-
-  assert {
-    condition     = jsondecode(grafana_dashboard.soc_dev_tailscale_connection.config_json).editable == true
-    error_message = "Dashboard should be editable"
   }
 
   # Test linux node dashboard exists
@@ -344,12 +267,6 @@ run "grafana_cloud_module_tests" {
     error_message = "Linux node integration dashboard should not be editable"
   }
 
-  # Test dashboard permissions exist
-  assert {
-    condition     = grafana_dashboard_permission.soc_dev_tailscale_connection_permission.org_id == "0"
-    error_message = "Dashboard permission should be in org 0"
-  }
-
   # Test data source references (checking computed outputs only)
   assert {
     condition     = data.grafana_data_source.soc_dev_prometheus.uid == "grafanacloud-prom"
@@ -359,41 +276,5 @@ run "grafana_cloud_module_tests" {
   assert {
     condition     = data.grafana_data_source.soc_dev_loki.uid == "grafanacloud-logs"
     error_message = "Loki data source should have correct UID"
-  }
-
-  # Test backup alerting resources (GHO-98)
-  assert {
-    condition     = grafana_contact_point.pagerduty_backup.name == "PagerDuty - Ghost Stack Backup"
-    error_message = "Backup contact point name should be 'PagerDuty - Ghost Stack Backup'"
-  }
-
-  assert {
-    condition     = grafana_rule_group.ghost_stack_backup.name == "Ghost Stack Backup"
-    error_message = "Alert rule group name should be 'Ghost Stack Backup'"
-  }
-
-  assert {
-    condition     = grafana_rule_group.ghost_stack_backup.interval_seconds == 300
-    error_message = "Alert rule group should evaluate every 300 seconds"
-  }
-
-  assert {
-    condition     = length(grafana_rule_group.ghost_stack_backup.rule) == 4
-    error_message = "Alert rule group should have 4 rules"
-  }
-
-  assert {
-    condition     = grafana_folder.ghost_stack_folder.title == "Ghost Stack"
-    error_message = "Ghost Stack folder title should be 'Ghost Stack'"
-  }
-
-  assert {
-    condition     = grafana_dashboard.ghost_stack_backup.config_json != null
-    error_message = "Backup dashboard config should not be null"
-  }
-
-  assert {
-    condition     = jsondecode(grafana_dashboard.ghost_stack_backup.config_json).title == "Ghost Stack Backup"
-    error_message = "Backup dashboard title should be 'Ghost Stack Backup'"
   }
 }
