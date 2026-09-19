@@ -33,6 +33,12 @@ variable "SOC_DEV_TERRAFORM_SA_TOK" {
   sensitive   = true
 }
 
+variable "health_check_token" {
+  description = "Token for X-Health-Check-Token header used by Grafana synthetic health check probes"
+  type        = string
+  sensitive   = true
+}
+
 variable "cloudflare_zone_id" {
   description = "Cloudflare Zone ID (optional, reads from bootstrap state if not provided)"
   type        = string

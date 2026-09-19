@@ -10368,6 +10368,19 @@ resource "grafana_notification_policy" "root" {
     group_interval  = "5m"
     repeat_interval = "4h"
   }
+
+  policy {
+    matcher {
+      label = "service"
+      match = "="
+      value = "health-check"
+    }
+    contact_point   = grafana_contact_point.pagerduty_health_check.name
+    group_by        = ["alertname", "instance"]
+    group_wait      = "30s"
+    group_interval  = "5m"
+    repeat_interval = "4h"
+  }
 }
 
 # Alert rules — 3 rules covering failure, missed window, compose recovery
@@ -10809,4 +10822,66 @@ resource "grafana_dashboard" "ghost_stack_backup" {
       }
     ]
   })
+}
+
+# =============================================================================
+# Synthetic Health Check Probes (OFF-178)
+# =============================================================================
+
+resource "grafana_synthetic_monitoring_installation" "ghost_stack" {
+  stack_id              = grafana_cloud_stack.soc_dev.id
+  metrics_publisher_key = var.metrics_publisher_key
+}
+
+provider "grafana" {
+  alias           = "sm"
+  sm_access_token = grafana_synthetic_monitoring_installation.ghost_stack.sm_access_token
+  sm_url          = grafana_synthetic_monitoring_installation.ghost_stack.stack_sm_api_url
+}
+
+data "grafana_synthetic_monitoring_probes" "main" {
+  provider = grafana.sm
+}
+
+resource "grafana_synthetic_monitoring_check" "tenant_health" {
+  provider = grafana.sm
+  job      = "tenant-health-${var.tenant_domain}"
+  target   = "https://${var.tenant_domain}/"
+  enabled  = true
+  probes = [
+    data.grafana_synthetic_monitoring_probes.main.probes.Atlanta,
+    data.grafana_synthetic_monitoring_probes.main.probes.NewYork,
+    data.grafana_synthetic_monitoring_probes.main.probes.SanFrancisco,
+  ]
+  frequency         = 120000
+  timeout           = 10000
+  alert_sensitivity = "medium"
+
+  labels = {
+    service = "health-check"
+  }
+
+  settings {
+    http {
+      method             = "GET"
+      headers            = ["X-Health-Check-Token:${var.health_check_token}"]
+      fail_if_not_ssl    = true
+      valid_status_codes = [200]
+    }
+  }
+}
+
+# PagerDuty contact point for health check alerts
+resource "grafana_contact_point" "pagerduty_health_check" {
+  provider = grafana.soc_dev
+  name     = "PagerDuty - Ghost Stack Health Check"
+
+  pagerduty {
+    integration_key         = var.pagerduty_health_check_integration_key
+    severity                = "critical"
+    disable_resolve_message = false
+    class                   = "health-check"
+    component               = "caddy"
+    group                   = "ghost-stack-dev-01"
+  }
 }
